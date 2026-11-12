@@ -613,7 +613,7 @@ function parsePdfLines(lines, src) {
   const DATE = /^(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})?(?=\s|$)/;
   const AMT = /(?:^|\s)([+-]?)\s?(\d{1,3}(?:\.\d{3})*,\d{2})\s?([+-]|S|H)?(?:\s*(?:EUR|€))?$/;
   const SKIP = /(alter|neuer|anfangs|end|zwischen)[\s-]?(kontostand|saldo|bestand)|kontostand|übertrag|uebertrag|summe|saldo/i;
-  const NOISE = /^(seite|blatt|iban|bic|kontoauszug|datum|buchung|wert|vorgang|erläuterung|bitte|sparkasse|bank|filiale|telefon|www\.|ust-?id|amtsgericht|vorstand|aufsichtsrat)/i;
+  const NOISE = /^(seite|blatt|iban|bic|kontoauszug|erstellt|datum|buchung|wert|vorgang|erläuterung|bitte|sparkasse|bank|filiale|telefon|www\.|ust-?id|amtsgericht|vorstand|aufsichtsrat)/i;
   const recs = [];
   let cur = null;
   for (const l of lines) {
