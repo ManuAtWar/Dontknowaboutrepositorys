@@ -1,0 +1,37 @@
+# Candidate universe for the systematic momentum sleeve (one ticker per line).
+# Large, liquid US names across sectors so the screen is not tech-only.
+AAPL
+MSFT
+NVDA
+AVGO
+AMD
+TSM
+ANET
+VRT
+ORCL
+CRM
+NOW
+PLTR
+GOOGL
+META
+AMZN
+NFLX
+TSLA
+LLY
+NVO
+UNH
+ISRG
+JPM
+GS
+V
+MA
+COST
+WMT
+HD
+CAT
+GE
+ETN
+XOM
+NEE
+SPOT
+UBER

@@ -1,0 +1,17 @@
+ticker,weight,sleeve,thesis
+SMH,0.10,core-etf,Semiconductor basket: picks-and-shovels exposure to AI capex
+MTUM,0.10,core-etf,US momentum factor: systematic exposure to trend-following premium
+QUAL,0.10,core-etf,US quality factor: high ROE / low leverage cushions drawdowns
+NVDA,0.07,ai-compute,Dominant AI accelerator franchise; highest-conviction growth name
+AVGO,0.06,ai-compute,Custom AI silicon + networking; diversified cash-flow base
+TSM,0.05,ai-compute,Sole leading-edge foundry; every AI chip runs through it
+ANET,0.04,ai-infra,Data-center Ethernet switching for AI clusters
+VRT,0.04,ai-infra,Power and liquid cooling for data centers
+MSFT,0.06,platforms,Azure + Copilot monetisation; fortress balance sheet
+GOOGL,0.06,platforms,Search cash cow funds Cloud/TPU/Gemini; cheapest mega-cap on P/E
+META,0.06,platforms,Ad engine with AI-driven targeting gains; high FCF and buybacks
+AMZN,0.06,platforms,AWS re-acceleration + retail margin expansion
+LLY,0.05,diversifier,GLP-1 obesity drugs: secular growth uncorrelated with tech
+JPM,0.04,diversifier,Best-in-class bank; benefits from steeper curve / capital markets
+COST,0.05,diversifier,Defensive compounder; low beta ballast
+GLD,0.06,hedge,Gold: hedge against inflation shocks and equity drawdowns
