@@ -1,6 +1,5 @@
-role,etf,isin,ter_pct,weight,eur_of_200
-core,iShares Core MSCI World UCITS ETF (Acc),IE00B4L5Y983,0.20,0.60,120
-core,iShares Core MSCI EM IMI UCITS ETF (Acc),IE00BKM4GZ66,0.18,0.10,20
-tilt-small-value,Avantis Global Small Cap Value UCITS ETF (Acc),IE0003R87OG3,0.39,0.10,20
-tilt-momentum,Xtrackers MSCI World Momentum UCITS ETF 1C,IE00BL25JP72,0.25,0.10,20
-tilt-quality,iShares Edge MSCI World Quality Factor UCITS ETF (Acc),IE00BP3QZ601,0.30,0.10,20
+role,etf,isin,ter_pct,weight,eur_of_500
+core (already owned),Vanguard FTSE All-World UCITS ETF (Acc),IE00BK5BQT80,0.19,0.70,350
+tilt-small-value,Avantis Global Small Cap Value UCITS ETF (Acc),IE0003R87OG3,0.39,0.10,50
+tilt-momentum,Xtrackers MSCI World Momentum UCITS ETF 1C,IE00BL25JP72,0.25,0.10,50
+tilt-quality,iShares Edge MSCI World Quality Factor UCITS ETF (Acc),IE00BP3QZ601,0.30,0.10,50

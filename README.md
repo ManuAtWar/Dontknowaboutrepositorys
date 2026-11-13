@@ -2,8 +2,9 @@
 
 ## Long-term plan (main): Trade Republic, starting from 0 €, 15+ years
 
+- [`plan/AUSTRIA.md`](plan/AUSTRIA.md): **personal plan: Austria, 500 €/month, FTSE All-World core**
 - [`plan/PLAN.md`](plan/PLAN.md): step-by-step plan, ETF savings plan, rules, projections
-- [`plan/savings_plan.csv`](plan/savings_plan.csv): ETFs, ISINs, weights
+- [`plan/savings_plan.csv`](plan/savings_plan.csv): ETFs, ISINs, weights for 500 €/month
 - [`tools/projection.py`](tools/projection.py): Monte Carlo projection of a monthly savings plan
 
 ```bash
