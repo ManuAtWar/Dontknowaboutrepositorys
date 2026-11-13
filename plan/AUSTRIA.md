@@ -77,3 +77,24 @@ From `python tools/projection.py --monthly 500 --start 100` (7% expected return,
 
 The results are before the 27.5% tax on the gains when you sell. Real results will differ: markets can
 fall 30–50% along the way. The plan works only if you keep buying through those falls.
+
+## 6. Paying out later: the 27.5% tax
+
+There is **no legal way to sell and avoid the 27.5% KESt** as an Austrian tax resident. It's a flat rate
+with no allowance, so spreading sales over years doesn't lower the rate. What you *can* do:
+
+- **You're only taxed on the gain, not the whole amount.** Paid-in money and the yearly AGE already taxed
+  raise your cost basis. Example: 1,000,000 € value, 350,000 € paid in, 50,000 € AGE already taxed:
+  taxable gain 600,000 € × 27.5% = 165,000 €, so **835,000 € net (16.5% effective)**.
+  **Keep records of the yearly AGE** (OeKB data) if the account isn't steuereinfach, or you pay twice.
+- **Don't sell everything at once; sell what you spend.** Whatever stays invested isn't taxed yet and keeps
+  growing. Selling about 3–4% a year to live on defers most of the tax for decades. Cash also loses to inflation,
+  and its interest is taxed at 25%.
+- **Offset losses within the same calendar year** if you have any (no carry-forward).
+- **Unit-linked life insurance (fondsgebundene Lebensversicherung)** held 15+ years: payouts are free of KESt
+  (4% insurance tax on premiums instead). Fees often eat the advantage, so only consider very low-cost
+  contracts, and get a written cost comparison. Not available at Trade Republic.
+- **Gifting or inheritance** doesn't remove the tax. There's no gift or inheritance tax in Austria, but the
+  recipient takes over your cost basis and pays KESt when they sell.
+- **Moving abroad** triggers Austria's exit tax (*Wegzugsbesteuerung*) on unrealised gains. Get advice
+  from a Steuerberater first.
