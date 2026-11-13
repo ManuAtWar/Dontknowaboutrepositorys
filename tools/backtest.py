@@ -153,8 +153,8 @@ def report(port: pd.Series, bench: pd.Series, bench_name: str, rf: float, capita
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("mode", choices=["static", "momentum", "screen"])
-    ap.add_argument("--holdings", type=Path, default=ROOT / "portfolio" / "holdings.csv")
-    ap.add_argument("--universe", type=Path, default=ROOT / "portfolio" / "universe.txt")
+    ap.add_argument("--holdings", type=Path, default=ROOT / "challenge" / "holdings.csv")
+    ap.add_argument("--universe", type=Path, default=ROOT / "challenge" / "universe.txt")
     ap.add_argument("--benchmark", default="SPY")
     ap.add_argument("--start", default="2021-01-01")
     ap.add_argument("--end", default=None)

@@ -1,29 +1,20 @@
-# Investing Challenge Portfolio
+# Investing Portfolio
 
-A portfolio built to outperform the S&P 500, plus a tool to backtest and maintain it.
+## Long-term plan (main): Trade Republic, starting from 0 €, 15+ years
 
-- [`portfolio/STRATEGY.md`](portfolio/STRATEGY.md): thesis, allocation, trading rules, caveats
-- [`portfolio/holdings.csv`](portfolio/holdings.csv): target weights (edit to change the portfolio)
-- [`portfolio/universe.txt`](portfolio/universe.txt): candidate names for the momentum screen
-- [`tools/backtest.py`](tools/backtest.py): backtest and screener
-
-## Usage
+- [`plan/PLAN.md`](plan/PLAN.md): step-by-step plan, ETF savings plan, rules, projections
+- [`plan/savings_plan.csv`](plan/savings_plan.csv): ETFs, ISINs, weights
+- [`tools/projection.py`](tools/projection.py): Monte Carlo projection of a monthly savings plan
 
 ```bash
 pip install -r requirements.txt
-
-# Backtest the static portfolio against SPY, rebalanced quarterly
-python tools/backtest.py static --start 2021-01-01
-
-# Backtest the systematic strategy (top-10 by 12-1 momentum, monthly)
-python tools/backtest.py momentum --top 10 --start 2019-01-01
-
-# Today's momentum ranking: what to hold this month
-python tools/backtest.py screen
-
-# Run offline from your own price file (Date column + one column per ticker)
-python tools/backtest.py static --prices-csv prices.csv
+python tools/projection.py --monthly 200 --years 20 --raise 3
 ```
 
-Reports include total return, CAGR, volatility, Sharpe, max drawdown, beta, alpha, information ratio,
-end value of $100k vs. the benchmark, and the number of months the portfolio beat it.
+## Short-term challenge portfolio (US stocks/ETFs)
+
+- [`challenge/STRATEGY.md`](challenge/STRATEGY.md): concentrated portfolio for a short investing challenge
+- [`tools/backtest.py`](tools/backtest.py): backtest/screener (`static`, `momentum`, `screen` modes)
+
+US-listed ETFs such as SPY or SMH usually **can't be bought** by EU retail investors (no KID document), so
+use the UCITS plan above for real money.
