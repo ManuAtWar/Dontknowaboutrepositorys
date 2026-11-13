@@ -12,6 +12,8 @@ Einfaches Buchhaltungsprogramm für private Einnahmen und Ausgaben – eine einz
 ## Funktionen
 
 - Import von CSV-Exporten üblicher Banken (Sparkasse, Volksbank, ING, DKB, Commerzbank, comdirect, N26, Postbank …); Spalten, Trennzeichen, Zeichensatz und deutsches Zahlenformat werden automatisch erkannt
+- Kein Download möglich? Umsatzliste im Online-Banking markieren, kopieren und einfügen. Erkannt werden Tabellen, untereinander stehende Angaben und App-Listen mit „Heute“/„Gestern“ oder „10. November 2026“.
+- Einzelne Buchungen von Hand eintragen (z. B. Barausgaben)
 - Doppelte Buchungen werden beim erneuten Import übersprungen
 - Diagramme: Einnahmen/Ausgaben pro Monat, Ausgaben bzw. Einnahmen nach Kategorie, laufender Saldo
 - Kennzahlen: Einnahmen, Ausgaben, Überschuss, Sparquote

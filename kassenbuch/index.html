@@ -89,6 +89,12 @@ select, input[type="text"], input[type="search"], textarea {
 .notice strong { color: var(--ink); }
 details.paste { width: 100%; }
 details.paste summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+details.paste .hint { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); max-width: 75ch; }
+.manual { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; align-items: end; }
+.manual label { display: grid; gap: 4px; font-size: 12px; color: var(--ink-2); min-width: 0; }
+.manual label.wide { grid-column: span 3; }
+.manual input, .manual select { width: 100%; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+@media (max-width: 600px) { .manual { grid-template-columns: minmax(0, 1fr); } .manual label.wide { grid-column: auto; } }
 details.paste textarea { width: 100%; min-height: 120px; margin-top: 8px; font-family: var(--font-num); font-size: 12px; }
 
 /* KPI tiles */
@@ -202,10 +208,23 @@ td.cat-cell select { max-width: 210px; padding: 4px 8px; font-size: 13px; }
 
   <section class="notice" id="drop">
     <p id="notice-text"></p>
-    <details class="paste">
-      <summary>CSV-Text stattdessen einfügen</summary>
-      <textarea id="paste-text" placeholder="Buchungstag;Empfänger;Verwendungszweck;Betrag&#10;01.10.2026;REWE Markt;Einkauf;-42,17"></textarea>
-      <div class="form-row"><button class="btn small" id="btn-paste" type="button">Text importieren</button></div>
+    <details class="paste" id="paste-box">
+      <summary>Kein Download möglich? Umsätze aus dem Online-Banking kopieren und hier einfügen</summary>
+      <p class="hint">Öffne im Online-Banking (Browser oder App) die Umsatzliste, markiere alle Umsätze mit der Maus oder lange gedrückt, kopiere sie (Strg+C) und füge sie hier ein (Strg+V). Datum und Betrag reichen, Empfänger und Verwendungszweck werden übernommen, wenn sie mitkopiert wurden. CSV-Text funktioniert hier auch.</p>
+      <textarea id="paste-text" placeholder="02.11.2026&#10;REWE Markt GmbH&#10;Kartenzahlung girocard&#10;-42,17 €&#10;&#10;01.11.2026&#10;Nordlicht Software GmbH&#10;Gehalt Oktober&#10;+2.840,00 €"></textarea>
+      <div class="form-row"><button class="btn small" id="btn-paste" type="button">Eingefügte Umsätze importieren</button></div>
+    </details>
+    <details class="paste" id="manual-box">
+      <summary>Buchung von Hand eintragen</summary>
+      <form class="manual" id="manual-form">
+        <label>Datum<input type="date" id="m-date" required></label>
+        <label>Art<select id="m-dir"><option value="-1">Ausgabe</option><option value="1">Einnahme</option></select></label>
+        <label>Betrag in €<input type="text" id="m-amount" inputmode="decimal" placeholder="12,50" required></label>
+        <label class="wide">Empfänger / Auftraggeber<input type="text" id="m-payee" placeholder="z. B. Bäckerei Schulz" required></label>
+        <label class="wide">Verwendungszweck (optional)<input type="text" id="m-purpose" placeholder="z. B. Brötchen"></label>
+        <label>Kategorie<select id="m-cat"><option value="">automatisch</option></select></label>
+        <div class="form-row"><button class="btn small primary" type="submit">Buchung speichern</button></div>
+      </form>
     </details>
   </section>
 
@@ -663,6 +682,80 @@ function parsePdfLines(lines, src) {
   return res;
 }
 
+/* ---------- Kopierter Text aus dem Online-Banking ---------- */
+const MON = { jan: 1, feb: 2, mär: 3, mae: 3, mar: 3, mrz: 3, apr: 4, mai: 5, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, okt: 10, oct: 10, nov: 11, dez: 12, dec: 12 };
+function looseDate(line, defYear) {
+  const l = line.trim();
+  let m = l.match(/^(?:[A-Za-zäöü]{2,10},?\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})?(?=\s|$|[^\d])/);
+  if (m) {
+    const y = m[3] ? (m[3].length === 2 ? 2000 + +m[3] : +m[3]) : defYear;
+    return { date: iso(y, +m[2], +m[1]), len: m[0].length };
+  }
+  m = l.match(/^(?:[A-Za-zäöü]{2,10},?\s+)?(\d{1,2})\.?\s+(jan|feb|mär|mae|mar|mrz|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)[a-zä]*\.?(?:\s+(\d{4}))?/i);
+  if (m) return { date: iso(m[3] ? +m[3] : defYear, MON[m[2].toLowerCase()], +m[1]), len: m[0].length };
+  m = l.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return { date: iso(+m[1], +m[2], +m[3]), len: m[0].length };
+  m = l.match(/^(heute|gestern|vorgestern)\b/i);
+  if (m) {
+    const d = new Date(); d.setDate(d.getDate() - { heute: 0, gestern: 1, vorgestern: 2 }[m[1].toLowerCase()]);
+    return { date: iso(d.getFullYear(), d.getMonth() + 1, d.getDate()), len: m[0].length };
+  }
+  return null;
+}
+const AMT_ANY = /(^|[\s(])([+\-−–]?)\s?(?:€\s?|EUR\s)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})(?!\d)\s?([+\-−–](?!\d)|S\b|H\b)?(?:\s?(?:€|EUR))?/;
+function parsePastedText(text, src) {
+  const raw = text.replace(/\u00a0/g, " ").split(/\r?\n/).map(l => l.replace(/\s+/g, " ").trim());
+  const yearHit = text.match(/\b\d{1,2}\.\d{1,2}\.(20\d{2})\b|\b(20\d{2})\b/);
+  const defYear = yearHit ? +(yearHit[1] || yearHit[2]) : new Date().getFullYear();
+  const SKIP = /kontostand|saldo|übertrag|uebertrag|summe|verfügbar|verfuegbar|dispo|kreditrahmen|vorgemerkt(e)? umsätze$/i;
+  const NOISE = /^(umsätze|umsatzliste|filter|suche|exportieren|drucken|details|mehr anzeigen|alle umsätze|kategorie|buchungsdatum|wertstellung|empfänger|betrag|verwendungszweck|status|gebucht|vorgemerkt|iban|bic|de\d{2}[\d ]{10,})$/i;
+  const recs = [];
+  let lastDate = null, pending = [];
+  for (const line of raw) {
+    if (!line) continue;
+    let rest = line;
+    const d = looseDate(rest, defYear);
+    if (d && d.date) {
+      lastDate = d.date;
+      rest = rest.slice(d.len).trim();
+      // zweites Datum (Valuta) am Zeilenanfang überspringen
+      const d2 = looseDate(rest, defYear);
+      if (d2 && d2.date) rest = rest.slice(d2.len).trim();
+      pending = [];
+    }
+    if (!lastDate) continue;
+    if (SKIP.test(rest)) { pending = []; continue; }
+    const am = rest.match(AMT_ANY);
+    if (am) {
+      const before = rest.slice(0, am.index).trim();
+      const after = rest.slice(am.index + am[0].length).trim();
+      const txt = pending.concat(before ? [before] : []).filter(t => !NOISE.test(t));
+      const s1 = am[2], s2 = am[4] || "";
+      let sign = 0;
+      if (/[-−–]/.test(s1) || /[-−–]/.test(s2) || s2 === "S") sign = -1;
+      else if (s1 === "+" || s2 === "+" || s2 === "H") sign = 1;
+      recs.push({ date: lastDate, value: parseAmount(am[3]), sign, txt, after });
+      pending = [];
+    } else if (!NOISE.test(rest) && rest.length > 1) {
+      pending.push(rest);
+      if (pending.length > 5) pending.shift();
+    }
+  }
+  if (!recs.length) throw new Error("Im eingefügten Text wurden keine Umsätze mit Datum und Betrag gefunden. Achte darauf, dass Datum und Betrag mitkopiert werden.");
+  const anyNeg = recs.some(r => r.sign === -1);
+  let guessed = 0;
+  const records = recs.filter(r => r.value > 0).map(r => {
+    let sign = r.sign;
+    if (!sign && anyNeg) sign = 1;
+    if (!sign) { guessed++; sign = /gutschrift|gehalt|lohn|eingang|erstattung|rente|kindergeld/i.test(r.txt.join(" ")) ? 1 : -1; }
+    const [payee = "", ...more] = r.txt;
+    return { date: r.date, amount: sign * r.value, payee, purpose: more.concat(r.after ? [r.after] : []).join(" · ") };
+  });
+  const res = finalize(records, src, 0);
+  res.guessed = guessed;
+  return res;
+}
+
 function commitImport(results) {
   const fresh = results.flatMap(r => r.fresh);
   if (!fresh.length) {
@@ -998,6 +1091,10 @@ function renderCatSelects() {
   $("cat-filter").innerHTML = `<option value="">Alle Kategorien</option>` + catOptions(ui.catFilter);
   $("cat-filter").value = ui.catFilter;
   $("rule-cat").innerHTML = catOptions($("rule-cat").value || "lebensmittel");
+  const mc = $("m-cat").value;
+  $("m-cat").innerHTML = `<option value="">automatisch</option>` + catOptions(mc);
+  $("m-cat").value = mc;
+  if (!$("m-date").value) { const d = new Date(); $("m-date").value = iso(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
 }
 
 function renderRows(tx) {
@@ -1050,9 +1147,29 @@ const drop = $("drop");
 document.addEventListener("drop", e => { const f = [...(e.dataTransfer?.files || [])]; if (f.length) handleFiles(f); });
 $("btn-paste").addEventListener("click", () => {
   const text = $("paste-text").value;
-  if (!text.trim()) return toast("Bitte zuerst CSV-Text einfügen.");
-  try { commitImport([importText(text, "Eingefügt")]); $("paste-text").value = ""; }
-  catch (e) { toast(e.message); }
+  if (!text.trim()) return toast("Bitte zuerst die kopierten Umsätze einfügen.");
+  let res;
+  try { res = importText(text, "Eingefügt"); }
+  catch (e) {
+    try { res = parsePastedText(text, "Eingefügt"); }
+    catch (e2) { return toast(e2.message); }
+  }
+  commitImport([res]); $("paste-text").value = "";
+});
+$("manual-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const value = parseAmount($("m-amount").value.replace(/^[+-]/, ""));
+  if (isNaN(value) || value <= 0) return toast("Bitte einen gültigen Betrag eingeben, z. B. 12,50.");
+  const t = { id: Math.random().toString(36).slice(2, 10), date: $("m-date").value, amount: Math.round(+$("m-dir").value * value * 100) / 100,
+    payee: $("m-payee").value.trim(), purpose: $("m-purpose").value.trim(), src: "Von Hand" };
+  if (!t.date) return toast("Bitte ein Datum wählen.");
+  const cat = $("m-cat").value;
+  if (cat) Object.assign(t, { cat, how: "user", manual: true }); else Object.assign(t, categorize(t));
+  if (state.tx.some(x => x.sample)) state.tx = state.tx.filter(x => !x.sample);
+  state.tx.push(t); save();
+  $("m-amount").value = ""; $("m-payee").value = ""; $("m-purpose").value = "";
+  render();
+  toast(`Gespeichert: ${t.payee} ${fmtEur(t.amount)} → ${catById(t.cat).name}`);
 });
 
 $("period").addEventListener("change", e => { ui.period = e.target.value; ui.limit = 30; render(); });
@@ -1143,7 +1260,7 @@ else recategorizeAll();
 render();
 
 // Für Tests freigeben
-window.__kassenbuch = { parsePdfLines, pdfLines, importText, parseAmount, parseDate, categorize };
+window.__kassenbuch = { parsePastedText, parsePdfLines, pdfLines, importText, parseAmount, parseDate, categorize };
 })();
 </script>
 </body>
