@@ -336,7 +336,8 @@ const BASE_CATS = [
   { id: "abos", name: "Abos, Handy & Internet", type: "out" },
   { id: "shopping", name: "Shopping", type: "out" },
   { id: "freizeit", name: "Restaurants & Freizeit", type: "out" },
-  { id: "bargeld", name: "Bargeld", type: "out" },
+  { id: "bargeld", name: "Bargeld", type: "both" },
+  { id: "kredit", name: "Kredite & Raten", type: "both" },
   { id: "sparen", name: "Sparen & Anlegen", type: "both" },
   { id: "steuern", name: "Steuern & Gebühren", type: "both" },
   { id: "umbuchung", name: "Umbuchungen", type: "both" },
@@ -346,15 +347,16 @@ const DEFAULT_RULES = {
   gehalt: ["gehalt", "lohn", "bezüge", "bezuege", "besoldung", "rente", "kindergeld", "elterngeld", "arbeitslosengeld", "bafög", "bafoeg"],
   wohnen: ["miete", "hausverwaltung", "wohnungsbau", "wohnungsgenossenschaft", "vonovia", "hausgeld", "kaltmiete", "warmmiete"],
   energie: ["stadtwerke", "strom", "gasversorgung", "vattenfall", "e.on", "eon energie", "enbw", "rwe", "lichtblick", "rundfunk", "ard zdf", "wasserwerk", "fernwärme", "heizkosten", "nebenkosten"],
-  lebensmittel: ["rewe", "edeka", "aldi", "lidl", "netto", "penny", "kaufland", "norma", "real", "tegut", "globus", "denns", "alnatura", "bäckerei", "baeckerei", "metzgerei", "flink", "getir", "hellofresh"],
-  drogerie: ["dm-drogerie", "dm drogerie", "dm fil", "rossmann", "müller", "apotheke", "arzt", "zahnarzt", "praxis", "klinik", "docmorris", "shop apotheke"],
-  mobilitaet: ["aral", "shell", "esso", "total", "jet tankstelle", "tankstelle", "agip", "db vertrieb", "deutsche bahn", "bahn.de", "bvg", "mvg", "hvv", "kvb", "rmv", "vvs", "deutschlandticket", "uber", "bolt", "flixbus", "sixt", "share now", "miles mobility", "tier", "lime", "parkhaus", "parken", "adac", "kfz-steuer", "werkstatt"],
-  versicherung: ["versicherung", "allianz", "huk", "ergo", "axa", "debeka", "generali", "signal iduna", "r+v", "devk", "techniker krankenkasse", "krankenkasse", "aok", "barmer", "dak", "haftpflicht", "check24 versicherung"],
-  abos: ["netflix", "spotify", "disney", "amazon prime", "prime video", "apple.com", "itunes", "google play", "youtube", "dazn", "sky deutschland", "audible", "telekom", "vodafone", "o2", "telefonica", "1&1", "congstar", "freenet", "mobilcom", "chatgpt", "openai", "anthropic", "microsoft", "adobe", "icloud", "fitx", "mcfit", "urban sports", "fitnessstudio"],
-  shopping: ["amazon", "amzn", "zalando", "otto", "ebay", "ikea", "mediamarkt", "media markt", "saturn", "h&m", "zara", "primark", "decathlon", "tchibo", "galeria", "thalia", "douglas", "about you", "shein", "temu", "obi", "hornbach", "bauhaus", "toom", "action"],
-  freizeit: ["restaurant", "lieferando", "wolt", "uber eats", "mcdonalds", "mcdonald's", "burger king", "kfc", "subway", "starbucks", "cafe", "café", "pizzeria", "döner", "doener", "bar ", "kino", "cinemaxx", "eventim", "ticketmaster", "steam", "playstation", "nintendo", "booking.com", "airbnb", "hotel", "ryanair", "lufthansa", "eurowings"],
-  bargeld: ["geldautomat", "bargeld", "auszahlung", "bargeldauszahlung", "atm", "gaa"],
-  sparen: ["sparplan", "depot", "trade republic", "scalable", "comdirect depot", "flatex", "smartbroker", "etf", "tagesgeld", "sparkonto", "bausparkasse", "bausparvertrag", "wertpapier"],
+  lebensmittel: ["rewe", "edeka", "aldi", "lidl", "netto", "penny", "kaufland", "norma", "real", "tegut", "globus", "denns", "alnatura", "bäckerei", "baeckerei", "metzgerei", "flink", "getir", "hellofresh", "billa", "spar", "interspar", "eurospar", "hofer", "merkur", "mpreis", "unimarkt", "ströck", "stroeck", "anker brot", "der mann", "felber", "gurkerl"],
+  drogerie: ["dm-drogerie", "dm drogerie", "dm fil", "rossmann", "müller", "apotheke", "arzt", "zahnarzt", "praxis", "klinik", "docmorris", "shop apotheke", "dm-fil", "bipa"],
+  mobilitaet: ["aral", "shell", "esso", "total", "jet tankstelle", "tankstelle", "agip", "db vertrieb", "deutsche bahn", "bahn.de", "bvg", "mvg", "hvv", "kvb", "rmv", "vvs", "deutschlandticket", "uber", "bolt", "flixbus", "sixt", "share now", "miles mobility", "tier", "lime", "parkhaus", "parken", "adac", "kfz-steuer", "werkstatt", "öbb", "oebb", "wiener linien", "westbahn", "linz ag linien", "graz linien", "öamtc", "oeamtc", "arbö", "omv", "eni", "turmöl", "avanti", "jet", "bp"],
+  versicherung: ["versicherung", "allianz", "huk", "ergo", "axa", "debeka", "generali", "signal iduna", "r+v", "devk", "techniker krankenkasse", "krankenkasse", "aok", "barmer", "dak", "haftpflicht", "check24 versicherung", "gesundheitskasse", "ögk", "svs", "bva", "uniqa", "wiener städtische", "grawe", "donau versicherung", "zürich"],
+  abos: ["netflix", "spotify", "disney", "amazon prime", "prime video", "apple.com", "itunes", "google play", "youtube", "dazn", "sky deutschland", "audible", "telekom", "vodafone", "o2", "telefonica", "1&1", "congstar", "freenet", "mobilcom", "chatgpt", "openai", "anthropic", "microsoft", "adobe", "icloud", "fitx", "mcfit", "urban sports", "fitnessstudio", "amazon prim", "a1 telekom", "magenta telekom", "hutchison drei", "drei.at", "spusu", "hot telekom", "orf-beitrag", "gis"],
+  shopping: ["amazon", "amzn", "zalando", "otto", "ebay", "ikea", "mediamarkt", "media markt", "saturn", "h&m", "zara", "primark", "decathlon", "tchibo", "galeria", "thalia", "douglas", "about you", "shein", "temu", "obi", "hornbach", "bauhaus", "toom", "action", "pagro", "libro", "thalia", "xxxlutz", "mömax", "kika", "leiner", "hervis", "intersport"],
+  freizeit: ["restaurant", "lieferando", "wolt", "uber eats", "mcdonalds", "mcdonald's", "burger king", "kfc", "subway", "starbucks", "cafe", "café", "pizzeria", "döner", "doener", "bar ", "kino", "cinemaxx", "eventim", "ticketmaster", "steam", "playstation", "nintendo", "booking.com", "airbnb", "hotel", "ryanair", "lufthansa", "eurowings", "eurest", "foodora", "mjam", "heuriger", "trafik"],
+  bargeld: ["geldautomat", "bargeld", "bargeldauszahlung", "atm", "gaa", "bankomat", "sb beheb", "sb ein", "debitkartenbeheb", "behebung"],
+  kredit: ["kreditrate", "kredit rate", "darlehen", "tilgung", "ratenzahlung", "cashpresso", "santander consumer", "klarna", "ratepay", "easyfinance"],
+  sparen: ["sparplan", "depot", "trade republic", "scalable", "comdirect depot", "flatex", "smartbroker", "etf", "tagesgeld", "sparkonto", "bausparkasse", "bausparvertrag", "wertpapier", "monefit", "smartsaver", "edelmetall", "bitpanda", "flatex", "dadat", "bausparen"],
   steuern: ["finanzamt", "kontoführung", "kontofuehrung", "kontoführungsentgelt", "rechnungsabschluss", "entgelt", "gebühr", "gebuehr", "zinsen", "sollzinsen", "bundeskasse", "stadtkasse", "gez"],
   umbuchung: ["umbuchung", "übertrag", "uebertrag", "eigenüberweisung", "kreditkartenabrechnung", "kreditkarte abrechnung"],
 };
@@ -703,7 +705,67 @@ function looseDate(line, defYear) {
   return null;
 }
 const AMT_ANY = /(^|[\s(])([+\-−–]?)\s?(?:€\s?|EUR\s)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})(?!\d)\s?([+\-−–](?!\d)|S\b|H\b)?(?:\s?(?:€|EUR))?/;
+/* Beschriftete Blöcke wie „Buchungsdatum: … / -12,50 EUR / Buchungstext: …“ (z. B. österreichische Banken) */
+const LBL_DATE = /^(?:buchungsdatum|buchungstag|buchung)\s*:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})/i;
+const LBL_AMT = /^([+\-−–]?)\s?(\d{1,3}(?:\.\d{3})*,\d{2})\s*(?:EUR|€)?$/i;
+const LBL_DROP = /^(wertstellung|valuta|kontoauszugsnummer|auszugsnummer|creditor-id|gläubiger-id|glaeubiger-id|lastschriftdatum|iban|bic|spesen|kategorie|status)\s*:/i;
+const LBL_REF = /^(ref|auftraggeberreferenz|lastschriftreferenz|mandatsreferenz|zahlungsreferenz|verwendungszweck)\s*:\s*(.*)$/i;
+const CARD_INFO = /^[A-Z]{2} [\d.,]+ (POS|E-COMM|MoneySend)\b/;
+const TX_TYPE = /^((mobile )?pos( zahlung(sauftrag)?)?( eu)?|bezahlen im internet|sb beheb\.?\/?einzahlung|sb[- ]?beheb.*|debitkartenbeheb.*|moneysend auftrag|(sepa[- ])?lastschrift|überweisung|ueberweisung|gutschrift|dauerauftrag|kartenzahlung|echtzeitüberweisung)$/i;
+function cleanMerchant(s) {
+  const out = s.replace(/\s+[DK]\d\s.*$/, "").replace(/\s+\d{3,}\b.*$/, "").replace(/([A-Za-zÄÖÜäöü.])\d+$/, "$1").trim();
+  return out || s;
+}
+function parseLabeledBlocks(lines, src) {
+  const recs = [];
+  let cur = null;
+  for (const line of lines) {
+    if (!line || /^[,;.\s]+$/.test(line)) continue;
+    const d = line.match(LBL_DATE);
+    if (d) {
+      const y = d[3].length === 2 ? 2000 + +d[3] : +d[3];
+      cur = { date: iso(y, +d[2], +d[1]), value: null, sign: 0, lines: [], refs: [] };
+      recs.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    // Tageskontostand „16.11.2026 30,46 EUR“ beendet den Block
+    if (/^\d{1,2}\.\d{1,2}\.\d{2,4}\s+[+\-−–]?\s?[\d.]+,\d{2}\s*(EUR|€)?$/i.test(line)) { cur = null; continue; }
+    if (cur.value === null) {
+      const a = line.match(LBL_AMT);
+      if (a) { cur.value = parseAmount(a[2]); cur.sign = /[-−–]/.test(a[1]) ? -1 : a[1] === "+" ? 1 : 0; continue; }
+    }
+    if (/^buchungstext\s*:?\s*$/i.test(line)) continue;
+    const bt = line.match(/^buchungstext\s*:\s*(.+)$/i);
+    if (bt) { cur.lines.push(bt[1]); continue; }
+    if (LBL_DROP.test(line)) continue;
+    const ref = line.match(LBL_REF);
+    if (ref) { if (ref[2] && !/^not ?provided$/i.test(ref[2])) cur.refs.push(ref[2]); continue; }
+    if (cur.lines[cur.lines.length - 1] !== line && cur.lines.length < 8) cur.lines.push(line);
+  }
+  const ok = recs.filter(r => r.date && r.value);
+  const anyNeg = ok.some(r => r.sign === -1);
+  const records = ok.map(r => {
+    const seen = new Set();
+    let ls = r.lines.filter(l => !seen.has(l.toLowerCase()) && seen.add(l.toLowerCase()));
+    const type = ls.length && TX_TYPE.test(ls[0]) ? ls.shift() : "";
+    const card = ls.filter(l => CARD_INFO.test(l));
+    ls = ls.filter(l => !CARD_INFO.test(l));
+    const first = ls.shift() || type || "";
+    const payee = type ? cleanMerchant(first) : first;
+    const purpose = [type, payee !== first ? first : "", ...ls, ...card, ...r.refs].filter(Boolean).join(" · ");
+    const sign = r.sign || (anyNeg ? 1 : -1);
+    return { date: r.date, amount: sign * r.value, payee, purpose };
+  });
+  if (!records.length) throw new Error("Keine Buchungen mit „Buchungsdatum“ und Betrag gefunden.");
+  const res = finalize(records, src, 0);
+  res.guessed = anyNeg ? 0 : records.length;
+  return res;
+}
+
 function parsePastedText(text, src) {
+  const lines0 = text.replace(/\u00a0/g, " ").split(/\r?\n/).map(l => l.replace(/\s+/g, " ").trim());
+  if (lines0.filter(l => LBL_DATE.test(l)).length >= 1) return parseLabeledBlocks(lines0, src);
   const raw = text.replace(/\u00a0/g, " ").split(/\r?\n/).map(l => l.replace(/\s+/g, " ").trim());
   const yearHit = text.match(/\b\d{1,2}\.\d{1,2}\.(20\d{2})\b|\b(20\d{2})\b/);
   const defYear = yearHit ? +(yearHit[1] || yearHit[2]) : new Date().getFullYear();
