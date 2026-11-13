@@ -7,19 +7,19 @@ Alle Marketing-Agenten lesen diese Datei zuerst. Je genauer sie ausgefüllt ist,
 - **Thema:** Gaming
 - **Sprache der Videos:** Deutsch
 - **Kanal-Link:** TODO
-- **Abonnenten (ungefähr):** TODO
+- **Abonnenten (ungefähr):** 1.000
 - **Durchschnittliche Aufrufe pro Video:** TODO
 - **Uploads bisher pro Woche:** TODO
 
 ## Inhalte
 - **Hauptspiele:** GTA 6 (Grand Theft Auto VI)
-- **Formate:** TODO (Let's Play, Guides, Highlights, Challenges, Streams, Shorts …)
+- **Formate:** Let's Plays
 - **Erfolgreichste Videos bisher:** TODO (Titel + warum vermutlich erfolgreich)
 - **Was der Kanal nicht machen will:** TODO
 
 ## Persönlichkeit & Stil
 - **Wie spricht ManuAtWar?** Locker und sarkastisch
-- **Facecam:** TODO (ja/nein)
+- **Facecam:** ja
 - **Wiedererkennbare Elemente:** TODO (Farben, Schrift, Logo, Sprüche, Intro)
 
 ## Zielgruppe
@@ -27,7 +27,7 @@ Alle Marketing-Agenten lesen diese Datei zuerst. Je genauer sie ausgefüllt ist,
 - **Was suchen die Zuschauer?** TODO (Unterhaltung, Tipps zum Besserwerden, Gesellschaft beim Zocken …)
 
 ## Ziele
-- **In 3 Monaten:** TODO (z. B. 1.000 Abos, Monetarisierung, 2 Videos pro Woche)
+- **In 3 Monaten:** 10.000 Abonnenten
 - **Langfristig:** TODO
 
 ## Links für Beschreibungen
