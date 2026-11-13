@@ -12,13 +12,13 @@ Alle Marketing-Agenten lesen diese Datei zuerst. Je genauer sie ausgefüllt ist,
 - **Uploads bisher pro Woche:** TODO
 
 ## Inhalte
-- **Hauptspiele:** TODO (z. B. Shooter, Strategie, Survival – welche Titel genau?)
+- **Hauptspiele:** GTA 6 (Grand Theft Auto VI)
 - **Formate:** TODO (Let's Play, Guides, Highlights, Challenges, Streams, Shorts …)
 - **Erfolgreichste Videos bisher:** TODO (Titel + warum vermutlich erfolgreich)
 - **Was der Kanal nicht machen will:** TODO
 
 ## Persönlichkeit & Stil
-- **Wie spricht ManuAtWar?** TODO (locker, sarkastisch, ehrgeizig, chaotisch …)
+- **Wie spricht ManuAtWar?** Locker und sarkastisch
 - **Facecam:** TODO (ja/nein)
 - **Wiedererkennbare Elemente:** TODO (Farben, Schrift, Logo, Sprüche, Intro)
 
