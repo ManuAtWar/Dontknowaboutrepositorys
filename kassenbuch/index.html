@@ -24,6 +24,7 @@
   --out: #e0632f;
   --good: #0a7a2f;
   --bad: #c0362f;
+  --warn: #a86a00;
   --focus: #2a78d6;
   --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -34,14 +35,14 @@
   :root:not([data-theme="light"]) {
     --bg: #0f1318; --surface: #171c22; --surface-2: #1f262e; --ink: #edf1f5; --ink-2: #b4bec9;
     --muted: #818b97; --line: #2a323b; --accent: #a9c4ec; --accent-ink: #0f1318;
-    --in: #3987e5; --out: #d95926; --good: #3fbf62; --bad: #ef6b63; --focus: #6da7ec;
+    --in: #3987e5; --out: #d95926; --good: #3fbf62; --bad: #ef6b63; --warn: #f0b429; --focus: #6da7ec;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f1318; --surface: #171c22; --surface-2: #1f262e; --ink: #edf1f5; --ink-2: #b4bec9;
   --muted: #818b97; --line: #2a323b; --accent: #a9c4ec; --accent-ink: #0f1318;
-  --in: #3987e5; --out: #d95926; --good: #3fbf62; --bad: #ef6b63; --focus: #6da7ec;
+  --in: #3987e5; --out: #d95926; --good: #3fbf62; --bad: #ef6b63; --warn: #f0b429; --focus: #6da7ec;
   color-scheme: dark;
 }
 
@@ -174,6 +175,24 @@ td.cat-cell select { max-width: 210px; padding: 4px 8px; font-size: 13px; }
   background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13px;
   box-shadow: 0 8px 30px rgba(0,0,0,.25); z-index: 20; max-width: calc(100% - 32px);
 }
+/* Budgets & Abos */
+.budgets, .recurring { display: grid; gap: 6px; }
+.brow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.brow:last-child { border-bottom: 0; }
+.brow .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.brow .right { display: flex; align-items: center; gap: 8px; }
+.brow input { width: 92px; text-align: right; padding: 4px 8px; font-family: var(--font-num); font-size: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.brow .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.brow .track { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; position: relative; }
+.brow .track i { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--c); max-width: 100%; }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.good { color: var(--good); } .pill.warn { color: var(--warn); } .pill.bad { color: var(--bad); }
+.rrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.rrow:last-child { border-bottom: 0; }
+.rrow .name { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rrow .amt { font-family: var(--font-num); font-variant-numeric: tabular-nums; text-align: right; }
+.rrow .meta { font-size: 12px; color: var(--muted); }
+.sum-line { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; background: var(--surface-2); border-radius: 8px; font-weight: 600; flex-wrap: wrap; }
 .toast-btn { margin-left: 10px; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 6px; padding: 2px 10px; cursor: pointer; font-weight: 600; }
 .empty { padding: 28px; text-align: center; color: var(--muted); }
 
@@ -248,6 +267,24 @@ td.cat-cell select { max-width: 210px; padding: 4px 8px; font-size: 13px; }
         </div>
       </div>
       <div class="cats" id="cats"></div>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Budgets</h2>
+        <span class="muted" id="budget-month" style="font-size:12px"></span>
+      </div>
+      <div class="budgets" id="budgets"></div>
+      <div class="muted" style="font-size:12px">Monatslimit pro Kategorie eintragen. Leer lassen heißt kein Budget.</div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Abos &amp; Fixkosten</h2>
+        <span class="muted" style="font-size:12px">automatisch erkannt: monatlich, ähnlicher Betrag</span>
+      </div>
+      <div class="recurring" id="recurring"></div>
     </section>
   </div>
 
@@ -364,6 +401,7 @@ const DEFAULT_RULES = {
 /* ---------- Zustand ---------- */
 const STORE_KEY = "kassenbuch.v1";
 let state = load() || { tx: [], rules: [], cats: [], seeded: false };
+if (!state.budgets) state.budgets = {};
 const ui = { period: "all", dir: "out", catFilter: "", search: "", onlyUnsorted: false, limit: 30 };
 
 function load() {
@@ -899,6 +937,7 @@ function seedSample() {
   });
   for (const t of tx) Object.assign(t, categorize(t));
   state.tx = tx; state.seeded = true;
+  if (!Object.keys(state.budgets || {}).length) state.budgets = { lebensmittel: 280, freizeit: 50, shopping: 80, mobilitaet: 150 };
 }
 
 /* ---------- Format ---------- */
@@ -953,6 +992,112 @@ function render() {
   renderCatSelects();
   renderRows(tx);
   renderRules();
+  renderBudgets();
+  renderRecurring();
+}
+
+/* ---------- Budgets ---------- */
+function budgetMonth() {
+  if (ui.period.length === 7) return ui.period;
+  const months = state.tx.filter(t => ui.period === "all" || t.date.startsWith(ui.period)).map(t => t.date.slice(0, 7)).sort();
+  return months.length ? months[months.length - 1] : null;
+}
+function renderBudgets() {
+  const m = budgetMonth();
+  const box = $("budgets");
+  if (!m) { box.innerHTML = `<div class="empty">Noch keine Buchungen.</div>`; $("budget-month").textContent = ""; return; }
+  $("budget-month").textContent = monthLabel(m, true);
+  const spent = new Map();
+  for (const t of state.tx) if (t.amount < 0 && t.date.startsWith(m)) spent.set(t.cat, (spent.get(t.cat) || 0) - t.amount);
+  const ids = allCats().filter(c => c.type !== "in" && c.id !== "umbuchung" && (spent.has(c.id) || state.budgets[c.id])).map(c => c.id);
+  ids.sort((a, b) => (state.budgets[b] ? 1 : 0) - (state.budgets[a] ? 1 : 0) || (spent.get(b) || 0) - (spent.get(a) || 0));
+  if (!ids.length) { box.innerHTML = `<div class="empty">Keine Ausgaben in ${monthLabel(m, true)}.</div>`; return; }
+  let over = 0;
+  box.innerHTML = ids.map(id => {
+    const b = +state.budgets[id] || 0, v = spent.get(id) || 0;
+    let pill = "", color = "var(--muted)", meta = `${fmtEur(v)} ausgegeben`;
+    if (b) {
+      const r = v / b;
+      if (r >= 1) { pill = `<span class="pill bad">✕ überschritten</span>`; color = "var(--bad)"; over++; }
+      else if (r >= 0.8) { pill = `<span class="pill warn">! knapp</span>`; color = "var(--warn)"; }
+      else { pill = `<span class="pill good">✓ im Rahmen</span>`; color = "var(--good)"; }
+      meta = `${fmtEur(v)} von ${fmtEur(b)}<span>${r >= 1 ? fmtEur(v - b) + " drüber" : "noch " + fmtEur(b - v)}</span>`;
+    }
+    return `<div class="brow">
+      <span class="name">${esc(catById(id).name)}</span>
+      <span class="right">${pill}<input type="text" inputmode="decimal" id="budget-${id}" data-cat="${id}" value="${b ? String(b).replace(".", ",") : ""}" placeholder="Budget €" aria-label="Monatsbudget ${esc(catById(id).name)}"></span>
+      ${b ? `<span class="track"><i style="width:${Math.min(100, v / b * 100)}%; --c:${color}"></i></span>` : ""}
+      <span class="meta">${meta}</span>
+    </div>`;
+  }).join("");
+}
+$("budgets").addEventListener("change", e => {
+  const inp = e.target.closest("input[data-cat]"); if (!inp) return;
+  const v = parseAmount(inp.value.replace(/[^\d.,]/g, ""));
+  if (!inp.value.trim() || isNaN(v) || v <= 0) delete state.budgets[inp.dataset.cat];
+  else state.budgets[inp.dataset.cat] = Math.round(v * 100) / 100;
+  save(); renderBudgets();
+  toast(state.budgets[inp.dataset.cat] ? `Budget ${catById(inp.dataset.cat).name}: ${fmtEur(state.budgets[inp.dataset.cat])} pro Monat` : `Budget ${catById(inp.dataset.cat).name} entfernt.`);
+});
+
+/* ---------- Abos & Fixkosten ---------- */
+function findRecurring() {
+  const groups = new Map();
+  for (const t of state.tx) {
+    if (t.amount >= 0 || t.cat === "bargeld" || t.cat === "umbuchung") continue;
+    const k = payeeKey(t) || (t.payee || "").toLowerCase();
+    if (!k) continue;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(t);
+  }
+  const out = [];
+  const median = a => { const b = a.slice().sort((x, y) => x - y); const n = b.length; return n % 2 ? b[(n - 1) / 2] : (b[n / 2 - 1] + b[n / 2]) / 2; };
+  for (const [k, list] of groups) {
+    // nach Betrag clustern (±15 %), damit z. B. zwei verschiedene Kreditraten getrennt bleiben
+    const clusters = [];
+    for (const t of list.sort((a, b) => a.date.localeCompare(b.date))) {
+      const a = -t.amount;
+      const c = clusters.find(c => Math.abs(a - c.ref) <= Math.max(0.5, c.ref * 0.05));
+      if (c) c.items.push(t); else clusters.push({ ref: a, items: [t] });
+    }
+    for (const c of clusters) {
+      const items = c.items;
+      const months = new Set(items.map(t => t.date.slice(0, 7)));
+      if (items.length < 2 || months.size < 2 || months.size < items.length * 0.75) continue;
+      // Bei nur zwei Zahlungen muss der Betrag exakt gleich sein, sonst ist es eher Zufall
+      if (items.length === 2 && Math.abs(items[0].amount - items[1].amount) > 0.01) continue;
+      const gaps = [];
+      for (let i = 1; i < items.length; i++) gaps.push((Date.parse(items[i].date) - Date.parse(items[i - 1].date)) / 864e5);
+      const gap = median(gaps);
+      if (gap < 24 || gap > 38) continue;
+      // Abbuchungstag muss ungefähr gleich bleiben (Monatswechsel berücksichtigt)
+      const days = items.map(t => +t.date.slice(8, 10));
+      const d0 = median(days);
+      const spread = Math.max(...days.map(d => { const x = Math.abs(d - d0); return Math.min(x, 31 - x); }));
+      if (spread > 6) continue;
+      const amt = median(items.map(t => -t.amount));
+      const last = items[items.length - 1];
+      const next = new Date(Date.parse(last.date) + Math.round(gap) * 864e5);
+      const nextIso = iso(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate());
+      const stale = (Date.now() - Date.parse(last.date)) / 864e5 > gap * 2.2 && !state.tx.every(t => t.sample);
+      out.push({ name: last.payee || k, cat: last.cat, amt, count: items.length, last: last.date, next: nextIso, stale });
+    }
+  }
+  return out.sort((a, b) => b.amt - a.amt);
+}
+function renderRecurring() {
+  const list = findRecurring();
+  const box = $("recurring");
+  if (!list.length) { box.innerHTML = `<div class="empty">Noch keine regelmäßigen Zahlungen erkannt. Dafür braucht es Umsätze aus mindestens zwei Monaten.</div>`; return; }
+  const active = list.filter(r => !r.stale);
+  const sum = active.reduce((s, r) => s + r.amt, 0);
+  box.innerHTML = `<div class="sum-line"><span>${active.length} laufende Zahlungen</span><span class="num">${fmtEur(sum)} / Monat · ${fmtEur(sum * 12)} / Jahr</span></div>` +
+    list.map(r => `<div class="rrow">
+      <span class="name">${esc(r.name)}${r.stale ? '<span class="badge">beendet?</span>' : ""}</span>
+      <span class="amt">${fmtEur(r.amt)}</span>
+      <span class="meta">${esc(catById(r.cat).name)} · ${r.count}× gezahlt</span>
+      <span class="meta" style="text-align:right">${r.stale ? "zuletzt " + fmtDate(r.last) : "nächste ca. " + fmtDate(r.next)}</span>
+    </div>`).join("");
 }
 
 function renderKpis(tx) {
@@ -1309,7 +1454,7 @@ $("btn-download").addEventListener("click", () => {
 $("btn-clear").addEventListener("click", () => { $("clear-confirm").hidden = false; $("btn-clear").hidden = true; });
 $("btn-clear-no").addEventListener("click", () => { $("clear-confirm").hidden = true; $("btn-clear").hidden = false; });
 $("btn-clear-yes").addEventListener("click", () => {
-  state = { tx: [], rules: [], cats: [], seeded: true }; save();
+  state = { tx: [], rules: [], cats: [], budgets: {}, seeded: true }; save();
   $("clear-confirm").hidden = true; $("btn-clear").hidden = false;
   ui.period = "all"; ui.catFilter = ""; render(); toast("Alle Daten gelöscht.");
 });
@@ -1322,7 +1467,7 @@ else recategorizeAll();
 render();
 
 // Für Tests freigeben
-window.__kassenbuch = { parsePastedText, parsePdfLines, pdfLines, importText, parseAmount, parseDate, categorize };
+window.__kassenbuch = { findRecurring, parsePastedText, parsePdfLines, pdfLines, importText, parseAmount, parseDate, categorize };
 })();
 </script>
 </body>

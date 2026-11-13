@@ -16,6 +16,8 @@ Einfaches Buchhaltungsprogramm für private Einnahmen und Ausgaben – eine einz
 - Einzelne Buchungen von Hand eintragen (z. B. Barausgaben)
 - Doppelte Buchungen werden beim erneuten Import übersprungen
 - Diagramme: Einnahmen/Ausgaben pro Monat, Ausgaben bzw. Einnahmen nach Kategorie, laufender Saldo
+- Budgets: Monatslimit pro Kategorie mit Ampel (im Rahmen / knapp / überschritten)
+- Abos & Fixkosten: regelmäßige monatliche Zahlungen werden automatisch erkannt, mit Summe pro Monat und Jahr und dem nächsten erwarteten Termin
 - Kennzahlen: Einnahmen, Ausgaben, Überschuss, Sparquote
 - Filter nach Zeitraum (Jahr/Monat), Kategorie und Suchbegriff
 - Eigene Regeln (Stichwort → Kategorie) und eigene Kategorien
