@@ -8,12 +8,12 @@
   :root {
     --bg: #0f1420; --panel: #171e2e; --panel2: #1e2739; --line: #2a3550;
     --text: #e6ebf5; --muted: #8a96b0; --up: #22c55e; --down: #ef4444;
-    --accent: #f5b301; --blue: #3b82f6;
+    --accent: #f5b301; --blue: #3b82f6; color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  header { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex;
+  header { padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); display: flex;
     flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
   h1 { margin: 0; font-size: 20px; }
   h1 span { color: var(--accent); }
@@ -25,17 +25,29 @@
   button.buy { background: var(--up); border-color: var(--up); color: #04160a; font-weight: 600; }
   button.sell { background: var(--down); border-color: var(--down); color: #fff; font-weight: 600; }
   button:disabled { opacity: .4; cursor: not-allowed; }
-  main { display: grid; grid-template-columns: 280px 1fr 320px; gap: 12px; padding: 12px; max-width: 1400px; margin: 0 auto; }
+  main { display: grid; grid-template-columns: 280px 1fr 320px; gap: 12px; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1400px; margin: 0 auto; }
   @media (max-width: 1050px) { main { grid-template-columns: 1fr 1fr; } #center { grid-column: 1 / -1; order: -1; } }
-  @media (max-width: 680px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 680px) {
+    main { grid-template-columns: 1fr; }
+    #left { order: -2; padding: 8px; }
+    #left h2 { display: none; }
+    #assets { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    #assets .asset { flex: 0 0 132px; scroll-snap-align: start; background: var(--panel2); grid-template-columns: 1fr; }
+    #assets .asset.sel { border-color: var(--blue); }
+    #assets .asset .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #assets .tag { display: none; }
+    #assets .price, #assets .chg { text-align: left; }
+    canvas { height: 220px !important; }
+    .stat .value { font-size: 17px; }
+  }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
   .panel h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px 12px 0; max-width: 1400px; margin: 0 auto; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); max-width: 1400px; margin: 0 auto; }
   @media (max-width: 680px) { .stats { grid-template-columns: repeat(2, 1fr); } }
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
   .stat .label { color: var(--muted); font-size: 12px; }
   .stat .value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .goal { max-width: 1400px; margin: 10px auto 0; padding: 0 12px; }
+  .goal { max-width: 1400px; margin: 10px auto 0; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
   .bar { height: 14px; background: var(--panel2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); position: relative; }
   .bar > div { height: 100%; background: linear-gradient(90deg, var(--blue), var(--accent)); width: 0; transition: width .3s; }
   .goal .txt { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
@@ -71,7 +83,7 @@
   .modal h2 { margin: 0 0 8px; font-size: 26px; }
   .modal p { color: var(--muted); }
   .modal .row { justify-content: center; margin-top: 16px; }
-  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line);
+  .toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line);
     padding: 10px 16px; border-radius: 10px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; max-width: calc(100% - 32px); }
   .toast.show { opacity: 1; }
   .disclaimer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 20px; }
@@ -318,7 +330,7 @@
       const as = asset(id), val = h.qty * as.price, pl = (val / h.invested - 1) * 100;
       return `<tr><td>${id}</td><td>${fmtQty(h.qty)}</td><td>${fmtEUR(val)}</td><td class="${pl >= 0 ? 'up' : 'down'}">${fmtPct(pl)}</td></tr>`;
     });
-    $('portfolio').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="4" class="hint" style="text-align:left">Noch leer. Wähle links einen Wert und kaufe.</td></tr>';
+    $('portfolio').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="4" class="hint" style="text-align:left">Noch leer. Wähle im Markt einen Wert und kaufe.</td></tr>';
 
     $('news').innerHTML = S.news.map(n => `<li class="${n.cls}"><div class="d">Tag ${n.day}</div>${n.text}</li>`).join('');
   }
@@ -365,10 +377,11 @@
   function play() { if (S.over) return; clearInterval(timer); timer = setInterval(tick, 1000 / speed); $('playBtn').textContent = '⏸ Pause'; }
   function pause() { clearInterval(timer); timer = null; $('playBtn').textContent = '▶ Start'; }
 
-  function showModal(title, text, canContinue) {
+  function showModal(title, text, canContinue, continueLabel = 'Weiterspielen') {
     $('mTitle').textContent = title; $('mText').textContent = text;
     $('mBest').textContent = 'Dein Rekord: ' + fmtEUR(getBest());
     $('mContinue').style.display = canContinue ? '' : 'none';
+    $('mContinue').textContent = continueLabel;
     $('overlay').classList.add('show');
   }
   function hideModal() { $('overlay').classList.remove('show'); }
@@ -385,7 +398,7 @@
     document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('active', x === b));
     if (timer) play();
   });
-  $('resetBtn').onclick = () => { if (confirm('Neues Spiel starten? Der aktuelle Fortschritt geht verloren.')) newGame(); };
+  $('resetBtn').onclick = () => { pause(); showModal('Neues Spiel?', 'Der aktuelle Fortschritt geht verloren.', true, 'Abbrechen'); };
   $('assets').onclick = e => { const el = e.target.closest('.asset'); if (el) { selected = el.dataset.id; $('qty').value = ''; render(); } };
   $('qty').oninput = updateCost;
   document.querySelectorAll('[data-pct]').forEach(b => b.onclick = () => {
