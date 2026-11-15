@@ -2,419 +2,966 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Börsen-Simulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
+  /* Layout: Handelsterminal. Kopfzeile mit Vermögen und Zielleiter, darunter drei Spalten Markt | Detail | Konto, unten Meilensteine. */
   :root {
-    --bg: #0f1420; --panel: #171e2e; --panel2: #1e2739; --line: #2a3550;
-    --text: #e6ebf5; --muted: #8a96b0; --up: #22c55e; --down: #ef4444;
-    --accent: #f5b301; --blue: #3b82f6; color-scheme: dark;
+    --bg: #0b1519; --panel: #11222a; --panel-2: #172d36; --line: #22404b; --line-soft: #1a3340;
+    --ink: #e8f0ee; --muted: #8aa4a9; --faint: #5d7a81;
+    --brass: #e2b04a; --brass-ink: #241a05; --up: #3ccf8c; --down: #f2646f; --sel: #6cb6ff;
+    --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --f-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  header { padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); display: flex;
-    flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
-  h1 { margin: 0; font-size: 20px; }
-  h1 span { color: var(--accent); }
-  .controls { display: flex; gap: 6px; flex-wrap: wrap; }
-  button { background: var(--panel2); color: var(--text); border: 1px solid var(--line);
-    border-radius: 8px; padding: 8px 12px; font: inherit; cursor: pointer; }
-  button:hover { border-color: var(--muted); }
-  button.active { background: var(--blue); border-color: var(--blue); }
-  button.buy { background: var(--up); border-color: var(--up); color: #04160a; font-weight: 600; }
-  button.sell { background: var(--down); border-color: var(--down); color: #fff; font-weight: 600; }
+  [hidden] { display: none !important; }
+  html, body { background: var(--bg); }
+  body { margin: 0; color: var(--ink); font: 14px/1.45 var(--f-body); -webkit-font-smoothing: antialiased;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 24px; }
+  .wrap { max-width: 1440px; margin: 0 auto; }
+  .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+  .up { color: var(--up); } .down { color: var(--down); } .muted { color: var(--muted); }
+  button { font: inherit; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: border-color .15s, background .15s; }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
   button:disabled { opacity: .4; cursor: not-allowed; }
-  main { display: grid; grid-template-columns: 280px 1fr 320px; gap: 12px; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1400px; margin: 0 auto; }
-  @media (max-width: 1050px) { main { grid-template-columns: 1fr 1fr; } #center { grid-column: 1 / -1; order: -1; } }
-  @media (max-width: 680px) {
-    main { grid-template-columns: 1fr; }
-    #left { order: -2; padding: 8px; }
-    #left h2 { display: none; }
-    #assets { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-    #assets .asset { flex: 0 0 132px; scroll-snap-align: start; background: var(--panel2); grid-template-columns: 1fr; }
-    #assets .asset.sel { border-color: var(--blue); }
-    #assets .asset .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #assets .tag { display: none; }
-    #assets .price, #assets .chg { text-align: left; }
-    canvas { height: 220px !important; }
-    .stat .value { font-size: 17px; }
-  }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
-  .panel h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); max-width: 1400px; margin: 0 auto; }
-  @media (max-width: 680px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
-  .stat .label { color: var(--muted); font-size: 12px; }
-  .stat .value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .goal { max-width: 1400px; margin: 10px auto 0; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
-  .bar { height: 14px; background: var(--panel2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); position: relative; }
-  .bar > div { height: 100%; background: linear-gradient(90deg, var(--blue), var(--accent)); width: 0; transition: width .3s; }
-  .goal .txt { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .asset { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
-  .asset:hover { background: var(--panel2); }
-  .asset.sel { background: var(--panel2); border-color: var(--blue); }
-  .asset .name { font-weight: 600; }
-  .asset .sub { color: var(--muted); font-size: 12px; }
-  .asset .price { text-align: right; font-variant-numeric: tabular-nums; }
-  .chg { text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; }
-  .up { color: var(--up); } .down { color: var(--down); }
-  .tag { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: var(--line); color: var(--muted); margin-left: 4px; vertical-align: middle; }
-  canvas { width: 100%; height: 300px; display: block; }
-  .chartHead { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-  .chartHead .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .trade { display: grid; gap: 8px; margin-top: 12px; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .row > * { flex: 1; }
-  input[type=number] { width: 100%; background: var(--panel2); color: var(--text); border: 1px solid var(--line);
-    border-radius: 8px; padding: 9px 10px; font: inherit; }
-  .quick button { flex: 1; padding: 6px; font-size: 12px; }
-  .hint { color: var(--muted); font-size: 12px; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--line); font-size: 13px; }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--muted); font-weight: 500; font-size: 12px; }
-  #news { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
-  #news li { padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
-  #news li .d { color: var(--muted); font-size: 11px; }
-  .overlay { position: fixed; inset: 0; background: rgba(5,8,15,.8); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
-  .overlay.show { display: flex; }
-  .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 24px; max-width: 460px; width: 100%; text-align: center; }
-  .modal h2 { margin: 0 0 8px; font-size: 26px; }
-  .modal p { color: var(--muted); }
-  .modal .row { justify-content: center; margin-top: 16px; }
-  .toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line);
-    padding: 10px 16px; border-radius: 10px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; max-width: calc(100% - 32px); }
-  .toast.show { opacity: 1; }
-  .disclaimer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 20px; }
+  button.primary { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); font-weight: 600; }
+  button.buy { background: var(--up); border-color: var(--up); color: #04170d; font-weight: 600; }
+  button.sell { background: var(--down); border-color: var(--down); color: #fff; font-weight: 600; }
+  button.ghost { background: transparent; }
+  input[type=number] { width: 100%; min-width: 0; font: 15px var(--f-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+  /* Kopfzeile */
+  .top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding-block: 16px 12px; border-bottom: 1px solid var(--line-soft); }
+  .brand { font: 700 22px/1 var(--f-display); letter-spacing: .14em; }
+  .brand small { display: block; font: 500 10px var(--f-body); letter-spacing: .2em; color: var(--brass); margin-top: 4px; }
+  .clock { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .chip.bull { color: var(--up); border-color: color-mix(in srgb, var(--up) 45%, transparent); }
+  .chip.bear, .chip.crash { color: var(--down); border-color: color-mix(in srgb, var(--down) 45%, transparent); }
+  .chip.crash { background: color-mix(in srgb, var(--down) 18%, transparent); }
+  .chip.bubble { color: var(--brass); border-color: color-mix(in srgb, var(--brass) 45%, transparent); }
+  .ctl { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 11px; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button.on { background: var(--panel-2); color: var(--brass); }
+  #play { min-width: 92px; }
+  #play.running { background: var(--panel-2); color: var(--brass); border-color: var(--brass); }
+
+  /* Vermögen + Zielleiter */
+  .hero { display: grid; grid-template-columns: auto auto 1fr; gap: 20px 32px; align-items: end; padding-block: 18px; }
+  .nw .big { font: 600 clamp(28px, 4.2vw, 44px)/1.05 var(--f-mono); letter-spacing: -.02em; }
+  .nw .sub { font-size: 13px; margin-top: 4px; }
+  .rank .name { font: 700 22px/1.1 var(--f-display); color: var(--brass); }
+  .rank .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .ladder { min-width: 0; padding-bottom: 4px; }
+  .track { position: relative; height: 8px; border-radius: 99px; background: var(--panel-2); margin: 26px 30px 22px; }
+  .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: linear-gradient(90deg, #3a7d8c, var(--brass)); width: 0; transition: width .25s; }
+  .track .node { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line); }
+  .track .node.hit { border-color: var(--brass); background: var(--brass); }
+  .track .node span { position: absolute; left: 50%; transform: translateX(-50%); font: 11px var(--f-mono); color: var(--muted); white-space: nowrap; }
+  .track .node .a { bottom: 16px; } .track .node .b { top: 16px; font-family: var(--f-body); font-size: 10px; color: var(--faint); }
+  .track .node.hit span { color: var(--brass); }
+  .track .me { position: absolute; top: 50%; width: 4px; height: 20px; margin: -10px 0 0 -2px; background: var(--ink); border-radius: 2px; transition: left .25s; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr 1fr; } .ladder { grid-column: 1 / -1; } }
+  @media (max-width: 560px) { .hero { grid-template-columns: 1fr; gap: 14px; } .track { margin-inline: 18px; } .track .node .b { display: none; } .track .node span.a { font-size: 9px; } .track .node[data-i="1"] .a, .track .node[data-i="2"] .a { display: none; } }
+
+  /* Hauptraster */
+  .grid { display: grid; grid-template-columns: 330px minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+  @media (max-width: 1180px) { .grid { grid-template-columns: 300px minmax(0, 1fr); } .side { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; } }
+  @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 14px; min-width: 0; }
+  .panel > .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px 0; }
+  .panel > .bd { padding: 12px 14px 14px; }
+  .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+  /* Markt */
+  .tabs { display: flex; gap: 4px; overflow-x: auto; padding: 10px 10px 0; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 0 0 auto; background: transparent; border-color: transparent; padding: 6px 10px; font-size: 13px; color: var(--muted); }
+  .tabs button.on { color: var(--ink); background: var(--panel-2); border-color: var(--line); }
+  .list { display: flex; flex-direction: column; padding: 8px; gap: 2px; max-height: 640px; overflow-y: auto; }
+  @media (max-width: 760px) { .list { max-height: 330px; } }
+  .arow { display: grid; grid-template-columns: minmax(0, 1fr) 60px auto; gap: 10px; align-items: center; text-align: left; background: transparent; border: 1px solid transparent; padding: 8px 10px; border-radius: 10px; width: 100%; }
+  .arow:hover { background: var(--panel-2); }
+  .arow.on { background: var(--panel-2); border-color: var(--sel); }
+  .arow .n b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .arow .n span { font-size: 11px; color: var(--muted); }
+  .arow .n .own { color: var(--brass); }
+  .arow .p { text-align: right; font: 13px var(--f-mono); }
+  .arow .p span { display: block; font-size: 11px; }
+  .arow svg { width: 60px; height: 22px; display: block; }
+  .sect { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 10px 10px 4px; }
+  .empty { color: var(--muted); padding: 14px 10px; font-size: 13px; }
+  .orow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-soft); margin-bottom: 6px; }
+  .orow .n { font-weight: 600; font-size: 13px; }
+  .orow .s { font-size: 11px; color: var(--muted); }
+  .orow .v { text-align: right; font: 13px var(--f-mono); }
+  .orow button { padding: 4px 10px; font-size: 12px; grid-column: 2; justify-self: end; }
+
+  /* Detail */
+  .dhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 14px 16px 6px; }
+  .dhead h2 { margin: 0; font: 700 22px/1.15 var(--f-display); text-wrap: balance; }
+  .dhead .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .dhead .px { text-align: right; }
+  .dhead .px .big { font: 600 26px/1.1 var(--f-mono); }
+  .dhead .px .sub { font: 12px var(--f-mono); }
+  .ctools { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 4px 16px; }
+  .ctools .seg button { padding: 4px 10px; font-size: 12px; }
+  .chartbox { padding: 6px 8px 0 12px; }
+  #chart { width: 100%; height: 280px; display: block; }
+  @media (max-width: 560px) { #chart { height: 210px; } }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); border-top: 1px solid var(--line-soft); margin-top: 8px; }
+  .facts > div { padding: 9px 14px; min-width: 0; border-bottom: 1px solid var(--line-soft); }
+  .facts .v { font: 13px var(--f-mono); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trade { padding: 14px 16px 16px; display: grid; gap: 10px; }
+  .ttabs { display: flex; gap: 6px; }
+  .ttabs button { flex: 1; }
+  .ttabs button.on { border-color: var(--brass); color: var(--brass); }
+  .irow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .irow > input { flex: 1 1 160px; }
+  .irow .hint { flex: 1 1 160px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips button { flex: 1 1 0; padding: 6px 8px; font-size: 12px; min-width: 52px; }
+  .chips button.on { border-color: var(--brass); color: var(--brass); }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btns button { flex: 1 1 120px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .kv > div { background: var(--bg); border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px; }
+  .kv .v { font: 13px var(--f-mono); margin-top: 2px; }
+  .lock { border: 1px dashed var(--line); border-radius: 10px; padding: 16px; text-align: center; color: var(--muted); }
+  .lock b { color: var(--brass); }
+
+  /* Konto */
+  .ledger { display: grid; gap: 6px; }
+  .ledger > div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .ledger .v { font-family: var(--f-mono); }
+  .ledger .tot { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; font-weight: 600; }
+  .meter { height: 8px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; margin: 8px 0 4px; }
+  .meter > div { height: 100%; width: 0; background: var(--up); transition: width .2s, background .2s; }
+  #news { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; }
+  #news li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; }
+  #news li .d { font: 11px var(--f-mono); color: var(--faint); padding-top: 2px; }
+  #news li.gold { color: var(--brass); }
+
+  /* Unten */
+  .lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; margin-top: 14px; }
+  @media (max-width: 900px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+  .ranks { display: grid; gap: 6px; }
+  .ranks > div { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line-soft); }
+  .ranks .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); justify-self: center; }
+  .ranks .hit .dot { background: var(--brass); border-color: var(--brass); }
+  .ranks .cur { border-color: var(--brass); }
+  .ranks .t b { font-weight: 600; }
+  .ranks .t span { display: block; font-size: 11px; color: var(--muted); }
+  .ranks .r { font: 12px var(--f-mono); color: var(--muted); text-align: right; }
+  .achs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .ach { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-soft); background: var(--bg); opacity: .5; }
+  .ach.got { opacity: 1; border-color: color-mix(in srgb, var(--brass) 55%, transparent); }
+  .ach b { display: block; font-size: 13px; }
+  .ach.got b { color: var(--brass); }
+  .ach span { font-size: 11px; color: var(--muted); }
+  .foot { text-align: center; color: var(--faint); font-size: 12px; margin-top: 18px; }
+
+  /* Overlay */
+  .overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(4, 10, 12, .78); padding: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .modal { width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .modal .kick { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--brass); }
+  .modal h3 { margin: 6px 0 8px; font: 700 24px/1.15 var(--f-display); text-wrap: balance; }
+  .modal p { color: var(--muted); margin: 0 0 10px; }
+  .modal .mbtns { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); z-index: 60; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px); }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+  .toast.gold { border-color: var(--brass); color: var(--brass); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>📈 Börsen-Simulator <span>×3</span></h1>
-  <div class="controls">
-    <button id="playBtn">▶ Start</button>
-    <button data-speed="1" class="active">1×</button>
-    <button data-speed="3">3×</button>
-    <button data-speed="8">8×</button>
-    <button id="resetBtn">↺ Neues Spiel</button>
-  </div>
-</header>
-
-<div class="stats">
-  <div class="stat"><div class="label">Tag</div><div class="value" id="sDay">1 / 365</div></div>
-  <div class="stat"><div class="label">Bargeld</div><div class="value" id="sCash">–</div></div>
-  <div class="stat"><div class="label">Depotwert</div><div class="value" id="sDepot">–</div></div>
-  <div class="stat"><div class="label">Gesamtvermögen</div><div class="value" id="sTotal">–</div></div>
-</div>
-<div class="goal">
-  <div class="bar"><div id="goalBar"></div></div>
-  <div class="txt"><span id="goalPct">0 %</span><span>Ziel: Kapital verdreifachen → <b id="goalTarget"></b></span></div>
-</div>
-
-<main>
-  <section class="panel" id="left">
-    <h2>Markt</h2>
-    <div id="assets"></div>
-  </section>
-
-  <section class="panel" id="center">
-    <div class="chartHead">
-      <div><div id="cName" style="font-weight:600"></div><div class="hint" id="cDesc"></div></div>
-      <div style="text-align:right"><div class="big" id="cPrice"></div><div id="cChg" class="chg"></div></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">KAPITAL<small>BÖRSENSPIEL · SPIELGELD</small></div>
+    <div class="clock">
+      <span class="chip mono" id="date">Jahr 1 · Tag 1</span>
+      <span class="chip" id="regime">Normal</span>
+      <span class="chip" id="rate">Leitzins 2,50 %</span>
     </div>
-    <canvas id="chart"></canvas>
-    <div class="trade">
-      <div class="row">
-        <input type="number" id="qty" min="0" step="any" placeholder="Anzahl">
-        <div class="hint" id="cost" style="flex:1.3">Kosten: –</div>
+    <div class="ctl">
+      <button id="play">▶ Start</button>
+      <div class="seg" id="speeds">
+        <button data-s="1" class="on">1×</button><button data-s="4">4×</button><button data-s="15">15×</button><button data-s="50">50×</button>
       </div>
-      <div class="row quick">
-        <button data-pct="0.1">10 %</button><button data-pct="0.25">25 %</button>
-        <button data-pct="0.5">50 %</button><button data-pct="1">Max</button>
-      </div>
-      <div class="row">
-        <button class="buy" id="buyBtn">Kaufen</button>
-        <button class="sell" id="sellBtn">Verkaufen</button>
-        <button id="sellAllBtn">Alles verkaufen</button>
-      </div>
-      <div class="hint">Gebühr pro Trade: 0,5 % · Die Prozent-Buttons rechnen mit deinem Bargeld.</div>
+      <button id="newGame" class="ghost">Neues Spiel</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="nw">
+      <div class="lbl">Nettovermögen</div>
+      <div class="big" id="nw">10.000,00 €</div>
+      <div class="sub mono" id="nwChg">±0,00 % heute</div>
+    </div>
+    <div class="rank">
+      <div class="lbl">Rang</div>
+      <div class="name" id="rankName">Sparer</div>
+      <div class="sub" id="nextGoal"></div>
+    </div>
+    <div class="ladder">
+      <div class="track" id="track"><div class="fill" id="trackFill"></div></div>
     </div>
   </section>
 
-  <section class="panel" id="right">
-    <h2>Mein Depot</h2>
-    <table>
-      <thead><tr><th>Wert</th><th>Stück</th><th>Wert €</th><th>G/V</th></tr></thead>
-      <tbody id="portfolio"></tbody>
-    </table>
-    <h2 style="margin-top:18px">Nachrichten</h2>
-    <ul id="news"></ul>
-  </section>
-</main>
-<p class="disclaimer">Reines Spiel mit Spielgeld. Keine echten Kurse, kein echtes Geld, keine Anlageberatung.</p>
+  <main class="grid">
+    <section class="panel">
+      <div class="tabs" id="tabs"></div>
+      <div class="list" id="list"></div>
+    </section>
 
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h2 id="mTitle"></h2>
-    <p id="mText"></p>
-    <p id="mBest" style="font-size:12px"></p>
-    <div class="row">
-      <button id="mContinue">Weiterspielen</button>
-      <button class="buy" id="mNew">Neues Spiel</button>
-    </div>
-  </div>
+    <section class="panel">
+      <div class="dhead">
+        <div><h2 id="dName"></h2><div class="meta" id="dMeta"></div></div>
+        <div class="px"><div class="big" id="dPrice"></div><div class="sub" id="dChg"></div></div>
+      </div>
+      <div class="ctools">
+        <div class="seg" id="modeSeg"><button data-m="price" class="on">Kurs</button><button data-m="nw">Mein Vermögen</button></div>
+        <div class="seg" id="tfSeg"><button data-t="63">3M</button><button data-t="250" class="on">1J</button><button data-t="750">3J</button></div>
+      </div>
+      <div class="chartbox"><canvas id="chart" aria-label="Kursverlauf"></canvas></div>
+      <div class="facts" id="facts"></div>
+      <div class="trade">
+        <div class="ttabs"><button id="tt-trade" class="on">Kaufen &amp; Verkaufen</button><button id="tt-opt">Optionen</button></div>
+        <div id="tradePane">
+          <div style="display:grid;gap:10px">
+            <div class="irow"><input type="number" id="amt" min="0" step="any" inputmode="decimal" placeholder="Betrag in €"><div class="hint mono" id="amtHint">Betrag in Euro eingeben</div></div>
+            <div class="chips" id="amtChips"><button data-p=".1">10 %</button><button data-p=".25">25 %</button><button data-p=".5">50 %</button><button data-p="1">Alles</button></div>
+            <div class="btns"><button class="buy" id="buyBtn">Kaufen</button><button class="sell" id="sellBtn">Verkaufen</button><button id="sellHalf">½ verkaufen</button><button id="sellAll">Alles verkaufen</button></div>
+            <div class="hint">Die Prozent-Buttons beziehen sich auf dein Bargeld. Ordergebühr 0,25 %.</div>
+          </div>
+        </div>
+        <div id="optPane" hidden></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <div class="hd"><span class="lbl">Konto</span><span class="lbl" id="tgRate"></span></div>
+        <div class="bd ledger" id="ledger"></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><span class="lbl">Lombardkredit</span><span class="lbl" id="loanRate"></span></div>
+        <div class="bd" id="loanBox"></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><span class="lbl">Nachrichten</span></div>
+        <div class="bd"><ul id="news"></ul></div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="lower">
+    <section class="panel"><div class="hd"><span class="lbl">Meilensteine</span></div><div class="bd ranks" id="ranks"></div></section>
+    <section class="panel"><div class="hd"><span class="lbl">Erfolge</span><span class="lbl" id="achCount"></span></div><div class="bd achs" id="achs"></div></section>
+  </section>
+  <p class="foot">Alles fiktiv: Spielgeld, erfundene Firmen, simulierte Kurse. Keine Anlageberatung.</p>
 </div>
+
+<div class="overlay" id="overlay" hidden><div class="modal" role="dialog" aria-modal="true"><div class="kick" id="mKick"></div><h3 id="mTitle"></h3><div id="mBody"></div><div class="mbtns" id="mBtns"></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
 (() => {
-  const START = 10000, GOAL = START * 3, DAYS = 365, FEE = 0.005, HISTORY = 120;
+'use strict';
+const DT = 1 / 250, FEE = 0.0025, START = 10000, SAVE_KEY = 'kapital-save-v2', YEAR = 250;
+const $ = id => document.getElementById(id);
+const rnd = Math.random;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function gauss() { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+const pick = arr => arr[Math.floor(rnd() * arr.length)];
 
-  const DEFS = [
-    { id: 'TCH', name: 'TechNova AG',     type: 'Aktie',  sector: 'tech',   price: 120,  drift: 0.0008, vol: 0.022 },
-    { id: 'GRN', name: 'GrünStrom SE',    type: 'Aktie',  sector: 'energy', price: 45,   drift: 0.0006, vol: 0.025 },
-    { id: 'BAU', name: 'Bauhaus Werke',   type: 'Aktie',  sector: 'industry', price: 80, drift: 0.0003, vol: 0.012 },
-    { id: 'PHA', name: 'MediPharm',       type: 'Aktie',  sector: 'health', price: 210,  drift: 0.0004, vol: 0.018 },
-    { id: 'RAK', name: 'Orbit Raketen',   type: 'Aktie',  sector: 'tech',   price: 15,   drift: 0.0010, vol: 0.045 },
-    { id: 'BTX', name: 'Bitex',           type: 'Krypto', sector: 'crypto', price: 30000, drift: 0.0012, vol: 0.040 },
-    { id: 'ETR', name: 'Etheron',         type: 'Krypto', sector: 'crypto', price: 1800, drift: 0.0012, vol: 0.050 },
-    { id: 'DOG', name: 'WuffCoin',        type: 'Krypto', sector: 'meme',   price: 0.08, drift: 0.0000, vol: 0.090 },
-  ];
+// ---------- Formatierung ----------
+const nf = (v, d = 2) => v.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+function eur(v) { const a = Math.abs(v); if (a >= 1e9) return nf(v / 1e9) + ' Mrd. €'; if (a >= 1e6) return nf(v / 1e6) + ' Mio. €'; return nf(v) + ' €'; }
+function eurS(v) { const a = Math.abs(v); if (a >= 1e9) return nf(v / 1e9, a >= 1e10 ? 0 : 1) + ' Mrd. €'; if (a >= 1e6) return nf(v / 1e6, a >= 1e7 ? 0 : 1) + ' Mio. €'; if (a >= 1e4) return nf(v / 1e3, 0) + ' Tsd. €'; return nf(v, 0) + ' €'; }
+function px(v) { return (v < 1 ? nf(v, 4) : v < 10 ? nf(v, 3) : nf(v, 2)) + ' €'; }
+function pct(v, d = 2) { return (v > 0 ? '+' : v < 0 ? '−' : '±') + nf(Math.abs(v), d) + ' %'; }
+function qty(v) { return v.toLocaleString('de-DE', { maximumFractionDigits: v < 1 ? 6 : v < 100 ? 3 : 0 }); }
+const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  const NEWS = [
-    { sector: 'tech',     good: 'KI-Durchbruch: Tech-Werte im Höhenflug',            bad: 'Chip-Engpass belastet Tech-Branche' },
-    { sector: 'energy',   good: 'Regierung beschließt riesiges Solar-Förderprogramm', bad: 'Subventionen für Ökostrom gestrichen' },
-    { sector: 'industry', good: 'Bauboom: Auftragsbücher voll',                       bad: 'Hohe Zinsen bremsen den Bau' },
-    { sector: 'health',   good: 'Neues Medikament erhält Zulassung',                  bad: 'Studie gescheitert, Pharma unter Druck' },
-    { sector: 'crypto',   good: 'Großbank steigt in Krypto ein',                      bad: 'Börse gehackt: Krypto-Panik' },
-    { sector: 'meme',     good: 'Ein Promi twittert über WuffCoin 🐶🚀',               bad: 'WuffCoin-Entwickler verschwunden?!' },
-    { sector: 'all',      good: 'Zentralbank senkt Zinsen: Märkte jubeln',           bad: 'Rezessionsangst: Märkte brechen ein' },
-  ];
+// ---------- Spieldaten ----------
+const GOALS = [30e3, 100e3, 1e6, 10e6, 100e6, 1e9];
+const RANKS = [
+  { name: 'Sparer', unlock: 'Aktien, ETFs, Anleihen, Rohstoffe und Krypto' },
+  { name: 'Kleinanleger', unlock: 'Optionen: Calls und Puts mit Hebel' },
+  { name: 'Trader', unlock: 'Lombardkredit bis 50 % deines Depots' },
+  { name: 'Millionär', unlock: 'Kreditrahmen 60 %, Zins −0,5 Punkte' },
+  { name: 'Fondsmanager', unlock: 'Kreditrahmen 70 %, Zins −1 Punkt' },
+  { name: 'Tycoon', unlock: 'Kreditrahmen 80 %, Zins −1,5 Punkte' },
+  { name: 'Milliardär', unlock: 'Spiel durchgespielt. Ab jetzt Endlosmodus.' },
+];
+const LOAN = [null, null, { ltv: .5, sp: 3 }, { ltv: .6, sp: 2.5 }, { ltv: .7, sp: 2 }, { ltv: .8, sp: 1.5 }, { ltv: .8, sp: 1 }];
+const CLASSES = [['stock', 'Aktien'], ['etf', 'ETFs'], ['bond', 'Anleihen'], ['commodity', 'Rohstoffe'], ['crypto', 'Krypto'], ['depot', 'Mein Depot']];
+const CLASS_NAME = { stock: 'Aktie', etf: 'ETF', bond: 'Anleihe', commodity: 'Rohstoff', crypto: 'Krypto' };
 
-  let S, timer = null, speed = 1, selected = 'TCH', goalShown = false;
-  const $ = id => document.getElementById(id);
+const DEFS = [
+  { id: 'NOVA', name: 'TechNova', cls: 'stock', sector: 'tech', p: 140, beta: 1.3, idio: .28, alpha: .06, div: 0 },
+  { id: 'QBIT', name: 'Quantix Computing', cls: 'stock', sector: 'tech', p: 35, beta: 1.7, idio: .55, alpha: .10, div: 0 },
+  { id: 'ORBT', name: 'Orbit Raketen', cls: 'stock', sector: 'space', p: 18, beta: 1.5, idio: .70, alpha: .08, div: 0 },
+  { id: 'VOLT', name: 'Volta Motors', cls: 'stock', sector: 'auto', p: 75, beta: 1.4, idio: .45, alpha: .04, div: .01 },
+  { id: 'SOLR', name: 'GrünStrom', cls: 'stock', sector: 'energy', p: 48, beta: 1.0, idio: .35, alpha: .04, div: .02 },
+  { id: 'PETR', name: 'Nordöl', cls: 'stock', sector: 'oil', p: 62, beta: .8, idio: .22, alpha: 0, div: .06 },
+  { id: 'MEDI', name: 'MediPharm', cls: 'stock', sector: 'health', p: 210, beta: .6, idio: .25, alpha: .03, div: .025 },
+  { id: 'HANS', name: 'Hanse Bank', cls: 'stock', sector: 'finance', p: 24, beta: 1.2, idio: .28, alpha: .01, div: .05, rateSens: 2 },
+  { id: 'ALPK', name: 'Alpen Konsum', cls: 'stock', sector: 'consumer', p: 95, beta: .5, idio: .15, alpha: .03, div: .035 },
+  { id: 'WOHN', name: 'Stadtwohnen', cls: 'stock', sector: 'realestate', p: 40, beta: .9, idio: .2, alpha: .01, div: .045, rateSens: -6 },
+  { id: 'WELT', name: 'Welt-ETF', cls: 'etf', comps: ['NOVA', 'QBIT', 'ORBT', 'VOLT', 'SOLR', 'PETR', 'MEDI', 'HANS', 'ALPK', 'WOHN'], p: 100, ter: .002, div: .018 },
+  { id: 'TECH', name: 'Tech-ETF', cls: 'etf', comps: ['NOVA', 'QBIT', 'ORBT'], p: 100, ter: .004, div: 0 },
+  { id: 'DIVI', name: 'Dividenden-ETF', cls: 'etf', comps: ['PETR', 'MEDI', 'HANS', 'ALPK', 'WOHN'], p: 50, ter: .003, div: .042 },
+  { id: 'EMKT', name: 'Schwellenländer-ETF', cls: 'etf', sector: 'em', p: 30, beta: 1.1, idio: .14, alpha: .03, div: .02 },
+  { id: 'TEC3', name: 'Tech 3× Hebel-ETF', cls: 'etf', base: 'TECH', lev: 3, p: 20, ter: .009, div: 0 },
+  { id: 'SHRT', name: 'Welt Short-ETF', cls: 'etf', base: 'WELT', lev: -1, p: 40, ter: .006, div: 0 },
+  { id: 'BUND', name: 'Bundesanleihe 10J', cls: 'bond', p: 100, coupon: .025, dur: 8, beta: 0, idio: .02, def: 0 },
+  { id: 'ST2J', name: 'Staatsanleihe 2J', cls: 'bond', p: 100, coupon: .035, dur: 1.9, beta: 0, idio: .01, def: 0 },
+  { id: 'CORP', name: 'Unternehmensanleihe', cls: 'bond', p: 100, coupon: .055, dur: 5, beta: .08, idio: .03, def: .01 },
+  { id: 'JUNK', name: 'Hochzinsanleihe', cls: 'bond', p: 100, coupon: .11, dur: 3, beta: .25, idio: .06, def: .06 },
+  { id: 'GOLD', name: 'Gold', cls: 'commodity', sector: 'gold', p: 2000, beta: -.25, idio: .14, alpha: .03, unit: 'Unze' },
+  { id: 'SILB', name: 'Silber', cls: 'commodity', sector: 'gold', p: 25, beta: .1, idio: .28, alpha: .02, unit: 'Unze' },
+  { id: 'OIL', name: 'Rohöl', cls: 'commodity', sector: 'oil', p: 80, beta: .5, idio: .38, alpha: 0, unit: 'Barrel' },
+  { id: 'BTX', name: 'Bitex', cls: 'crypto', sector: 'crypto', p: 40000, cb: 1, idio: .35, alpha: .15 },
+  { id: 'ETR', name: 'Etheron', cls: 'crypto', sector: 'crypto', p: 2500, cb: 1.25, idio: .5, alpha: .15 },
+  { id: 'WUFF', name: 'WuffCoin', cls: 'crypto', sector: 'meme', p: .08, cb: 2, idio: 1.3, alpha: 0 },
+];
 
-  const fmtEUR = v => v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
-  const fmtPrice = v => v < 1 ? v.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' €'
-                              : v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
-  const fmtQty = v => v.toLocaleString('de-DE', { maximumFractionDigits: v < 10 ? 4 : 2 });
-  const fmtPct = v => (v >= 0 ? '+' : '') + v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %';
+const REG = {
+  normal: { name: 'Normaler Markt', mu: .07, sig: .15, next: [['bull', .004], ['bear', .0025], ['crash', .0006]] },
+  bull:   { name: 'Bullenmarkt', mu: .28, sig: .13, next: [['normal', .004], ['bubble', .0015], ['crash', .0006]] },
+  bear:   { name: 'Bärenmarkt', mu: -.22, sig: .24, next: [['normal', .005], ['crash', .0015]] },
+  crash:  { name: 'Crash!', mu: -1.8, sig: .55, next: [] },
+  bubble: { name: 'Spekulationsblase', mu: .7, sig: .25, next: [['crash', .012], ['bull', .004]] },
+};
+const REG_NEWS = {
+  bull: ['Die Stimmung dreht: Bullenmarkt!', 'up'], bear: ['Die Kurse bröckeln: Bärenmarkt beginnt', 'down'],
+  crash: ['BÖRSENCRASH! Panikverkäufe überall', 'down'], bubble: ['Euphorie an den Märkten: Blasengefahr', 'gold'], normal: ['Die Märkte beruhigen sich', ''],
+};
 
-  function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+const NEWS = [
+  ['tech', 'KI-Durchbruch: Tech-Werte gefragt', 'Chip-Engpass belastet die Tech-Branche'],
+  ['space', 'Orbit Raketen landet Großauftrag', 'Testrakete von Orbit explodiert beim Start'],
+  ['auto', 'Rekordabsatz bei Elektroautos', 'Große Rückrufaktion bei Volta Motors'],
+  ['energy', 'Neues Solar-Förderprogramm beschlossen', 'Ökostrom-Subventionen gestrichen'],
+  ['oil', 'Förderkürzung: Ölpreis springt', 'Ölschwemme: Preise fallen'],
+  ['health', 'MediPharm erhält Zulassung für neues Medikament', 'Studie gescheitert: Pharma unter Druck'],
+  ['finance', 'Banken melden Rekordgewinne', 'Sorge um Kreditausfälle bei Banken'],
+  ['consumer', 'Konsumlaune auf Jahreshoch', 'Kaufzurückhaltung im Einzelhandel'],
+  ['realestate', 'Wohnungsmangel treibt Mieten', 'Immobilienpreise geraten ins Rutschen'],
+  ['gold', 'Anleger flüchten in Edelmetalle', 'Edelmetalle verlieren an Glanz'],
+  ['em', 'Schwellenländer wachsen kräftig', 'Währungskrise in Schwellenländern'],
+  ['crypto', 'Großbank steigt in Krypto ein', 'Krypto-Börse gehackt: Panik'],
+  ['meme', 'Ein Promi postet über WuffCoin 🐶🚀', 'WuffCoin-Entwickler abgetaucht'],
+];
+const IPO_NAMES = [['LUMN', 'Lumen Robotics'], ['FJRD', 'Fjord Batteries'], ['HELX', 'Helix Genomics'], ['PNDA', 'Panda Payments'], ['NIMB', 'Nimbus Cloud'], ['AURA', 'Aurora Fusion']];
+const STARTUPS = ['Snackdrohne', 'Katzen-Dating-App', 'Vertical Farming Berlin', 'KI-Steuerberater', 'Weltraum-Hotel', 'Pilz-Leder', 'Quanten-Kaffeemaschine', 'E-Scooter für Hunde', 'Batterie aus Salz', 'Roboter-Friseur'];
 
-  function newGame() {
-    S = {
-      day: 1, cash: START, holdings: {}, news: [], over: false,
-      assets: DEFS.map(d => {
-        const a = { ...d, history: [] };
-        // Vorlauf-Historie erzeugen
-        let p = d.price;
-        for (let i = 0; i < HISTORY; i++) { p = Math.max(p * Math.exp(d.drift - d.vol * d.vol / 2 + d.vol * gauss()), d.price * 0.001); a.history.push(p); }
-        a.price = p; a.prevPrice = a.history[a.history.length - 2];
-        return a;
-      }),
-    };
-    goalShown = false;
-    addNews('Willkommen! Du hast ' + fmtEUR(START) + ' Spielgeld. Schaffst du ' + fmtEUR(GOAL) + ' in ' + DAYS + ' Tagen?');
-    pause(); hideModal(); render();
+const ACH = [
+  ['first', 'Erster Trade', 'Kaufe dein erstes Wertpapier'],
+  ['divi', 'Passives Einkommen', 'Erhalte eine Dividende oder einen Kupon'],
+  ['rentier', 'Rentier', 'Kassiere insgesamt 10.000 € Dividenden und Zinsen'],
+  ['diverse', 'Breit gestreut', 'Halte gleichzeitig alle fünf Anlageklassen'],
+  ['opt2', 'Hebelkünstler', 'Schließe eine Option mit mindestens +100 % ab'],
+  ['opt10', 'Volltreffer', 'Schließe eine Option mit mindestens +900 % ab'],
+  ['ten', 'Tenbagger', 'Eine Position steigt auf das 10-Fache des Einstands'],
+  ['ipo', 'Zeichnungsgewinn', 'Gewinne am ersten Handelstag eines Börsengangs'],
+  ['unicorn', 'Einhorn-Jäger', 'Ein Startup bringt mindestens das 12-Fache'],
+  ['crash', 'Krisengewinner', 'Steigere dein Vermögen während eines Crashs um 20 %'],
+  ['margin', 'Margin Call', 'Erlebe eine Zwangsliquidation'],
+  ['debtfree', 'Schuldenfrei', 'Tilge einen Kredit von mind. 100.000 € vollständig'],
+  ['crypto1m', 'Krypto-Millionär', 'Halte Krypto im Wert von 1 Mio. €'],
+  ['fast1m', 'Senkrechtstarter', 'Werde Millionär in weniger als 3 Spieljahren'],
+];
+
+// ---------- Zustand ----------
+let S, A = {};
+const U = { tab: 'stock', sel: 'NOVA', mode: 'price', tf: 250, ttab: 'trade', oType: 'C', oK: 1, oT: 63 };
+let timer = null, speed = 1, dirty = true, modalOpen = false, wasRunning = false;
+
+function indexAssets() { A = {}; for (const a of S.assets) A[a.id] = a; }
+
+function newState() {
+  S = {
+    v: 2, day: 1, cash: START, debt: 0, rate: 2.5, regime: 'normal', regDays: 0, regLen: 0,
+    hold: {}, opts: [], ventures: [], ipos: [], ipoCount: 0, news: [], nwHist: [], maxNW: START, rank: 0,
+    reached: {}, ach: {}, income: 0, nextEvent: 30, tips: [], uid: 1, crashStartNW: 0, lastNW: START, over: false,
+    assets: DEFS.map(d => ({ ...d, price: d.p, prev: d.p, hist: [d.p], ret: 0, listed: true })),
+  };
+  indexAssets();
+  for (let i = 0; i < YEAR; i++) stepMarket(true);
+  S.day = 1; S.regime = 'normal'; S.regDays = 0; S.rate = 2.5;
+  S.nwHist = [START];
+  addNews('Willkommen! Du startest mit ' + eur(START) + ' Spielgeld. Erstes Ziel: ' + eur(GOALS[0]) + '.', 'gold');
+}
+
+// ---------- Markt ----------
+function setPrice(a, p) { a.prev = a.price; a.price = p; a.hist.push(p); if (a.hist.length > 750) a.hist.shift(); }
+
+function setRegime(n, silent) {
+  if (n === S.regime) return;
+  S.regime = n; S.regDays = 0;
+  if (n === 'crash') { S.regLen = 8 + Math.floor(rnd() * 14); S.crashStartNW = silent ? 0 : netWorth(); }
+  if (!silent) addNews(REG_NEWS[n][0], REG_NEWS[n][1]);
+}
+
+function centralBank(silent) {
+  const g = S.regime; let d = 0;
+  if (g === 'crash' || g === 'bear') d = rnd() < .65 ? -(rnd() < .5 ? .25 : .5) : 0;
+  else if (g === 'bull' || g === 'bubble') d = rnd() < .45 ? .25 : 0;
+  else d = rnd() < .3 ? (rnd() < .5 ? .25 : -.25) : 0;
+  d = clamp(S.rate + d, 0, 8) - S.rate;
+  S.rate += d;
+  if (!silent) addNews(d > 0 ? 'Zentralbank erhöht den Leitzins auf ' + nf(S.rate) + ' %' : d < 0 ? 'Zentralbank senkt den Leitzins auf ' + nf(S.rate) + ' %' : 'Zentralbank belässt den Leitzins bei ' + nf(S.rate) + ' %', d < 0 ? 'up' : d > 0 ? 'down' : '');
+  return d;
+}
+
+function stepMarket(silent) {
+  S.regDays++;
+  if (S.regime === 'crash') { if (S.regDays > S.regLen) setRegime(rnd() < .6 ? 'bear' : 'normal', silent); }
+  else for (const [n, p] of REG[S.regime].next) if (rnd() < p) { setRegime(n, silent); break; }
+  const R = REG[S.regime], sq = Math.sqrt(DT);
+  const m = R.mu * DT + R.sig * sq * gauss();
+  const cm = 1.5 * m + .55 * sq * gauss() + .12 * DT;
+  const dRate = S.day % 42 === 0 ? centralBank(silent) : 0;
+
+  const sh = {};
+  if (!silent && rnd() < .05) {
+    const [sec, good, bad] = pick(NEWS); const g = rnd() < .5;
+    const size = (.05 + rnd() * .15) * (sec === 'meme' ? 3 : sec === 'crypto' ? 1.5 : 1);
+    sh[sec] = Math.log(1 + (g ? size : -size * .8));
+    addNews(g ? good : bad, g ? 'up' : 'down');
   }
+  const assetShock = {};
+  if (!silent) S.tips = S.tips.filter(t => {
+    if (S.day < t.day) return true;
+    const a = A[t.id];
+    if (t.truth) { assetShock[t.id] = Math.log(1 + t.dir * t.mag); addNews('Gerücht bestätigt: ' + a.name + (t.dir > 0 ? ' hebt ab' : ' stürzt ab'), t.dir > 0 ? 'up' : 'down'); }
+    else { assetShock[t.id] = Math.log(1 - t.dir * t.mag * .4); addNews('Gerücht um ' + a.name + ' dementiert', t.dir > 0 ? 'down' : 'up'); }
+    return false;
+  });
 
-  function addNews(text, cls = '') {
-    S.news.unshift({ day: S.day, text, cls });
-    S.news = S.news.slice(0, 40);
-  }
-
-  function tick() {
-    if (S.over) return;
-    S.day++;
-    // Zufallsereignis
-    const shocks = {};
-    if (Math.random() < 0.08) {
-      const n = NEWS[Math.floor(Math.random() * NEWS.length)];
-      const good = Math.random() < 0.5;
-      const size = (0.06 + Math.random() * 0.22) * (n.sector === 'meme' ? 3 : 1) * (n.sector === 'all' ? 0.5 : 1);
-      shocks[n.sector] = good ? size : -size;
-      addNews((good ? '🟢 ' : '🔴 ') + (good ? n.good : n.bad), good ? 'up' : 'down');
-    }
-    for (const a of S.assets) {
-      a.prevPrice = a.price;
-      let r = a.drift - a.vol * a.vol / 2 + a.vol * gauss();
-      if (shocks[a.sector]) r += Math.log(1 + shocks[a.sector]);
-      if (shocks.all) r += Math.log(1 + shocks.all * (a.type === 'Krypto' ? 1.5 : 1));
-      a.price = Math.max(a.price * Math.exp(r), a.history[0] * 0.0005);
-      a.history.push(a.price);
-      if (a.history.length > HISTORY) a.history.shift();
-    }
-    const total = netWorth();
-    if (total >= GOAL && !goalShown) {
-      goalShown = true; pause(); saveBest(total);
-      showModal('🏆 Verdreifacht!', 'Du hast an Tag ' + S.day + ' ' + fmtEUR(total) + ' erreicht. Das ist das ' +
-        (total / START).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + '-fache deines Startkapitals!', true);
-    } else if (total < START * 0.05) {
-      S.over = true; pause(); saveBest(total);
-      showModal('💸 Pleite!', 'Dein Vermögen ist auf ' + fmtEUR(total) + ' geschrumpft. Die Börse kann grausam sein.', false);
-    } else if (S.day >= DAYS) {
-      S.over = true; pause(); saveBest(total);
-      const x = total / START;
-      showModal(x >= 3 ? '🏆 Jahr beendet: Ziel erreicht!' : x >= 1 ? '📅 Jahr beendet: im Plus' : '📅 Jahr beendet: im Minus',
-        'Endvermögen: ' + fmtEUR(total) + ' (' + fmtPct((x - 1) * 100) + ').', false);
-    }
-    render();
-  }
-
-  const asset = id => S.assets.find(a => a.id === id);
-  const depotValue = () => Object.entries(S.holdings).reduce((s, [id, h]) => s + h.qty * asset(id).price, 0);
-  const netWorth = () => S.cash + depotValue();
-
-  function buy(qty) {
-    const a = asset(selected);
-    if (!(qty > 0)) return toast('Bitte eine Anzahl eingeben.');
-    const cost = qty * a.price * (1 + FEE);
-    if (cost > S.cash + 1e-9) return toast('Nicht genug Bargeld.');
-    S.cash -= cost;
-    const h = S.holdings[a.id] || { qty: 0, invested: 0 };
-    h.qty += qty; h.invested += cost;
-    S.holdings[a.id] = h;
-    toast('Gekauft: ' + fmtQty(qty) + ' × ' + a.name);
-    render();
-  }
-
-  function sell(qty) {
-    const a = asset(selected), h = S.holdings[a.id];
-    if (!h || h.qty <= 0) return toast('Davon besitzt du nichts.');
-    if (!(qty > 0)) return toast('Bitte eine Anzahl eingeben.');
-    qty = Math.min(qty, h.qty);
-    const proceeds = qty * a.price * (1 - FEE);
-    h.invested *= (h.qty - qty) / h.qty;
-    h.qty -= qty;
-    S.cash += proceeds;
-    if (h.qty < 1e-9) delete S.holdings[a.id];
-    toast('Verkauft: ' + fmtQty(qty) + ' × ' + a.name + ' für ' + fmtEUR(proceeds));
-    render();
-  }
-
-  // ---------- Rendering ----------
-  function render() {
-    const depot = depotValue(), total = S.cash + depot;
-    $('sDay').textContent = S.day + ' / ' + DAYS;
-    $('sCash').textContent = fmtEUR(S.cash);
-    $('sDepot').textContent = fmtEUR(depot);
-    $('sTotal').textContent = fmtEUR(total);
-    $('sTotal').className = 'value ' + (total >= START ? 'up' : 'down');
-    const prog = Math.max(0, Math.min(1, (total - START) / (GOAL - START)));
-    $('goalBar').style.width = (prog * 100) + '%';
-    $('goalPct').textContent = '×' + (total / START).toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ' · ' + Math.round(prog * 100) + ' % zum Ziel';
-    $('goalTarget').textContent = fmtEUR(GOAL);
-
-    $('assets').innerHTML = S.assets.map(a => {
-      const c = (a.price / a.prevPrice - 1) * 100;
-      return `<div class="asset ${a.id === selected ? 'sel' : ''}" data-id="${a.id}">
-        <div class="name">${a.name}<span class="tag">${a.type}</span></div><div class="price">${fmtPrice(a.price)}</div>
-        <div class="sub">${a.id}${S.holdings[a.id] ? ' · im Depot' : ''}</div><div class="chg ${c >= 0 ? 'up' : 'down'}">${fmtPct(c)}</div>
-      </div>`;
-    }).join('');
-
-    const a = asset(selected);
-    const c = (a.price / a.prevPrice - 1) * 100;
-    $('cName').textContent = a.name + ' (' + a.id + ')';
-    $('cDesc').textContent = a.type + ' · Schwankung: ' + (a.vol < 0.02 ? 'niedrig' : a.vol < 0.04 ? 'mittel' : a.vol < 0.07 ? 'hoch' : 'extrem');
-    $('cPrice').textContent = fmtPrice(a.price);
-    $('cChg').textContent = fmtPct(c) + ' heute';
-    $('cChg').className = 'chg ' + (c >= 0 ? 'up' : 'down');
-    updateCost();
-    drawChart(a);
-
-    const rows = Object.entries(S.holdings).map(([id, h]) => {
-      const as = asset(id), val = h.qty * as.price, pl = (val / h.invested - 1) * 100;
-      return `<tr><td>${id}</td><td>${fmtQty(h.qty)}</td><td>${fmtEUR(val)}</td><td class="${pl >= 0 ? 'up' : 'down'}">${fmtPct(pl)}</td></tr>`;
-    });
-    $('portfolio').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="4" class="hint" style="text-align:left">Noch leer. Wähle im Markt einen Wert und kaufe.</td></tr>';
-
-    $('news').innerHTML = S.news.map(n => `<li class="${n.cls}"><div class="d">Tag ${n.day}</div>${n.text}</li>`).join('');
-  }
-
-  function updateCost() {
-    const a = asset(selected), q = parseFloat($('qty').value);
-    $('cost').textContent = q > 0 ? 'Wert: ' + fmtEUR(q * a.price) + ' (+ Gebühr ' + fmtEUR(q * a.price * FEE) + ')' : 'Kosten: –';
-  }
-
-  function drawChart(a) {
-    const cv = $('chart'), dpr = window.devicePixelRatio || 1;
-    const w = cv.clientWidth, h = cv.clientHeight;
-    cv.width = w * dpr; cv.height = h * dpr;
-    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, w, h);
-    const d = a.history, min = Math.min(...d), max = Math.max(...d), pad = 10, right = 70;
-    const x = i => pad + i / (d.length - 1) * (w - pad - right);
-    const y = v => pad + (1 - (v - min) / (max - min || 1)) * (h - 2 * pad);
-    ctx.strokeStyle = '#2a3550'; ctx.fillStyle = '#8a96b0'; ctx.font = '11px system-ui'; ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) {
-      const v = min + (max - min) * i / 4, yy = y(v);
-      ctx.beginPath(); ctx.moveTo(pad, yy); ctx.lineTo(w - right, yy); ctx.stroke();
-      ctx.fillText(fmtPrice(v), w - right + 6, yy + 4);
-    }
-    const upTrend = d[d.length - 1] >= d[0], col = upTrend ? '#22c55e' : '#ef4444';
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, upTrend ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath(); d.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)));
-    ctx.lineTo(x(d.length - 1), h - pad); ctx.lineTo(x(0), h - pad); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-    ctx.beginPath(); d.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)));
-    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
-    const h0 = S.holdings[a.id];
-    if (h0) { // durchschnittlicher Kaufkurs
-      const avg = h0.invested / h0.qty;
-      if (avg >= min && avg <= max) {
-        ctx.setLineDash([5, 4]); ctx.strokeStyle = '#f5b301'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(pad, y(avg)); ctx.lineTo(w - right, y(avg)); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = '#f5b301'; ctx.fillText('Ø Kauf', pad + 4, y(avg) - 4);
+  for (const a of S.assets) {
+    if (a.comps || a.base || !a.listed) continue;
+    let r;
+    if (a.cls === 'crypto') r = a.alpha * DT + a.cb * cm + a.idio * sq * gauss() + (sh.crypto || 0);
+    else if (a.cls === 'bond') {
+      r = -a.dur * dRate / 100 + a.beta * m + a.idio * sq * gauss() + (100 - a.price) / 100 * .4 * DT;
+      if (a.def && rnd() < a.def * DT * (S.regime === 'crash' || S.regime === 'bear' ? 3 : 1)) {
+        r += Math.log(.5);
+        if (!silent) addNews('Zahlungsausfall! Emittent der ' + a.name + ' insolvent', 'down');
       }
-    }
+    } else r = (a.alpha || 0) * DT + a.beta * m + a.idio * sq * gauss() + (a.rateSens || 0) * dRate / 100;
+    r += (sh[a.sector] || 0) + (assetShock[a.id] || 0);
+    const np = Math.max(a.price * Math.exp(r), 1e-6);
+    a.ret = np / a.price - 1; setPrice(a, np);
   }
-
-  // ---------- Steuerung ----------
-  function play() { if (S.over) return; clearInterval(timer); timer = setInterval(tick, 1000 / speed); $('playBtn').textContent = '⏸ Pause'; }
-  function pause() { clearInterval(timer); timer = null; $('playBtn').textContent = '▶ Start'; }
-
-  function showModal(title, text, canContinue, continueLabel = 'Weiterspielen') {
-    $('mTitle').textContent = title; $('mText').textContent = text;
-    $('mBest').textContent = 'Dein Rekord: ' + fmtEUR(getBest());
-    $('mContinue').style.display = canContinue ? '' : 'none';
-    $('mContinue').textContent = continueLabel;
-    $('overlay').classList.add('show');
+  for (const a of S.assets) if (a.comps) {
+    let s = 0; for (const id of a.comps) s += A[id].ret;
+    a.ret = s / a.comps.length - a.ter * DT; setPrice(a, a.price * (1 + a.ret));
   }
-  function hideModal() { $('overlay').classList.remove('show'); }
+  for (const a of S.assets) if (a.base) {
+    a.ret = Math.max(a.lev * A[a.base].ret - a.ter * DT, -.95); setPrice(a, Math.max(a.price * (1 + a.ret), .01));
+  }
+}
 
-  function getBest() { try { return parseFloat(localStorage.getItem('boersenSimBest')) || 0; } catch { return 0; } }
-  function saveBest(v) { try { if (v > getBest()) localStorage.setItem('boersenSimBest', String(v)); } catch {} }
+// ---------- Bewertung ----------
+function realVol(a) {
+  const h = a.hist, n = Math.min(60, h.length - 1); if (n < 5) return .3;
+  let s = 0, s2 = 0; for (let i = h.length - n; i < h.length; i++) { const r = Math.log(h[i] / h[i - 1]); s += r; s2 += r * r; }
+  const mu = s / n; return clamp(Math.sqrt(Math.max(s2 / n - mu * mu, 0) * YEAR), .08, 3);
+}
+function ncdf(x) { const t = 1 / (1 + .2316419 * Math.abs(x)); const d = .3989423 * Math.exp(-x * x / 2); const p = d * t * (.3193815 + t * (-.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; }
+function bs(type, s0, K, T, r, v) {
+  if (T <= 0) return Math.max(0, type === 'C' ? s0 - K : K - s0);
+  const sq = v * Math.sqrt(T), d1 = (Math.log(s0 / K) + (r + v * v / 2) * T) / sq, d2 = d1 - sq;
+  return type === 'C' ? s0 * ncdf(d1) - K * Math.exp(-r * T) * ncdf(d2) : K * Math.exp(-r * T) * ncdf(-d2) - s0 * ncdf(-d1);
+}
+function bsDelta(type, s0, K, T, r, v) {
+  if (T <= 0) return type === 'C' ? (s0 > K ? 1 : 0) : (s0 < K ? -1 : 0);
+  const d1 = (Math.log(s0 / K) + (r + v * v / 2) * T) / (v * Math.sqrt(T)); return type === 'C' ? ncdf(d1) : ncdf(d1) - 1;
+}
+function optFair(o) { const a = A[o.und]; return bs(o.type, a.price, o.K, (o.exp - S.day) / YEAR, S.rate / 100, realVol(a)); }
+const optValue = o => optFair(o) * o.qty;
 
-  let toastT;
-  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+function holdValue() { let v = 0; for (const id in S.hold) v += S.hold[id].qty * A[id].price; return v; }
+function optsValue() { let v = 0; for (const o of S.opts) v += optValue(o); return v; }
+function ventValue() { let v = 0; for (const x of S.ventures) v += x.amt; for (const x of S.ipos) v += x.qty * x.issue; return v; }
+function netWorth() { return S.cash + holdValue() + optsValue() + ventValue() - S.debt; }
+function collateral() { return holdValue() + optsValue(); }
+const loanCfg = () => LOAN[S.rank] || null;
+const loanRate = () => loanCfg() ? S.rate + loanCfg().sp : S.rate + 3;
+const tgRate = () => Math.max(0, S.rate - .5);
 
-  $('playBtn').onclick = () => timer ? pause() : play();
-  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
-    speed = +b.dataset.speed;
-    document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('active', x === b));
-    if (timer) play();
+// ---------- Tageslauf ----------
+function tick() {
+  if (S.over || modalOpen) return;
+  S.day++;
+  stepMarket(false);
+  const d = S.day;
+  // Kreditzinsen, Tagesgeld
+  if (S.debt > 0) S.debt *= 1 + loanRate() / 100 * DT;
+  if (d % 21 === 0 && S.cash > 0) { const z = S.cash * tgRate() / 100 / 12; if (z > 0) { S.cash += z; S.income += z; } }
+  // Kupons monatlich, Dividenden quartalsweise
+  let inc = 0;
+  for (const id in S.hold) {
+    const a = A[id], h = S.hold[id];
+    if (a.cls === 'bond' && d % 21 === 0) inc += h.qty * 100 * a.coupon / 12;
+    if (a.div && d % 63 === 0) inc += h.qty * a.price * a.div / 4;
+  }
+  if (inc > 0) { S.cash += inc; S.income += inc; achieve('divi'); addNews('Ausschüttung erhalten: ' + eur(inc), 'up'); }
+  // Optionen verfallen
+  S.opts = S.opts.filter(o => {
+    if (d < o.exp) return true;
+    const pay = optFair(o) * o.qty; S.cash += pay;
+    const r = pay / o.cost;
+    addNews('Option verfallen (' + (o.type === 'C' ? 'Call' : 'Put') + ' ' + A[o.und].name + '): ' + (pay > 0 ? eur(pay) + ' ausgezahlt' : 'wertlos'), pay > o.cost ? 'up' : 'down');
+    if (r >= 2) achieve('opt2'); if (r >= 10) achieve('opt10');
+    return false;
   });
-  $('resetBtn').onclick = () => { pause(); showModal('Neues Spiel?', 'Der aktuelle Fortschritt geht verloren.', true, 'Abbrechen'); };
-  $('assets').onclick = e => { const el = e.target.closest('.asset'); if (el) { selected = el.dataset.id; $('qty').value = ''; render(); } };
-  $('qty').oninput = updateCost;
-  document.querySelectorAll('[data-pct]').forEach(b => b.onclick = () => {
-    const a = asset(selected), p = +b.dataset.pct;
-    let q = (S.cash * p) / (a.price * (1 + FEE));
-    q = Math.floor(q * 1e6) / 1e6;
-    $('qty').value = q > 0 ? q : ''; updateCost();
+  // Startups
+  S.ventures = S.ventures.filter(v => {
+    if (d < v.day) return true;
+    const x = rnd(), mult = x < .55 ? 0 : x < .8 ? 1.5 : x < .92 ? 4 : x < .98 ? 12 : 60;
+    const pay = v.amt * mult; S.cash += pay;
+    addNews(mult === 0 ? 'Startup „' + v.name + '“ ist pleite. Einsatz verloren.' : 'Startup „' + v.name + '“ wird verkauft: ×' + nf(mult, mult < 2 ? 1 : 0) + ' = ' + eur(pay), mult === 0 ? 'down' : 'gold');
+    if (mult >= 12) achieve('unicorn');
+    if (mult >= 4) toast('🦄 Startup-Exit: ' + eur(pay), true);
+    return false;
   });
-  $('buyBtn').onclick = () => { buy(parseFloat($('qty').value)); };
-  $('sellBtn').onclick = () => { sell(parseFloat($('qty').value)); };
-  $('sellAllBtn').onclick = () => { const h = S.holdings[selected]; if (h) sell(h.qty); else toast('Davon besitzt du nichts.'); };
-  $('mContinue').onclick = () => { hideModal(); };
-  $('mNew').onclick = newGame;
-  window.addEventListener('resize', () => drawChart(asset(selected)));
+  // Börsengänge
+  S.ipos = S.ipos.filter(p => {
+    if (d < p.day) return true;
+    const a = A[p.id]; a.listed = true;
+    const first = p.issue * Math.exp(.08 + .35 * gauss());
+    a.hist = [p.issue, first]; a.prev = p.issue; a.price = first; a.ret = first / p.issue - 1;
+    if (p.qty > 0) { S.hold[p.id] = { qty: p.qty, cost: p.qty * p.issue }; if (first > p.issue) achieve('ipo'); }
+    addNews(a.name + ' startet an der Börse: ' + pct((first / p.issue - 1) * 100) + ' am ersten Tag', first > p.issue ? 'up' : 'down');
+    return false;
+  });
+  marginCheck();
+  const nw = netWorth();
+  S.nwHist.push(nw); if (S.nwHist.length > 3000) S.nwHist = S.nwHist.filter((_, i) => i % 2 === 0);
+  S.maxNW = Math.max(S.maxNW, nw);
+  checkAchievements(nw);
+  if (S.regime === 'crash' && S.crashStartNW > 0 && nw >= S.crashStartNW * 1.2) achieve('crash');
+  S.lastNW = S.nwHist.length > 1 ? S.nwHist[S.nwHist.length - 2] : nw;
+  if (nw <= 0) { S.over = true; pause(); save(); showModal({ kick: 'Spielende', title: 'Pleite.', body: '<p>Deine Schulden sind höher als dein Vermögen. Du hast es bis zum Rang <b>' + RANKS[S.rank].name + '</b> geschafft, Höchststand ' + eur(S.maxNW) + '.</p>', btns: [['Neues Spiel', 'primary', () => { newState(); hideModal(); }]] }); }
+  else if (S.rank < GOALS.length && nw >= GOALS[S.rank]) rankUp();
+  else if (d >= S.nextEvent) { S.nextEvent = d + 25 + Math.floor(rnd() * 35); fireEvent(); }
+  if (d % 10 === 0) save();
+  dirty = true;
+}
 
-  newGame();
+function marginCheck() {
+  if (S.debt <= 0) return;
+  const cfg = loanCfg() || { ltv: .5 }, col = collateral(), D = S.debt - Math.max(S.cash, 0);
+  if (D <= (cfg.ltv + .1) * col) return;
+  const f = col > 0 ? clamp((D - .7 * cfg.ltv * col) / ((.98 - .7 * cfg.ltv) * col), 0, 1) : 1;
+  let got = 0;
+  for (const id in S.hold) { const h = S.hold[id], q = h.qty * f; got += q * A[id].price * .98; h.qty -= q; h.cost *= 1 - f; if (h.qty < 1e-9) delete S.hold[id]; }
+  for (const o of S.opts) { got += optFair(o) * o.qty * f * .98; o.qty *= 1 - f; o.cost *= 1 - f; }
+  S.opts = S.opts.filter(o => o.qty > 1e-9);
+  S.cash += got;
+  const pay = Math.min(S.cash, S.debt); S.cash -= pay; S.debt -= pay;
+  achieve('margin');
+  addNews('MARGIN CALL: Die Bank verkauft Positionen für ' + eur(got), 'down');
+  toast('⚠ Margin Call! Zwangsverkauf: ' + eur(got));
+}
+
+function rankUp() {
+  const i = S.rank; S.rank++; S.reached[i + 1] = S.day;
+  if (S.rank >= 3 && S.day < 3 * YEAR) achieve('fast1m');
+  const r = RANKS[S.rank], next = GOALS[S.rank];
+  save();
+  showModal({ kick: 'Ziel erreicht · Tag ' + S.day, title: eurS(GOALS[i]) + '! Du bist jetzt ' + r.name + '.',
+    body: '<p>Freigeschaltet: <b style="color:var(--brass)">' + r.unlock + '</b></p>' + (next ? '<p>Nächstes Ziel: <b>' + eurS(next) + '</b>.</p>' : '<p>Du hast die Milliarde geknackt. Respekt!</p>'),
+    btns: [['Weiter', 'primary', hideModal]] });
+}
+
+// ---------- Ereignisse ----------
+function fireEvent() {
+  const nw = netWorth(), types = ['tip', 'tip', 'startup', 'startup'];
+  if (S.ipoCount < IPO_NAMES.length) types.push('ipo', 'ipo');
+  const t = pick(types);
+  if (t === 'tip') {
+    const pool = S.assets.filter(a => a.cls === 'stock' && a.listed), a = pick(pool), dir = rnd() < .6 ? 1 : -1;
+    S.tips.push({ id: a.id, dir, truth: rnd() < .6, mag: .15 + rnd() * .25, day: S.day + 5 + Math.floor(rnd() * 15) });
+    const txt = dir > 0 ? pick(['bald übernommen werden', 'einen Rekordauftrag melden', 'mit Traumzahlen überraschen']) : pick(['eine Gewinnwarnung herausgeben', 'Ärger mit der Finanzaufsicht bekommen', 'einen Großkunden verlieren']);
+    showModal({ kick: 'Gerücht', title: 'Psst: ' + a.name + ' soll ' + txt + '.', body: '<p>Ein Bekannter aus der Branche ist sich „ziemlich sicher“. In den nächsten 1–4 Wochen soll es passieren. Gerüchte stimmen nicht immer.</p>',
+      btns: [['Zur Aktie', 'primary', () => { selectAsset(a.id); hideModal(); }], ['Ignorieren', '', hideModal]] });
+  } else if (t === 'startup') {
+    const amt = Math.max(500, Math.round(nw * .05 / 100) * 100), name = pick(STARTUPS), days = 120 + Math.floor(rnd() * 130);
+    const go = mult => () => { const a = amt * mult; if (S.cash < a) return toast('Nicht genug Bargeld.'); S.cash -= a; S.ventures.push({ name, amt: a, day: S.day + days }); addNews('Du bist beim Startup „' + name + '“ eingestiegen: ' + eur(a), 'gold'); hideModal(); };
+    showModal({ kick: 'Startup-Pitch', title: '„' + name + '“ sucht Investoren', body: '<p>Die Gründer wollen <b>' + eur(amt) + '</b> von dir. In etwa ' + Math.round(days / 21) + ' Monaten fällt die Entscheidung: Die meisten Startups scheitern, wenige vervielfachen das Geld (bis ×60).</p><p class="hint">Dein Bargeld: ' + eur(S.cash) + '</p>',
+      btns: [['Investieren (' + eurS(amt) + ')', 'primary', go(1), S.cash < amt], ['Doppelt investieren (' + eurS(amt * 2) + ')', '', go(2), S.cash < amt * 2], ['Ablehnen', 'ghost', hideModal]] });
+  } else {
+    const [id, name] = IPO_NAMES[S.ipoCount++], issue = Math.round(10 + rnd() * 50);
+    S.assets.push({ id, name, cls: 'stock', sector: 'tech', p: issue, price: issue, prev: issue, hist: [issue], ret: 0, beta: 1.2 + rnd() * .6, idio: .5 + rnd() * .3, alpha: .05 + rnd() * .1, div: 0, listed: false });
+    indexAssets();
+    const max = Math.max(1000, Math.round(nw * .1 / 100) * 100);
+    const sub = f => () => { const want = max * f; if (S.cash < want) return toast('Nicht genug Bargeld.'); const alloc = .4 + rnd() * .6, spend = want * alloc, q = spend / issue; S.cash -= spend; S.ipos.push({ id, qty: q, issue, day: S.day + 3 }); addNews('Zuteilung bei ' + name + ': ' + qty(q) + ' Aktien für ' + eur(spend) + ' (' + Math.round(alloc * 100) + ' % deiner Order)', 'gold'); hideModal(); };
+    showModal({ kick: 'Börsengang', title: name + ' geht an die Börse', body: '<p>Ausgabepreis <b>' + px(issue) + '</b>. Erster Handelstag in 3 Tagen. Börsengänge sind oft überzeichnet, du bekommst vielleicht nur einen Teil.</p>',
+      btns: [['Voll zeichnen (' + eurS(max) + ')', 'primary', sub(1), S.cash < max], ['Halb zeichnen (' + eurS(max / 2) + ')', '', sub(.5), S.cash < max / 2], ['Nicht zeichnen', 'ghost', () => { S.ipos.push({ id, qty: 0, issue, day: S.day + 3 }); hideModal(); }]] });
+  }
+}
+
+// ---------- Erfolge ----------
+function achieve(k) {
+  if (S.ach[k]) return;
+  S.ach[k] = S.day; const a = ACH.find(x => x[0] === k);
+  if (a) { toast('🏅 Erfolg: ' + a[1], true); addNews('Erfolg freigeschaltet: ' + a[1], 'gold'); }
+}
+function checkAchievements(nw) {
+  if (S.income >= 1e4) achieve('rentier');
+  const have = new Set(); let crypto = 0, tenX = false;
+  for (const id in S.hold) { const a = A[id], h = S.hold[id], v = h.qty * a.price; have.add(a.cls); if (a.cls === 'crypto') crypto += v; if (h.cost > 0 && v >= h.cost * 10) tenX = true; }
+  if (have.size >= 5) achieve('diverse');
+  if (crypto >= 1e6) achieve('crypto1m');
+  if (tenX) achieve('ten');
+}
+
+// ---------- Handel ----------
+function buy(amount) {
+  const a = A[U.sel];
+  if (!a.listed) return toast('Noch nicht handelbar.');
+  amount = Math.min(amount, S.cash);
+  if (!(amount > 0.01)) return toast(S.cash <= 0.01 ? 'Kein Bargeld übrig.' : 'Bitte einen Betrag eingeben.');
+  const q = amount / (a.price * (1 + FEE));
+  S.cash -= amount;
+  const h = S.hold[a.id] || (S.hold[a.id] = { qty: 0, cost: 0 });
+  h.qty += q; h.cost += amount;
+  achieve('first');
+  toast('Gekauft: ' + qty(q) + ' × ' + a.name + ' für ' + eur(amount));
+  dirty = true;
+}
+function sellQty(q) {
+  const a = A[U.sel], h = S.hold[a.id];
+  if (!h) return toast('Davon besitzt du nichts.');
+  q = Math.min(q, h.qty); if (!(q > 0)) return toast('Bitte einen Betrag eingeben.');
+  const got = q * a.price * (1 - FEE);
+  h.cost *= 1 - q / h.qty; h.qty -= q; S.cash += got;
+  if (h.qty < 1e-9) delete S.hold[a.id];
+  toast('Verkauft: ' + qty(q) + ' × ' + a.name + ' für ' + eur(got));
+  dirty = true;
+}
+function optQuote() {
+  const a = A[U.sel], K = a.price * U.oK, T = U.oT / YEAR, v = realVol(a), r = S.rate / 100;
+  const fair = bs(U.oType, a.price, K, T, r, v), ask = Math.max(fair * 1.02, a.price * .0005);
+  const dl = bsDelta(U.oType, a.price, K, T, r, v);
+  return { a, K, ask, lev: Math.abs(dl) * a.price / ask, be: U.oType === 'C' ? K + ask : K - ask, v };
+}
+function buyOption(amount) {
+  const q = optQuote(); amount = Math.min(amount, S.cash);
+  if (!(amount > 0.01)) return toast('Bitte einen Betrag eingeben.');
+  const n = amount / q.ask; S.cash -= amount;
+  S.opts.push({ uid: S.uid++, und: q.a.id, type: U.oType, K: q.K, exp: S.day + U.oT, qty: n, cost: amount });
+  achieve('first');
+  toast((U.oType === 'C' ? 'Call' : 'Put') + ' gekauft: ' + qty(n) + ' Stück für ' + eur(amount));
+  dirty = true;
+}
+function sellOption(uid) {
+  const o = S.opts.find(x => x.uid === uid); if (!o) return;
+  const got = optFair(o) * o.qty * .98; S.cash += got;
+  const r = got / o.cost; if (r >= 2) achieve('opt2'); if (r >= 10) achieve('opt10');
+  S.opts = S.opts.filter(x => x !== o);
+  toast('Option verkauft für ' + eur(got) + ' (' + pct((r - 1) * 100, 0) + ')');
+  dirty = true;
+}
+function borrow(x) {
+  const cfg = loanCfg(); if (!cfg) return;
+  const room = Math.max(0, cfg.ltv * collateral() - S.debt); x = Math.min(x, room);
+  if (!(x > 0.01)) return toast(room <= 0.01 ? 'Kreditrahmen ausgeschöpft. Kaufe erst Wertpapiere als Sicherheit.' : 'Bitte einen Betrag eingeben.');
+  S.debt += x; S.cash += x; S.loanPeak = Math.max(S.loanPeak || 0, S.debt);
+  toast('Kredit aufgenommen: ' + eur(x)); dirty = true;
+}
+function repay(x) {
+  x = Math.min(x, S.debt, S.cash);
+  if (!(x > 0.01)) return toast(S.debt <= 0 ? 'Du hast keine Schulden.' : 'Nicht genug Bargeld zum Tilgen.');
+  S.debt -= x; S.cash -= x;
+  if (S.debt < 0.01) { if ((S.loanPeak || 0) >= 1e5) achieve('debtfree'); S.debt = 0; S.loanPeak = 0; }
+  toast('Getilgt: ' + eur(x)); dirty = true;
+}
+
+// ---------- Nachrichten / Toast ----------
+function addNews(t, k = '') { S.news.unshift({ d: S.day, t, k }); if (S.news.length > 80) S.news.length = 80; dirty = true; }
+let toastT;
+function toast(msg, gold) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (gold ? ' gold' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 2200); }
+
+// ---------- Modal ----------
+function showModal({ kick, title, body, btns }) {
+  wasRunning = !!timer; pause(); modalOpen = true;
+  $('mKick').textContent = kick || ''; $('mTitle').textContent = title; $('mBody').innerHTML = body || '';
+  const box = $('mBtns'); box.innerHTML = '';
+  for (const [label, kind, fn, disabled] of btns) { const b = document.createElement('button'); b.textContent = label; if (kind) b.className = kind; b.disabled = !!disabled; b.onclick = fn; box.appendChild(b); }
+  $('overlay').hidden = false; box.querySelector('button:not(:disabled)')?.focus();
+}
+function hideModal() { $('overlay').hidden = true; modalOpen = false; dirty = true; if (wasRunning && !S.over) play(); wasRunning = false; }
+
+// ---------- Steuerung ----------
+function play() { if (S.over || modalOpen) return; clearInterval(timer); timer = setInterval(tick, 1000 / speed); $('play').textContent = '❚❚ Pause'; $('play').classList.add('running'); }
+function pause() { clearInterval(timer); timer = null; $('play').textContent = '▶ Start'; $('play').classList.remove('running'); }
+function selectAsset(id) { U.sel = id; const a = A[id]; if (U.tab !== 'depot') U.tab = a.cls; if (a.cls === 'bond' && U.ttab === 'opt') U.ttab = 'trade'; $('amt').value = ''; U.mode = 'price'; dirty = true; }
+
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.v === 2 && s.assets) return s; } catch (e) {} return null; }
+
+// ---------- Darstellung ----------
+const CSSV = getComputedStyle(document.documentElement);
+const C = n => CSSV.getPropertyValue(n).trim();
+const COL = { up: C('--up'), down: C('--down'), line: C('--line-soft'), muted: C('--muted'), brass: C('--brass'), ink: C('--ink') };
+
+function spark(h) {
+  const d = h.slice(-40); let mn = Infinity, mx = -Infinity; for (const v of d) { if (v < mn) mn = v; if (v > mx) mx = v; }
+  const r = mx - mn || 1, pts = d.map((v, i) => (i / (d.length - 1) * 60).toFixed(1) + ',' + (20 - (v - mn) / r * 18).toFixed(1)).join(' ');
+  return '<svg viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="' + (d[d.length - 1] >= d[0] ? COL.up : COL.down) + '" stroke-width="1.5" points="' + pts + '"/></svg>';
+}
+function extra(a) {
+  if (a.cls === 'bond') return 'Kupon ' + nf(a.coupon * 100, 1) + ' %';
+  if (a.lev) return (a.lev > 0 ? a.lev + '× Hebel' : 'Short');
+  if (a.div) return 'Div. ' + nf(a.div * 100, 1) + ' %';
+  if (a.unit) return 'pro ' + a.unit;
+  return a.id;
+}
+function assetRow(a) {
+  const c = (a.price / a.prev - 1) * 100;
+  return '<button class="arow' + (a.id === U.sel ? ' on' : '') + '" data-id="' + a.id + '"><div class="n"><b>' + esc(a.name) + '</b><span>' + extra(a) + (S.hold[a.id] ? ' · <span class="own">im Depot</span>' : '') + '</span></div>' + spark(a.hist) + '<div class="p">' + px(a.price) + '<span class="' + cls(c) + '">' + pct(c) + '</span></div></button>';
+}
+function renderTabs() { $('tabs').innerHTML = CLASSES.map(([k, n]) => '<button data-tab="' + k + '" class="' + (U.tab === k ? 'on' : '') + '">' + n + '</button>').join(''); }
+function renderList() {
+  if (U.tab !== 'depot') { $('list').innerHTML = S.assets.filter(a => a.cls === U.tab && a.listed).map(assetRow).join(''); return; }
+  let h = '';
+  const ids = Object.keys(S.hold);
+  h += '<div class="sect">Wertpapiere</div>';
+  h += ids.length ? ids.map(id => { const a = A[id], x = S.hold[id], v = x.qty * a.price, g = (v / x.cost - 1) * 100; return '<button class="arow' + (id === U.sel ? ' on' : '') + '" data-id="' + id + '"><div class="n"><b>' + esc(a.name) + '</b><span>' + qty(x.qty) + ' Stk. · ' + CLASS_NAME[a.cls] + '</span></div>' + spark(a.hist) + '<div class="p">' + eurS(v) + '<span class="' + cls(g) + '">' + pct(g, 1) + '</span></div></button>'; }).join('') : '<div class="empty">Noch keine Wertpapiere. Wähle oben eine Anlageklasse.</div>';
+  if (S.opts.length) {
+    h += '<div class="sect">Optionen</div><div style="padding:0 2px">';
+    for (const o of S.opts) { const v = optValue(o), g = (v / o.cost - 1) * 100; h += '<div class="orow"><div><div class="n">' + (o.type === 'C' ? 'Call' : 'Put') + ' ' + esc(A[o.und].name) + '</div><div class="s">Basis ' + px(o.K) + ' · noch ' + (o.exp - S.day) + ' Tage</div></div><div class="v">' + eurS(v) + '<div class="' + cls(g) + '" style="font-size:11px">' + pct(g, 0) + '</div></div><button data-sellopt="' + o.uid + '">Verkaufen</button></div>'; }
+    h += '</div>';
+  }
+  if (S.ventures.length || S.ipos.some(p => p.qty > 0)) {
+    h += '<div class="sect">Beteiligungen</div><div style="padding:0 2px">';
+    for (const v of S.ventures) h += '<div class="orow"><div><div class="n">Startup „' + esc(v.name) + '“</div><div class="s">Entscheidung in ' + (v.day - S.day) + ' Tagen</div></div><div class="v">' + eurS(v.amt) + '</div></div>';
+    for (const p of S.ipos) if (p.qty > 0) h += '<div class="orow"><div><div class="n">Zeichnung ' + esc(A[p.id].name) + '</div><div class="s">Börsenstart in ' + (p.day - S.day) + ' Tagen</div></div><div class="v">' + eurS(p.qty * p.issue) + '</div></div>';
+    h += '</div>';
+  }
+  $('list').innerHTML = h;
+}
+
+function renderDetail() {
+  const a = A[U.sel], h = S.hold[a.id];
+  const c = (a.price / a.prev - 1) * 100, hy = a.hist[Math.max(0, a.hist.length - YEAR)], cy = (a.price / hy - 1) * 100;
+  $('dName').textContent = U.mode === 'nw' ? 'Mein Vermögen' : a.name;
+  $('dMeta').textContent = U.mode === 'nw' ? 'Nettovermögen seit Spielbeginn' + (S.maxNW > 2e5 ? ' · logarithmische Skala' : '') : CLASS_NAME[a.cls] + ' · ' + a.id + (a.comps ? ' · ' + a.comps.length + ' Titel' : '') + (a.lev ? ' · tägliche ' + (a.lev > 0 ? a.lev + '-fache' : 'inverse') + ' Wertentwicklung von ' + A[a.base].name : '');
+  if (U.mode === 'nw') {
+    const nw = netWorth(), f = S.nwHist[0];
+    $('dPrice').textContent = eur(nw); $('dChg').innerHTML = '<span class="' + cls(nw - f) + '">' + pct((nw / f - 1) * 100, 1) + ' gesamt</span>';
+  } else {
+    $('dPrice').textContent = px(a.price);
+    $('dChg').innerHTML = '<span class="' + cls(c) + '">' + pct(c) + ' heute</span> · <span class="' + cls(cy) + '">' + pct(cy, 1) + ' 1J</span>';
+  }
+  const vol = realVol(a), facts = [['Volatilität', nf(vol * 100, 0) + ' % p.a.']];
+  if (a.cls === 'bond') facts.push(['Kupon', nf(a.coupon * 100, 2) + ' % mtl.'], ['Duration', nf(a.dur, 1) + ' J.'], ['Ausfallrisiko', a.def ? nf(a.def * 100, 0) + ' % p.a.' : 'keins']);
+  else if (a.cls === 'crypto') facts.push(['Krypto-Beta', nf(a.cb, 2)]);
+  else { if (a.beta != null) facts.push(['Beta', nf(a.beta, 2)]); facts.push([a.cls === 'etf' ? 'Ausschüttung' : 'Dividende', a.div ? nf(a.div * 100, 1) + ' % p.a.' : 'keine']); }
+  if (h) { const v = h.qty * a.price, g = v - h.cost; facts.push(['Bestand', qty(h.qty) + ' Stk.'], ['Wert', eurS(v)], ['Ø Einstand', px(h.cost / h.qty)], ['Gewinn/Verlust', '<span class="' + cls(g) + '">' + (g >= 0 ? '+' : '−') + eurS(Math.abs(g)) + '</span>']); }
+  $('facts').innerHTML = facts.map(([k, v]) => '<div><div class="lbl">' + k + '</div><div class="v">' + v + '</div></div>').join('');
+  for (const b of $('modeSeg').children) b.classList.toggle('on', b.dataset.m === U.mode);
+  for (const b of $('tfSeg').children) b.classList.toggle('on', +b.dataset.t === U.tf);
+  $('tt-trade').classList.toggle('on', U.ttab === 'trade'); $('tt-opt').classList.toggle('on', U.ttab === 'opt');
+  $('tradePane').hidden = U.ttab !== 'trade'; $('optPane').hidden = U.ttab !== 'opt';
+  $('sellBtn').disabled = $('sellHalf').disabled = $('sellAll').disabled = !h;
+  updateAmtHint();
+  if (U.ttab === 'opt') renderOpt();
+  drawChart();
+}
+function updateAmtHint() {
+  const a = A[U.sel], v = parseFloat($('amt').value);
+  $('amtHint').textContent = v > 0 ? '≈ ' + qty(v / a.price) + ' Stk. · ' + eurS(v) : 'Bargeld: ' + eur(S.cash);
+}
+let optBuilt = '';
+function renderOpt() {
+  const a = A[U.sel], pane = $('optPane');
+  if (S.rank < 1) { if (optBuilt !== 'lock') { pane.innerHTML = '<div class="lock">Optionen werden ab <b>' + eurS(GOALS[0]) + '</b> Vermögen freigeschaltet (Rang Kleinanleger).</div>'; optBuilt = 'lock'; } return; }
+  if (a.cls === 'bond') { pane.innerHTML = '<div class="lock">Auf Anleihen gibt es keine Optionen.</div>'; optBuilt = 'bond'; return; }
+  if (optBuilt !== 'form') {
+    pane.innerHTML = '<div style="display:grid;gap:10px">' +
+      '<div class="chips" id="oType"><button data-v="C">Call · auf steigende Kurse</button><button data-v="P">Put · auf fallende Kurse</button></div>' +
+      '<div class="lbl">Basispreis</div><div class="chips" id="oK"><button data-v=".8">−20 %</button><button data-v=".9">−10 %</button><button data-v="1">am Geld</button><button data-v="1.1">+10 %</button><button data-v="1.2">+20 %</button><button data-v="1.5">+50 %</button></div>' +
+      '<div class="lbl">Laufzeit</div><div class="chips" id="oT"><button data-v="21">1 Monat</button><button data-v="63">3 Monate</button><button data-v="125">6 Monate</button><button data-v="250">1 Jahr</button></div>' +
+      '<div class="kv" id="oKv"></div>' +
+      '<div class="irow"><input type="number" id="oAmt" min="0" step="any" inputmode="decimal" placeholder="Einsatz in €"><div class="hint mono" id="oHint"></div></div>' +
+      '<div class="chips" id="oChips"><button data-p=".05">5 %</button><button data-p=".1">10 %</button><button data-p=".25">25 %</button><button data-p=".5">50 %</button></div>' +
+      '<button class="primary" id="oBuy">Option kaufen</button>' +
+      '<div class="hint">Optionen sind gehebelt: Kleine Kursbewegungen ergeben große Gewinne oder Verluste. Bei Verfall wird der innere Wert ausgezahlt, sonst ist der Einsatz weg.</div></div>';
+    optBuilt = 'form';
+  }
+  for (const b of $('oType').children) b.classList.toggle('on', b.dataset.v === U.oType);
+  for (const b of $('oK').children) b.classList.toggle('on', +b.dataset.v === U.oK);
+  for (const b of $('oT').children) b.classList.toggle('on', +b.dataset.v === U.oT);
+  const q = optQuote(), v = parseFloat($('oAmt').value);
+  $('oKv').innerHTML = [['Basispreis', px(q.K)], ['Preis je Option', px(q.ask)], ['Break-even', px(q.be)], ['Hebel', '×' + nf(q.lev, 1)]].map(([k, x]) => '<div><div class="lbl">' + k + '</div><div class="v">' + x + '</div></div>').join('');
+  $('oHint').textContent = v > 0 ? '≈ ' + qty(v / q.ask) + ' Optionen' : 'Bargeld: ' + eurS(S.cash);
+  $('oBuy').textContent = (U.oType === 'C' ? 'Call' : 'Put') + ' auf ' + a.name + ' kaufen';
+}
+
+function renderSide(nw) {
+  const hv = holdValue(), ov = optsValue(), vv = ventValue();
+  $('tgRate').textContent = 'Tagesgeld ' + nf(tgRate()) + ' %';
+  $('ledger').innerHTML = [['Bargeld', S.cash], ['Wertpapiere', hv], ['Optionen', ov], ['Beteiligungen', vv], ['Kredit', -S.debt]].filter(([k, v]) => v !== 0 || k === 'Bargeld' || k === 'Wertpapiere')
+    .map(([k, v]) => '<div><span class="muted">' + k + '</span><span class="v ' + (v < 0 ? 'down' : '') + '">' + eur(v) + '</span></div>').join('') +
+    '<div class="tot"><span>Netto</span><span class="v">' + eur(nw) + '</span></div>';
+  const cfg = loanCfg(), box = $('loanBox');
+  $('loanRate').textContent = 'Zins ' + nf(loanRate()) + ' %';
+  if (!cfg) { if (box.dataset.k !== 'lock') { box.innerHTML = '<div class="lock">Kredite gibt es ab <b>' + eurS(GOALS[1]) + '</b> Vermögen (Rang Trader). Damit kannst du dein Depot beleihen und mit Hebel investieren.</div>'; box.dataset.k = 'lock'; } return; }
+  if (box.dataset.k !== 'form') {
+    box.innerHTML = '<div class="ledger" id="loanLedger"></div><div class="meter"><div id="loanMeter"></div></div><div class="hint" id="loanHint"></div>' +
+      '<div class="irow" style="margin-top:10px"><input type="number" id="loanAmt" min="0" step="any" inputmode="decimal" placeholder="Betrag in €"></div>' +
+      '<div class="btns" style="margin-top:8px"><button id="loanMax">Max</button><button class="primary" id="loanTake">Aufnehmen</button><button id="loanPay">Tilgen</button></div>';
+    box.dataset.k = 'form';
+  }
+  const col = collateral(), lim = cfg.ltv * col, mc = (cfg.ltv + .1) * col, use = mc > 0 ? (S.debt - Math.max(S.cash, 0)) / mc : 0;
+  $('loanLedger').innerHTML = '<div><span class="muted">Beleihungsgrenze (' + Math.round(cfg.ltv * 100) + ' %)</span><span class="v">' + eurS(lim) + '</span></div><div><span class="muted">Offener Kredit</span><span class="v">' + eurS(S.debt) + '</span></div><div><span class="muted">Noch verfügbar</span><span class="v">' + eurS(Math.max(0, lim - S.debt)) + '</span></div>';
+  const m = $('loanMeter'); m.style.width = clamp(use, 0, 1) * 100 + '%'; m.style.background = use > .85 ? COL.down : use > .6 ? COL.brass : COL.up;
+  $('loanHint').textContent = S.debt > 0 ? 'Auslastung bis Margin Call: ' + Math.round(clamp(use, 0, 9) * 100) + ' %. Bei 100 % verkauft die Bank Teile deines Depots.' : 'Sicherheiten: deine Wertpapiere und Optionen.';
+}
+
+function renderHeader(nw) {
+  const y = Math.floor((S.day - 1) / YEAR) + 1, d = (S.day - 1) % YEAR + 1;
+  $('date').textContent = 'Jahr ' + y + ' · Tag ' + d;
+  const rg = $('regime'); rg.textContent = REG[S.regime].name; rg.className = 'chip ' + S.regime;
+  $('rate').textContent = 'Leitzins ' + nf(S.rate) + ' %';
+  $('nw').textContent = eur(nw);
+  const ch = S.lastNW ? (nw / S.lastNW - 1) * 100 : 0;
+  $('nwChg').innerHTML = '<span class="' + cls(ch) + '">' + pct(ch) + ' heute</span> <span class="muted">· Start ' + eurS(START) + ' · ×' + nf(nw / START, nw / START >= 100 ? 0 : 2) + '</span>';
+  $('rankName').textContent = RANKS[S.rank].name;
+  $('nextGoal').textContent = S.rank < GOALS.length ? 'Nächstes Ziel: ' + eurS(GOALS[S.rank]) + ' · noch ' + eurS(Math.max(0, GOALS[S.rank] - nw)) : 'Alle Ziele erreicht!';
+  const pos = v => clamp((Math.log10(Math.max(v, 1)) - 4) / 5, 0, 1) * 100;
+  $('trackFill').style.width = pos(S.maxNW) + '%';
+  let me = $('trackMe');
+  if (!me) { const t = $('track'); t.insertAdjacentHTML('beforeend', [START, ...GOALS].map((g, i) => '<div class="node" data-i="' + i + '" style="left:' + pos(g) + '%"><span class="a">' + eurS(g).replace(' €', '').replace(',0', '') + '</span><span class="b">' + RANKS[i].name + '</span></div>').join('') + '<div class="me" id="trackMe"></div>'); me = $('trackMe'); }
+  me.style.left = pos(nw) + '%';
+  for (const n of $('track').querySelectorAll('.node')) n.classList.toggle('hit', +n.dataset.i <= S.rank);
+}
+
+function renderLower() {
+  $('ranks').innerHTML = RANKS.map((r, i) => {
+    const hit = i <= S.rank, cur = i === S.rank;
+    return '<div class="' + (hit ? 'hit ' : '') + (cur ? 'cur' : '') + '"><div class="dot"></div><div class="t"><b>' + r.name + '</b> <span>' + (i ? 'ab ' + eurS(GOALS[i - 1]) + ' · ' : '') + r.unlock + '</span></div><div class="r">' + (i === 0 ? 'Start' : S.reached[i] ? 'Tag ' + S.reached[i] : '–') + '</div></div>';
+  }).join('');
+  $('achs').innerHTML = ACH.map(([k, n, d]) => '<div class="ach' + (S.ach[k] ? ' got' : '') + '"><b>' + (S.ach[k] ? '🏅 ' : '') + n + '</b><span>' + d + '</span></div>').join('');
+  $('achCount').textContent = Object.keys(S.ach).length + ' / ' + ACH.length;
+}
+function renderNews() { $('news').innerHTML = S.news.map(n => '<li class="' + n.k + '"><span class="d">J' + (Math.floor((n.d - 1) / YEAR) + 1) + ' T' + ((n.d - 1) % YEAR + 1) + '</span><span>' + esc(n.t) + '</span></li>').join(''); }
+
+function drawChart() {
+  const cv = $('chart'), dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+  const isNW = U.mode === 'nw', a = A[U.sel];
+  const data = isNW ? S.nwHist : a.hist.slice(-U.tf);
+  if (data.length < 2) { c.fillStyle = COL.muted; c.font = '13px ' + C('--f-body'); c.fillText('Noch zu wenig Daten. Starte die Zeit.', 12, h / 2); return; }
+  const log = isNW && S.maxNW > 2e5;
+  const f = v => log ? Math.log(Math.max(v, 1)) : v, inv = t => log ? Math.exp(t) : t;
+  let mn = Infinity, mx = -Infinity; for (const v of data) { const t = f(v); if (t < mn) mn = t; if (t > mx) mx = t; }
+  const hold = !isNW && S.hold[a.id], avg = hold ? hold.cost / hold.qty : null;
+  if (avg && f(avg) > mn - (mx - mn) * .5 && f(avg) < mx + (mx - mn) * .5) { mn = Math.min(mn, f(avg)); mx = Math.max(mx, f(avg)); }
+  if (mx - mn < 1e-9) { mx += 1; mn -= 1; }
+  const pad = (mx - mn) * .08; mn -= pad; mx += pad;
+  const L = 4, R = 84, T = 10, B = 12;
+  const X = i => L + i / (data.length - 1) * (w - L - R), Y = v => T + (1 - (f(v) - mn) / (mx - mn)) * (h - T - B);
+  c.font = '11px ' + C('--f-mono'); c.lineWidth = 1; c.textBaseline = 'middle';
+  for (let i = 0; i <= 4; i++) {
+    const v = inv(mn + (mx - mn) * i / 4), y = Y(v);
+    c.strokeStyle = COL.line; c.beginPath(); c.moveTo(L, y); c.lineTo(w - R, y); c.stroke();
+    c.fillStyle = COL.muted; c.fillText(isNW ? eurS(v) : px(v), w - R + 8, y);
+  }
+  const up = data[data.length - 1] >= data[0], col = isNW ? COL.brass : up ? COL.up : COL.down;
+  const g = c.createLinearGradient(0, T, 0, h - B); g.addColorStop(0, col + '40'); g.addColorStop(1, col + '00');
+  c.beginPath(); data.forEach((v, i) => i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)));
+  c.lineTo(X(data.length - 1), h - B); c.lineTo(X(0), h - B); c.closePath(); c.fillStyle = g; c.fill();
+  c.beginPath(); data.forEach((v, i) => i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)));
+  c.strokeStyle = col; c.lineWidth = 2; c.lineJoin = 'round'; c.stroke();
+  if (isNW) for (const gl of GOALS) { if (f(gl) > mn && f(gl) < mx) { const y = Y(gl); c.setLineDash([3, 5]); c.strokeStyle = COL.muted; c.lineWidth = 1; c.beginPath(); c.moveTo(L, y); c.lineTo(w - R, y); c.stroke(); c.setLineDash([]); c.fillStyle = COL.muted; c.fillText('Ziel', L + 4, y - 8); } }
+  if (avg) { const y = Y(avg); if (y > T && y < h - B) { c.setLineDash([5, 4]); c.strokeStyle = COL.brass; c.lineWidth = 1; c.beginPath(); c.moveTo(L, y); c.lineTo(w - R, y); c.stroke(); c.setLineDash([]); c.fillStyle = COL.brass; c.fillText('Ø Einstand', L + 4, y - 9); } }
+  const lx = X(data.length - 1), ly = Y(data[data.length - 1]);
+  c.fillStyle = col; c.beginPath(); c.arc(lx, ly, 3.5, 0, Math.PI * 2); c.fill();
+}
+
+function render() {
+  if (!dirty) return; dirty = false;
+  const nw = netWorth();
+  renderHeader(nw); renderTabs(); renderList(); renderDetail(); renderSide(nw); renderNews(); renderLower();
+}
+function loop() { render(); requestAnimationFrame(loop); }
+
+// ---------- Ereignis-Bindungen ----------
+$('play').onclick = () => timer ? pause() : play();
+$('speeds').onclick = e => { const b = e.target.closest('button'); if (!b) return; speed = +b.dataset.s; for (const x of $('speeds').children) x.classList.toggle('on', x === b); if (timer) play(); };
+$('newGame').onclick = () => showModal({ kick: 'Neues Spiel', title: 'Wirklich von vorn anfangen?', body: '<p>Dein aktueller Spielstand (' + eurS(netWorth()) + ', Rang ' + RANKS[S.rank].name + ') wird gelöscht.</p>', btns: [['Ja, neues Spiel', 'sell', () => { newState(); optBuilt = ''; $('loanBox').dataset.k = ''; U.sel = 'NOVA'; U.tab = 'stock'; save(); hideModal(); intro(); }], ['Abbrechen', '', hideModal]] });
+$('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; U.tab = b.dataset.tab; if (U.tab !== 'depot' && A[U.sel].cls !== U.tab) U.sel = S.assets.find(a => a.cls === U.tab && a.listed).id; dirty = true; };
+$('list').onclick = e => { const so = e.target.closest('[data-sellopt]'); if (so) return sellOption(+so.dataset.sellopt); const b = e.target.closest('[data-id]'); if (b) selectAsset(b.dataset.id); };
+$('modeSeg').onclick = e => { const b = e.target.closest('button'); if (b) { U.mode = b.dataset.m; dirty = true; } };
+$('tfSeg').onclick = e => { const b = e.target.closest('button'); if (b) { U.tf = +b.dataset.t; if (U.mode === 'nw') U.mode = 'price'; dirty = true; } };
+$('tt-trade').onclick = () => { U.ttab = 'trade'; dirty = true; };
+$('tt-opt').onclick = () => { U.ttab = 'opt'; dirty = true; };
+$('amt').oninput = updateAmtHint;
+$('amtChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('amt').value = Math.floor(S.cash * +b.dataset.p * 100) / 100; updateAmtHint(); };
+$('buyBtn').onclick = () => buy(parseFloat($('amt').value));
+$('sellBtn').onclick = () => { const v = parseFloat($('amt').value); sellQty(v / A[U.sel].price); };
+$('sellHalf').onclick = () => { const h = S.hold[U.sel]; if (h) sellQty(h.qty / 2); };
+$('sellAll').onclick = () => { const h = S.hold[U.sel]; if (h) sellQty(h.qty); };
+$('optPane').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const p = b.parentElement.id;
+  if (p === 'oType') U.oType = b.dataset.v; else if (p === 'oK') U.oK = +b.dataset.v; else if (p === 'oT') U.oT = +b.dataset.v;
+  else if (p === 'oChips') { $('oAmt').value = Math.floor(S.cash * +b.dataset.p * 100) / 100; }
+  else if (b.id === 'oBuy') buyOption(parseFloat($('oAmt').value));
+  dirty = true;
+};
+$('optPane').oninput = () => { dirty = true; };
+$('loanBox').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return; const v = parseFloat($('loanAmt').value);
+  if (b.id === 'loanMax') { const cfg = loanCfg(); $('loanAmt').value = Math.floor(Math.max(0, cfg.ltv * collateral() - S.debt)); }
+  else if (b.id === 'loanTake') borrow(v); else if (b.id === 'loanPay') repay(v);
+};
+window.addEventListener('resize', () => { dirty = true; });
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+document.addEventListener('keydown', e => { if (e.key === ' ' && !modalOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); timer ? pause() : play(); } });
+
+function intro() {
+  showModal({ kick: 'Kapital · Börsenspiel', title: 'Von 10.000 € zur Milliarde', body:
+    '<p>Du startest mit <b>10.000 € Spielgeld</b>. Kaufe Aktien, ETFs, Anleihen, Rohstoffe und Krypto. Die Zeit läuft, sobald du auf Start drückst. Ein Tag pro Sekunde, schneller mit 4× bis 50×.</p>' +
+    '<p>Jedes Ziel schaltet etwas frei: <b>Optionen</b> ab 30.000 €, <b>Kredite</b> ab 100.000 €. Danach geht es um Millionen.</p>' +
+    '<p>Achte auf Marktphasen, Zinsentscheide, Gerüchte, Startups und Börsengänge. Mit Kredit kannst du hebeln, aber ein Margin Call kann dich ruinieren.</p>',
+    btns: [['Los geht’s', 'primary', hideModal]] });
+}
+
+function start(data) {
+  S = (data && data.S) || load();
+  let fresh = false;
+  if (!S) { newState(); fresh = true; } else indexAssets();
+  if (data && data.U) Object.assign(U, data.U);
+  if (!A[U.sel]) U.sel = 'NOVA';
+  dirty = true; loop();
+  if (fresh) intro();
+}
+window.claude?.hot?.snapshot?.(() => ({ S, U }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 })();
 </script>
 </body>
