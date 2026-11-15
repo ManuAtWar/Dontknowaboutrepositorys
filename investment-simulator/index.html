@@ -173,8 +173,8 @@
   .foot { text-align: center; color: var(--faint); font-size: 12px; margin-top: 18px; }
 
   /* Overlay */
-  .overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(4, 10, 12, .78); padding: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .modal { width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(4, 10, 12, .78); cursor: pointer; }
+  .modal { cursor: auto; position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: min(480px, calc(100% - 32px)); max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
   .modal .kick { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--brass); }
   .modal h3 { margin: 6px 0 8px; font: 700 24px/1.15 var(--f-display); text-wrap: balance; }
   .modal p { color: var(--muted); margin: 0 0 10px; }
@@ -707,8 +707,41 @@ function showModal({ kick, title, body, btns }) {
   $('mKick').textContent = kick || ''; $('mTitle').textContent = title; $('mBody').innerHTML = body || '';
   const box = $('mBtns'); box.innerHTML = '';
   for (const [label, kind, fn, disabled] of btns) { const b = document.createElement('button'); b.textContent = label; if (kind) b.className = kind; b.disabled = !!disabled; b.onclick = fn; box.appendChild(b); }
-  $('overlay').hidden = false; box.querySelector('button:not(:disabled)')?.focus();
+  $('overlay').hidden = false;
+  ensureStrips(); placeModal();
+  requestAnimationFrame(() => { placeModal(); box.querySelector('button:not(:disabled)')?.focus({ preventScroll: true }); });
 }
+
+// Sichtbaren Bereich ermitteln: In eingebetteten Ansichten ist die Seite oft so hoch wie ihr Inhalt
+// und wird von außen gescrollt. Dann läge ein mittig fixiertes Fenster außerhalb des Bildschirms.
+// Unsichtbare 100-px-Streifen + IntersectionObserver verraten, welcher Teil gerade zu sehen ist.
+const STRIP = 100, stripVis = new Map();
+let stripBox = null, stripH = 0, io = null;
+function ensureStrips() {
+  if (!('IntersectionObserver' in window)) return;
+  const H = document.documentElement.scrollHeight;
+  if (stripBox && Math.abs(H - stripH) < STRIP) return;
+  if (io) io.disconnect(); if (stripBox) stripBox.remove(); stripVis.clear();
+  stripH = H; stripBox = document.createElement('div');
+  stripBox.setAttribute('aria-hidden', 'true');
+  stripBox.style.cssText = 'position:absolute;left:0;top:0;width:1px;height:0;pointer-events:none;visibility:hidden';
+  for (let y = 0; y < H; y += STRIP) { const d = document.createElement('div'); d.style.cssText = 'position:absolute;left:0;width:1px;top:' + y + 'px;height:' + STRIP + 'px'; d.dataset.y = y; stripBox.appendChild(d); }
+  document.body.appendChild(stripBox);
+  io = new IntersectionObserver(es => {
+    for (const e of es) { if (e.isIntersecting && e.intersectionRect.height > 0) stripVis.set(e.target, e.intersectionRect); else stripVis.delete(e.target); }
+    if (modalOpen) placeModal();
+  }, { threshold: [0, .25, .5, .75, 1] });
+  for (const d of stripBox.children) io.observe(d);
+}
+function placeModal() {
+  const m = $('overlay').querySelector('.modal');
+  let top = 0, h = window.innerHeight;
+  if (stripVis.size) { let a = Infinity, b = -Infinity; for (const r of stripVis.values()) { a = Math.min(a, r.top); b = Math.max(b, r.bottom); } top = a; h = b - a; }
+  h = Math.min(h, screen.height || h);
+  m.style.maxHeight = Math.max(240, h - 32) + 'px';
+  m.style.top = Math.max(0, top + Math.max(16, (h - m.offsetHeight) / 2)) + 'px';
+}
+function dismissModal() { if (modalOpen) $('mBtns').lastElementChild?.click(); }
 function hideModal() { $('overlay').hidden = true; modalOpen = false; dirty = true; if (wasRunning && !S.over) play(); wasRunning = false; }
 
 // ---------- Steuerung ----------
@@ -939,9 +972,10 @@ $('loanBox').onclick = e => {
   if (b.id === 'loanMax') { const cfg = loanCfg(); $('loanAmt').value = Math.floor(Math.max(0, cfg.ltv * collateral() - S.debt)); }
   else if (b.id === 'loanTake') borrow(v); else if (b.id === 'loanPay') repay(v);
 };
-window.addEventListener('resize', () => { dirty = true; });
+window.addEventListener('resize', () => { dirty = true; if (modalOpen) placeModal(); });
+$('overlay').addEventListener('click', e => { if (e.target === $('overlay')) dismissModal(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
-document.addEventListener('keydown', e => { if (e.key === ' ' && !modalOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); timer ? pause() : play(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') return dismissModal(); if (e.key === ' ' && !modalOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); timer ? pause() : play(); } });
 
 function intro() {
   showModal({ kick: 'Kapital · Börsenspiel', title: 'Von 10.000 € zur Milliarde', body:
