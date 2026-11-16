@@ -9,6 +9,18 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
   Zerstörer, Fregatten, Korvetten, U-Boote, Atomsprengköpfe, Militärbudget, Technologiestand und die wichtigsten Waffensysteme
   (z. B. Leopard 2A7V, F-35A, Type 055, K9 Thunder).
 
+## Neu in Version 2
+
+* **Flüssige Karte:** Canvas-Renderer mit Detailstufen statt SVG; Zoomen und Verschieben bleiben auch auf dem Handy flüssig.
+* **Animationen:** Bei Invasionen erscheint ein Angriffspfeil, Panzer rollen über die Grenze (bei Seelandungen fahren Schiffe vor) und bekommen Luftunterstützung.
+  Bei einer Eroberung färbt sich das Land von der Einbruchstelle aus in der Farbe des Eroberers. Luftschläge zeigen Jets, Explosionen,
+  Druckwellen und ein leichtes Bildschirmwackeln. Der Sound wird im Browser synthetisiert und lässt sich abschalten.
+* **KI spielt auf Weltherrschaft:** Großmächte führen Feldzüge über mehrere Runden, rüsten auf und wählen Ziele nach Wert und Schwäche.
+  Wer führt, wird zum Ziel aller. Wer zuerst 60 % aller Länder hält, gewinnt, und das kann auch ein KI-Rivale sein.
+* **Weniger Pop-ups:** Mit „Angreifen!“ wird sofort angegriffen. Meldungen laufen als Ticker über die Karte, die Rangliste der Weltmächte ist immer sichtbar,
+  und die KI-Züge laufen live ab (Überspringen möglich, Taste E beendet die Runde).
+* Seelandungen sind nur gegen Länder mit Küste möglich; Binnenländer erreicht man nur über Land.
+
 ## Spielen
 
 `index.html` im Browser öffnen – fertig (läuft offline, alle Daten sind eingebettet).
@@ -29,6 +41,7 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
 | **Wirtschaft** | Einnahmen = Militärbudgets aller eigenen Länder. Rüstungsetat bis ×3, aber mehr Aufstände. |
 | **Aufstände** | Besetzte Länder können rebellieren, besonders bei zu wenigen Soldaten oder im „Totalen Krieg“. |
 | **Weltspannung** | Je mehr du eroberst, desto öfter greifen dich andere Mächte an. Die KI-Staaten führen auch untereinander Krieg. |
+| **Sieg / Niederlage** | Weltherrschaft ab 60 % aller Länder (danach optional weiterspielen). Verloren hast du, wenn ein Rivale die 60 % zuerst erreicht oder du dein letztes Land verlierst. |
 
 ## Projektstruktur
 

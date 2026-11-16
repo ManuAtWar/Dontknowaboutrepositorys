@@ -73,8 +73,9 @@ const kept = [];
 for (const g of geoms) {
   const k = keyOf(g);
   if (!k) continue;
+  const terr = g.id && MERGE[+g.id] != null; // dependent territory merged into its state
   g.id = index.get(k);
-  delete g.properties;
+  if (terr) g.properties = { t: 1 }; else delete g.properties;
   kept.push(g);
 }
 topo.objects = { c: { type: 'GeometryCollection', geometries: kept } };
@@ -83,6 +84,13 @@ topo.objects = { c: { type: 'GeometryCollection', geometries: kept } };
 const nbGeom = topojson.neighbors(kept);
 const nb = Array.from({ length: N }, () => new Set());
 kept.forEach((g, i) => nbGeom[i].forEach(j => { const a = g.id, b = kept[j].id; if (a !== b) { nb[a].add(b); nb[b].add(a); } }));
+
+// ---------- 3b. Coastal states (any border arc not shared with another shape) ----------
+const arcUse = new Map();
+const walkArcs = (a, fn) => Array.isArray(a) ? a.forEach(x => walkArcs(x, fn)) : fn(a < 0 ? ~a : a);
+kept.forEach(g => walkArcs(g.arcs, i => arcUse.set(i, (arcUse.get(i) || 0) + 1)));
+const coast = new Array(N).fill(0);
+kept.forEach(g => walkArcs(g.arcs, i => { if (arcUse.get(i) === 1) coast[g.id] = 1; }));
 
 // ---------- 4. Coast-to-coast distances (km) ----------
 const feats = topojson.feature(topo, topo.objects.c).features;
@@ -123,6 +131,7 @@ for (let a = 0; a < N; a++) {
 const data = {
   c: countries,
   nb: nb.map(s => [...s].sort((x, y) => x - y)),
+  coast,
   dist: Buffer.from(dist.buffer).toString('base64'),
 };
 

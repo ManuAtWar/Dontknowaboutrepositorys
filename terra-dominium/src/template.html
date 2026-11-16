@@ -19,6 +19,7 @@
       <div class="stat"><span class="lbl">Einnahmen/Monat</span><span class="val" id="hudIncome">–</span></div>
       <div class="stat"><span class="lbl">Länder</span><span class="val" id="hudLands">–</span></div>
       <div class="stat hide-s"><span class="lbl">Weltbevölkerung</span><span class="val" id="hudPop">–</span></div>
+      <div class="stat"><span class="lbl">Stärkster Rivale</span><span class="val" id="hudRival">–</span></div>
     </div>
     <div class="hud-actions">
       <button class="btn ghost" id="btnForces" type="button">Streitkräfte</button>
@@ -27,7 +28,10 @@
     </div>
   </header>
   <main id="stage">
-    <svg id="map" role="img" aria-label="Weltkarte"></svg>
+    <canvas id="map" aria-hidden="true"></canvas>
+    <canvas id="fx" role="img" aria-label="Weltkarte – ziehen zum Verschieben, zwei Finger oder Mausrad zum Zoomen, tippen zum Auswählen"></canvas>
+    <div id="ticker" aria-live="polite"></div>
+    <div id="powers"></div>
     <div id="tip" hidden></div>
     <div id="legend">
       <span><i class="sw me"></i>Dein Reich</span>
@@ -39,6 +43,7 @@
       <button type="button" id="zIn" aria-label="Hineinzoomen">+</button>
       <button type="button" id="zOut" aria-label="Herauszoomen">−</button>
       <button type="button" id="zHome" aria-label="Zum eigenen Reich">⌖</button>
+      <button type="button" id="sndBtn" aria-label="Ton an/aus">♪</button>
     </div>
     <aside id="panel" aria-live="polite"></aside>
   </main>
