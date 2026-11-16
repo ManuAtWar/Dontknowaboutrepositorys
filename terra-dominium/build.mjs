@@ -138,7 +138,7 @@ const data = {
 // ---------- 5. Assemble HTML ----------
 const tpl = readFileSync(join(ROOT, 'src/template.html'), 'utf8');
 const css = readFileSync(join(ROOT, 'src/style.css'), 'utf8');
-const js = readFileSync(join(ROOT, 'src/game.js'), 'utf8').replace('/*TACTICAL*/', () => readFileSync(join(ROOT, 'src/tactical.js'), 'utf8'));
+const js = readFileSync(join(ROOT, 'src/game.js'), 'utf8').replace('/*TACTICAL*/', () => readFileSync(join(ROOT, 'src/battle3d.js'), 'utf8') + readFileSync(join(ROOT, 'src/tactical.js'), 'utf8'));
 const dataScript = `<script>window.TD_DATA=${JSON.stringify(data)};window.TD_TOPO=${JSON.stringify(topo)};</script>`;
 
 const page = libs => tpl
@@ -148,8 +148,9 @@ const page = libs => tpl
   .replace('/*GAME*/', () => js);
 
 const cdn = '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>\n'
-  + '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>';
-const local = '<script src="vendor/d3.min.js"></script>\n<script src="vendor/topojson-client.min.js"></script>';
+  + '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>\n'
+  + '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>';
+const local = '<script src="vendor/d3.min.js"></script>\n<script src="vendor/topojson-client.min.js"></script>\n<script src="vendor/three.min.js"></script>';
 
 mkdirSync(join(ROOT, 'dist'), { recursive: true });
 writeFileSync(join(ROOT, 'dist/artifact.html'), page(cdn));

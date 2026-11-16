@@ -11,11 +11,12 @@
   const SEA = ['cv','amph','dd','ff','cor','ss'];
   const BUYABLE = [...LAND, ...AIR, ...SEA];
   // ---- player settings (persisted per browser) ----
-  const CFG_DEF = { tempo: 'fast', aiShow: 'all', aggr: 1, win: 0.6, money: 1, name: '', color: '#f0b43c' };
+  const CFG_DEF = { v: 4, tempo: 'normal', aiShow: 'all', aggr: 1, win: 0.6, money: 1, name: '', color: '#f0b43c' };
   let CFG = { ...CFG_DEF };
   try { Object.assign(CFG, JSON.parse(localStorage.getItem('td-cfg')) || {}); } catch (e) { /* ignore */ }
+  if (CFG.v !== 4) { CFG.v = 4; CFG.tempo = 'normal'; } // v4: smoother default pacing
   const saveCfg = () => { try { localStorage.setItem('td-cfg', JSON.stringify(CFG)); } catch (e) { /* ignore */ } };
-  const TEMPO = { normal: 1.2, fast: 2, blitz: 3.6 };
+  const TEMPO = { normal: 1, fast: 1.6, blitz: 3 };
   const tempo = () => TEMPO[CFG.tempo] || 2;
   let WIN_SHARE = CFG.win; // share of all countries needed for world domination
 
@@ -423,12 +424,12 @@
     events.forEach((e, i) => setTimeout(() => ticker(e.type, e.text), 200 + i * 250));
     let tEnd = 0;
     const playerFirst = battles.filter(b => b.def === P || b.att === P).concat(battles.filter(b => b.def !== P && b.att !== P));
-    const tp = tempo() * 1.5;
+    const tp = tempo() * 0.9;
     playerFirst.forEach((rep, i) => {
       const mineB = rep.def === P || rep.att === P;
       const tick = () => { if (rep.ev && (rep.def === P || rep.ev.type !== 'info' || rep.conquered)) ticker(rep.ev.type, rep.ev.text, rep); };
       if (CFG.aiShow === 'none' || (CFG.aiShow === 'mine' && !mineB)) { if (rep.conquered) { shown[rep.tgt] = rep.att; } tick(); return; }
-      const delay = i * 380 / tempo();
+      const delay = i * 420 / tempo();
       const dur = playInvasion(rep, delay, tp, tick);
       tEnd = Math.max(tEnd, delay + dur);
     });
@@ -1090,7 +1091,7 @@
         else h += `<div class="route">Außer Reichweite (${nf0.format(r.d)} km, deine Seereichweite ${nf0.format(seaRange(S.P))} km).</div>`;
         h += `<div class="actions">
           <button class="btn danger" type="button" data-act="quick" ${r.type === 'none' || busy ? 'disabled' : ''}>Angreifen!</button>
-          <button class="btn primary" type="button" data-act="tac" ${r.type === 'none' || busy ? 'disabled' : ''}>⚔ Schlacht führen</button>
+          <button class="btn" type="button" data-act="tac" ${r.type === 'none' || busy ? 'disabled' : ''}>⚔ 3D-Schlacht</button>
           <button class="btn" type="button" data-act="invade" ${r.type === 'none' || busy ? 'disabled' : ''}>Planen…</button>
           <button class="btn" type="button" data-act="air" ${md > ar || busy ? 'disabled' : ''}>Luftschlag</button></div>`;
         if (md > ar) h += `<div class="note" style="margin-top:6px">Luftschlag außer Reichweite (${nf0.format(ar)} km). Bomber oder Flugzeugträger erhöhen die Reichweite.</div>`;
@@ -1206,7 +1207,7 @@
       <h2>${kind === 'invade' ? 'Invasion' : 'Luftschlag gegen'} ${esc(C[t].n)}</h2>
       <p class="sub">Verteidiger: ${esc(ownerName(def))} · Technologie ${Math.round(S.pools[def].t * 100)}/100 vs. deine ${Math.round(S.pools[S.P].t * 100)}/100. Deine Einstellung wird für „Angreifen!“ gespeichert.</p>
       <div id="atkDyn"></div>
-      <div class="actions" style="justify-content:flex-end"><button class="btn ghost" type="button" id="atkCancel">Abbrechen</button>${kind === 'invade' ? '<button class="btn primary" type="button" id="atkTac">⚔ Schlacht führen</button>' : ''}<button class="btn danger" type="button" id="atkGo">${kind === 'invade' ? 'Automatisch' : 'Luftschlag befehlen'}</button></div>`);
+      <div class="actions" style="justify-content:flex-end"><button class="btn ghost" type="button" id="atkCancel">Abbrechen</button>${kind === 'invade' ? '<button class="btn primary" type="button" id="atkTac">⚔ 3D-Schlacht</button>' : ''}<button class="btn danger" type="button" id="atkGo">${kind === 'invade' ? 'Angriff befehlen' : 'Luftschlag befehlen'}</button></div>`);
     render();
     $('#atkCancel').addEventListener('click', closeModal);
     const tacBtn = $('#atkTac');

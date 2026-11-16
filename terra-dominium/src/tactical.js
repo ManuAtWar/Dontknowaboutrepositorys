@@ -10,7 +10,7 @@
   };
   const TT = Object.keys(TU);
   const FW = 1000, FH = 560, HOLD_X = 610, TIME_LIMIT = 150;
-  const btEl = $('#battle'), btCv = $('#btCanvas'), btx = btCv.getContext('2d');
+  const btEl = $('#battle');
   let TB = null;
 
   function sideRaw(m, t, isDef, c, landCap) {
@@ -57,21 +57,25 @@
       hpMulD: Math.min(1.9, ter * 1.15),
       abil: { air: (commit.ftr || 0) + (commit.bmb || 0) > 0 ? 1 + ((commit.bmb || 0) > 0 ? 1 : 0) : 0, bar: (commit.art || 0) + (commit.mlrs || 0) > 0 ? 1 : 0 },
       enemyAir: (dm.ftr || 0) + (dm.bmb || 0) > 0 ? 1 + ((dm.bmb || 0) > 0 ? 1 : 0) : 0, enemyAirAt: 16,
-      targeting: null, decor: makeDecor(ter, rtype !== 'land', t),
+      targeting: null,
     };
+    const lookA = R3.lookFor(S.P, CFG.color), lookD = R3.lookFor(def, '#d8402f');
+    btEl.hidden = false;
+    $('#btResult').hidden = true;
+    const ok3d = R3.setup({ ter, sea: rtype !== 'land', arid: R3.lookFor(t, '#fff').arid, lookA, lookD, seed: t + 1 });
+    if (!ok3d) { btEl.hidden = true; ticker('info', '3D wird von diesem Gerät nicht unterstützt – die Schlacht wird automatisch ausgetragen.'); }
+    $('#btArmyA').textContent = lookA.army; $('#btArmyD').textContent = lookD.army;
     // defender is dug in: 40 % of every arm already in position
     TT.forEach(k => { const n = Math.round(resD[k] * 0.4); for (let i = 0; i < n; i++) spawn(1, k, true); });
     $('#btTitle').textContent = `Schlacht um ${c.n}`;
     $('#btSub').textContent = `${ROUTE_TXT[rtype]}${ter > 1.15 ? ' · schweres Gelände: Verteidiger +' + Math.round((TB.hpMulD - 1) * 100) + ' % Panzerung' : ''}`;
     $('#btNameA').textContent = TB.sides[0].name; $('#btNameD').textContent = TB.sides[1].name;
-    $('#btResult').hidden = true;
-    btEl.hidden = false;
     document.documentElement.style.setProperty('--me', CFG.color);
-    btResize();
     renderBtCards();
     setSpeed(1);
-    btLast = 0; requestAnimationFrame(btFrame);
     audio();
+    if (!ok3d) { autoFinish(); $('#btDone') && $('#btDone').click(); return; }
+    btLast = 0; requestAnimationFrame(btFrame);
   }
 
   function spawn(side, ty, entrenched) {
@@ -82,21 +86,11 @@
     let x, y = d.layer === 2 ? 40 + Math.random() * 480 : 150 + Math.random() * 380;
     if (side === 0) x = TB.sea && d.layer === 0 ? 85 + Math.random() * 20 : 20 + Math.random() * 20;
     else x = entrenched ? (d.layer === 0 ? 700 + Math.random() * 250 : 850 + Math.random() * 120) : 975 + Math.random() * 15;
-    TB.units.push({ side, ty, x, y, hp: d.hp * hpMul, max: d.hp * hpMul, cd: Math.random() * d.rof, dir: side ? -1 : 1, ent: entrenched, ph: Math.random() * 6 });
+    const unit = { side, ty, x, y, hp: d.hp * hpMul, max: d.hp * hpMul, cd: Math.random() * d.rof, dir: side ? -1 : 1, ent: entrenched, ph: Math.random() * 6, aimX: null, aimY: null };
+    TB.units.push(unit);
+    R3.add(unit);
     if (side === 0 && TB.sea && d.layer === 0) TB.booms.push({ x: x - 30, y, t: 0, dur: 0.6, s: 0.5, water: true });
     return true;
-  }
-
-  function makeDecor(ter, sea, t) {
-    let seed = (t + 1) * 9301;
-    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-    const items = [];
-    const n = ter >= 1.3 ? 70 : ter >= 1.15 ? 90 : 45;
-    for (let i = 0; i < n; i++) items.push({ x: rnd() * FW, y: 130 + rnd() * 420, r: 4 + rnd() * (ter >= 1.3 ? 18 : 10), k: rnd() });
-    const pal = ter >= 1.3 ? { g0: '#3a3a33', g1: '#2b2c27', it: '#55544a', sky: '#1d2733' }
-      : ter >= 1.15 ? { g0: '#24361f', g1: '#1b2a18', it: '#18301a', sky: '#18242e' }
-      : { g0: '#3a4426', g1: '#2c351d', it: '#4a5530', sky: '#1a2630' };
-    return { items, pal, sea, mountains: ter >= 1.3 };
   }
 
   // ---------- simulation ----------
@@ -140,6 +134,7 @@
         if (sc < bs) { bs = sc; best = e; bd = dist; }
       }
       const inRange = best && bd <= d.range;
+      u.aimX = best ? best.x : null; u.aimY = best ? best.y : null;
       if (inRange && u.cd <= 0) fire(u, best, d);
       const moving = d.layer === 2 || !inRange;
       if (moving) {
@@ -151,6 +146,12 @@
         else u.x = clamp(u.x, 15, 985);
       }
       u.y = clamp(u.y, d.layer === 2 ? 30 : 140, 540);
+      // keep formation: ground units of one side don't stack on top of each other
+      if (d.layer === 0) for (const o of B.units) {
+        if (o === u || o.side !== u.side || TU[o.ty].layer !== 0) continue;
+        const ddx = u.x - o.x, ddy = u.y - o.y, dd = ddx * ddx + ddy * ddy;
+        if (dd < 400 && dd > 0.01) { const f = (20 - Math.sqrt(dd)) * dt * 2.2; u.y += ddy / Math.sqrt(dd) * f; u.x += ddx / Math.sqrt(dd) * f * 0.5; }
+      }
       // air defence: aircraft bleed over enemy-held ground
       if (d.layer === 2 && (u.side === 0 ? u.x > HOLD_X : u.x < 390)) u.hp -= 2.6 * dt;
     }
@@ -182,6 +183,7 @@
       if (u.hp > 0) continue;
       B.units.splice(i, 1);
       B.sides[u.side].lost[u.ty]++;
+      R3.kill(u);
       B.booms.push({ x: u.x, y: u.y, t: 0, dur: 0.8, s: u.ty === 'tank' || u.ty === 'jet' || u.ty === 'heli' ? 1 : 0.6 });
       if (u.ty !== 'inf' && speed <= 2 && B.speed <= 2) boom(0.5);
     }
@@ -199,6 +201,7 @@
     if (d.splash) TB.shells.push({ x0: u.x, y0: u.y, x1: e.x + (Math.random() - 0.5) * 24, y1: e.y + (Math.random() - 0.5) * 24, t: 0, dur: 0.75, side: u.side, dmg, r: d.splash });
     else { e.hp -= dmg; TB.shots.push({ x0: u.x, y0: u.y, x1: e.x, y1: e.y, t: 0, side: u.side, air: d.layer > 0 }); if (Math.random() < 0.18) TB.booms.push({ x: e.x, y: e.y, t: 0, dur: 0.3, s: 0.25 }); }
     u.cd = d.rof * (0.85 + Math.random() * 0.3);
+    u.fireT = TB.time;
   }
   function explode(side, x, y, r, dmg, big) {
     TB.booms.push({ x, y, t: 0, dur: big ? 0.9 : 0.6, s: big ? 0.9 : 0.55 });
@@ -218,135 +221,16 @@
     return p;
   }
 
-  // ---------- render ----------
-  let btLast = 0, btDpr = 1, btM = new DOMMatrix(), btPortrait = false;
-  function btResize() {
-    btDpr = Math.min(2, window.devicePixelRatio || 1);
-    const w = btCv.clientWidth || 800, h = btCv.clientHeight || 450;
-    const W2 = Math.round(w * btDpr), H2 = Math.round(h * btDpr);
-    btCv.width = W2; btCv.height = H2;
-    btPortrait = h > w * 1.05;
-    if (btPortrait) {
-      const sc = Math.min(W2 / FH, H2 / FW), ox = (W2 - FH * sc) / 2, oy = (H2 - FW * sc) / 2;
-      btM = new DOMMatrix([0, -sc, sc, 0, ox, oy + FW * sc]); // field x runs bottom -> top
-    } else {
-      const sc = Math.min(W2 / FW, H2 / FH), ox = (W2 - FW * sc) / 2, oy = (H2 - FH * sc) / 2;
-      btM = new DOMMatrix([sc, 0, 0, sc, ox, oy]);
-    }
-  }
+  // ---------- render loop (3D) ----------
+  let btLast = 0;
   function btFrame(now) {
     if (!TB) return;
     const dt = btLast ? Math.min(0.05, (now - btLast) / 1000) : 0.016; btLast = now;
-    if (!TB.over) {
-      let rem = dt * TB.speed;
-      while (rem > 0 && !TB.over) { const s = Math.min(0.04, rem); btStep(s); rem -= s; }
-    }
-    drawBattle();
-    updBtHud();
+    if (!TB.over) { let rem = dt * TB.speed; while (rem > 0 && !TB.over) { const st = Math.min(0.04, rem); btStep(st); rem -= st; } }
+    if (TB) { R3.frame(TB.over ? dt * 0.7 : dt * TB.speed, TB); updBtHud(); }
     if (TB && !btEl.hidden) requestAnimationFrame(btFrame);
   }
-  function drawBattle() {
-    const c = btx, B = TB, P = B.decor.pal;
-    c.setTransform(1, 0, 0, 1, 0, 0);
-    c.fillStyle = '#0a1219'; c.fillRect(0, 0, btCv.width, btCv.height);
-    c.setTransform(btM);
-    // sky band + ground
-    c.fillStyle = P.sky; c.fillRect(0, 0, FW, 125);
-    if (B.decor.mountains) {
-      c.fillStyle = '#2a3038'; c.beginPath(); c.moveTo(0, 125);
-      for (let x = 0; x <= FW; x += 50) c.lineTo(x, 125 - 30 - 40 * Math.abs(Math.sin(x * 0.013 + 1)) - 15 * Math.sin(x * 0.05));
-      c.lineTo(FW, 125); c.fill();
-    }
-    const g = c.createLinearGradient(0, 125, 0, FH); g.addColorStop(0, P.g0); g.addColorStop(1, P.g1);
-    c.fillStyle = g; c.fillRect(0, 125, FW, FH - 125);
-    for (const it of B.decor.items) {
-      c.fillStyle = P.it; c.globalAlpha = 0.55 + it.k * 0.35;
-      c.beginPath(); c.ellipse(it.x, it.y, it.r, it.r * 0.6, 0, 0, Math.PI * 2); c.fill();
-    }
-    c.globalAlpha = 1;
-    if (B.decor.sea) {
-      c.fillStyle = '#123147'; c.fillRect(0, 125, 70, FH - 125);
-      c.strokeStyle = 'rgba(180,220,255,.25)'; c.lineWidth = 1.5;
-      for (let y = 140; y < FH; y += 22) { c.beginPath(); c.moveTo(8, y + Math.sin(B.time * 2 + y) * 3); c.lineTo(60, y + Math.sin(B.time * 2 + y + 1) * 3); c.stroke(); }
-      c.fillStyle = '#b6a77a'; c.fillRect(70, 125, 14, FH - 125);
-    }
-    // defensive line
-    c.setLineDash([8, 8]); c.strokeStyle = 'rgba(239,90,76,.35)'; c.lineWidth = 2;
-    c.beginPath(); c.moveTo(HOLD_X, 135); c.lineTo(HOLD_X, FH - 10); c.stroke(); c.setLineDash([]);
-    if (!btPortrait) { c.font = '600 13px "Saira Condensed","Arial Narrow",sans-serif'; c.fillStyle = 'rgba(239,90,76,.6)'; c.textAlign = 'center'; c.fillText('VERTEIDIGUNGSLINIE', HOLD_X, 148); }
-    // shells
-    for (const sh of B.shells) {
-      const p = sh.t / sh.dur, x = lerp(sh.x0, sh.x1, p), y = lerp(sh.y0, sh.y1, p) - Math.sin(p * Math.PI) * (sh.big ? 10 : 60);
-      c.fillStyle = '#ffd27a'; c.beginPath(); c.arc(x, y, sh.big ? 3.5 : 2.5, 0, Math.PI * 2); c.fill();
-    }
-    // units: ground → heli → jets
-    const order = [0, 1, 2];
-    for (const L of order) for (const u of B.units) {
-      if (TU[u.ty].layer !== L) continue;
-      const col = B.sides[u.side].col, ang = u.dir > 0 ? 0 : Math.PI;
-      if (u.ty === 'inf') drawInf(c, u, col);
-      else if (u.ty === 'tank') drawTank(c, u.x, u.y, ang, 9, col);
-      else if (u.ty === 'art') drawGun(c, u, col);
-      else if (u.ty === 'heli') drawHeli(c, u, col);
-      else { c.globalAlpha = 0.25; c.fillStyle = '#000'; c.beginPath(); c.ellipse(u.x, u.y + 26, 10, 3, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; drawJet(c, u.x, u.y, ang, 9, col); }
-      if (u.hp < u.max) {
-        c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(u.x - 11, u.y - 17, 22, 4);
-        c.fillStyle = u.side ? '#ef5a4c' : '#4cc38a'; c.fillRect(u.x - 11, u.y - 17, 22 * Math.max(0, u.hp / u.max), 4);
-      }
-    }
-    // tracers
-    c.lineWidth = 1.6;
-    for (const s of B.shots) { c.strokeStyle = s.side ? 'rgba(255,140,120,.9)' : 'rgba(255,230,140,.9)'; c.beginPath(); c.moveTo(s.x0, s.y0); c.lineTo(s.x1, s.y1); c.stroke(); }
-    // strike planes
-    for (const st of B.strikes) {
-      if (st.kind !== 'air') continue;
-      const p = st.t / 1.6, dir = st.side ? -1 : 1;
-      const x = st.side ? lerp(1060, -60, p) : lerp(-60, 1060, p);
-      for (let k = 0; k < 3; k++) drawJet(c, x - dir * k * 26, st.y - 70 + k * 18, st.side ? Math.PI : 0, 11, st.side ? COL.hostile : CFG.color);
-    }
-    // explosions
-    c.globalCompositeOperation = 'lighter';
-    for (const b of B.booms) {
-      const p = b.t / b.dur, r = (6 + 30 * easeOut(Math.min(1, p * 1.5))) * b.s, a = Math.max(0, 1 - p * 1.2);
-      const gr = c.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
-      if (b.water) { gr.addColorStop(0, `rgba(220,240,255,${a})`); gr.addColorStop(1, 'rgba(120,180,255,0)'); }
-      else { gr.addColorStop(0, `rgba(255,250,210,${a})`); gr.addColorStop(0.4, `rgba(255,170,50,${a * 0.85})`); gr.addColorStop(1, 'rgba(200,40,10,0)'); }
-      c.fillStyle = gr; c.beginPath(); c.arc(b.x, b.y, r, 0, Math.PI * 2); c.fill();
-    }
-    c.globalCompositeOperation = 'source-over';
-    if (B.targeting) {
-      c.fillStyle = 'rgba(255,255,255,.06)'; c.fillRect(0, 125, FW, FH - 125);
-      c.font = '700 22px "Saira Condensed","Arial Narrow",sans-serif'; c.fillStyle = '#fff'; c.textAlign = 'center';
-      if (!btPortrait) c.fillText(B.targeting === 'air' ? 'ZIEL FÜR LUFTSCHLAG ANTIPPEN' : 'ZIEL FÜR SPERRFEUER ANTIPPEN', FW / 2, 112);
-    }
-  }
-  function drawInf(c, u, col) {
-    const off = [[-5, -4], [4, -1], [-2, 5]];
-    for (const [dx, dy] of off) {
-      const bob = Math.sin(u.ph * 9 + dx) * 0.8;
-      c.fillStyle = 'rgba(5,10,16,.9)'; c.beginPath(); c.arc(u.x + dx, u.y + dy + bob, 3.6, 0, Math.PI * 2); c.fill();
-      c.fillStyle = col; c.beginPath(); c.arc(u.x + dx, u.y + dy + bob, 2.6, 0, Math.PI * 2); c.fill();
-    }
-  }
-  function drawGun(c, u, col) {
-    c.save(); c.translate(u.x, u.y); if (u.dir < 0) c.scale(-1, 1);
-    c.strokeStyle = 'rgba(5,10,16,.9)'; c.lineWidth = 1.5; c.fillStyle = col;
-    c.fillRect(-9, -3, 14, 7); c.strokeRect(-9, -3, 14, 7);
-    c.lineWidth = 3; c.strokeStyle = col; c.beginPath(); c.moveTo(2, -1); c.lineTo(15, -9); c.stroke();
-    c.fillStyle = '#111'; c.beginPath(); c.arc(-5, 5, 2.6, 0, Math.PI * 2); c.arc(3, 5, 2.6, 0, Math.PI * 2); c.fill();
-    c.restore();
-  }
-  function drawHeli(c, u, col) {
-    const y = u.y - 8 + Math.sin(u.ph * 3) * 1.5;
-    c.globalAlpha = 0.25; c.fillStyle = '#000'; c.beginPath(); c.ellipse(u.x, u.y + 10, 9, 3, 0, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
-    c.save(); c.translate(u.x, y); if (u.dir < 0) c.scale(-1, 1);
-    c.fillStyle = col; c.strokeStyle = 'rgba(5,10,16,.9)'; c.lineWidth = 1.4;
-    c.beginPath(); c.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-    c.beginPath(); c.moveTo(-7, -1); c.lineTo(-17, -2); c.lineWidth = 2.5; c.strokeStyle = col; c.stroke();
-    const rot = Math.cos(u.ph * 40) * 13;
-    c.strokeStyle = 'rgba(230,240,250,.8)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-rot, -6); c.lineTo(rot, -6); c.stroke();
-    c.restore();
-  }
+  function btResize() { R3.resize(); }
 
   // ---------- HUD / controls ----------
   function renderBtCards() {
@@ -386,24 +270,26 @@
   $('#btAbil').addEventListener('click', e => {
     const b = e.target.closest('[data-ab]'); if (!b || !TB || TB.over) return;
     TB.targeting = TB.targeting === b.dataset.ab ? null : b.dataset.ab;
+    $('#btHint').hidden = !TB.targeting;
+    $('#btHint').textContent = TB.targeting === 'air' ? 'Tippe auf das Ziel für den Luftschlag' : 'Tippe auf das Ziel für das Sperrfeuer';
     renderBtCards();
   });
   $('#btSpeed').addEventListener('click', e => { const b = e.target.closest('[data-sp]'); if (b) setSpeed(+b.dataset.sp); });
-  btCv.addEventListener('click', e => {
+  R3.onTap = (cx, cy) => {
     if (!TB || TB.over || !TB.targeting) return;
-    const r = btCv.getBoundingClientRect();
-    const pt = btM.inverse().transformPoint(new DOMPoint((e.clientX - r.left) * btDpr, (e.clientY - r.top) * btDpr));
-    const x = pt.x, y = pt.y;
+    const pt = R3.pick(cx, cy); if (!pt) return;
+    const x = clamp(pt.x, 20, 980), y = clamp(pt.y, 150, 530);
     if (TB.targeting === 'air' && TB.abil.air > 0) { airStrike2(0, x, Math.max(150, y)); TB.abil.air--; }
     if (TB.targeting === 'bar' && TB.abil.bar > 0) { barrage(0, x, Math.max(150, y)); TB.abil.bar--; }
-    TB.targeting = null; renderBtCards();
-  });
-  $('#btAuto').addEventListener('click', () => {
+    TB.targeting = null; $('#btHint').hidden = true; renderBtCards();
+  };
+  function autoFinish() {
     if (!TB || TB.over) return;
     TB.q = []; TT.forEach(ty => { for (let i = 0; i < TB.sides[0].res[ty]; i++) TB.q.push(ty); });
     if (TB.abil.air) { const tg = TB.units.find(u => u.side === 1) || { x: 800, y: 340 }; airStrike2(0, tg.x, tg.y); TB.abil.air--; }
     let guard = 0; while (!TB.over && guard++ < 8000) btStep(0.04);
-  });
+  }
+  $('#btAuto').addEventListener('click', autoFinish);
   $('#btRetreat').addEventListener('click', () => { if (TB && !TB.over) endTactical(1, false, true); });
   window.addEventListener('resize', () => { if (TB && !btEl.hidden) btResize(); });
 
@@ -450,7 +336,7 @@
     $('#btResult').hidden = false;
     $('#btRep').addEventListener('click', () => showReport(rep));
     $('#btDone').addEventListener('click', () => {
-      btEl.hidden = true; const t = B.t; TB = null;
+      btEl.hidden = true; const t = B.t; TB = null; R3.clear();
       afterPlayerBattle(rep, t, 'invade', tempo() * 1.6);
     });
   }
