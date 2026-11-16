@@ -9,6 +9,20 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
   Zerstörer, Fregatten, Korvetten, U-Boote, Atomsprengköpfe, Militärbudget, Technologiestand und die wichtigsten Waffensysteme
   (z. B. Leopard 2A7V, F-35A, Type 055, K9 Thunder).
 
+## Neu in Version 3
+
+* **Taktische Schlachten:** Mit „⚔ Schlacht führen“ öffnet sich ein Schlachtfeld. Du schickst Infanterie, Panzer, Artillerie, Hubschrauber
+  und Kampfjets als Verbände los, der Verteidiger hält seine Verteidigungslinie und schickt Reserven. Gekämpft wird bis zum letzten Verband.
+  Die Truppenstärke beider Seiten ergibt sich aus den echten Streitkräften (inkl. Technologie, Gelände, Landekapazität).
+  * Stein-Schere-Papier: Panzer schlagen Infanterie, Hubschrauber jagen Panzer, Jets jagen Hubschrauber, Infanterie hat Fliegerfäuste.
+  * Fähigkeiten: Luftschlag (Ziel antippen) und Sperrfeuer der Artillerie. Der Verteidiger fliegt eigene Luftangriffe.
+  * Luftmacht allein erobert nichts: Am Ende müssen eigene Bodentruppen stehen. Flugzeuge verlieren über feindlichem Gebiet durch Flugabwehr Substanz.
+  * Tempo 1×/2×/4×, „Automatisch zu Ende“ und „Rückzug“. Auf dem Handy im Hochformat läuft der Angriff von unten nach oben.
+  * Ein klarer Sieg erobert das Land sofort, ein knapper bringt viel Kriegsfortschritt.
+* **Schnelleres Gameplay:** kürzere Animationen, schnellere KI-Züge, mehr Fortschritt pro Angriff.
+* **Einstellungen (⚙):** Name und Farbe des Reiches, Spieltempo (Normal/Schnell/Blitz), KI-Züge anzeigen (alle/nur gegen mich/keine),
+  KI-Aggressivität (Friedlich bis Brutal), Siegziel (40 %, 60 %, 80 %, ganze Welt), Startkapital (×1, ×5, ×25).
+
 ## Neu in Version 2
 
 * **Flüssige Karte:** Canvas-Renderer mit Detailstufen statt SVG; Zoomen und Verschieben bleiben auch auf dem Handy flüssig.
@@ -48,7 +62,7 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
 ```
 data/military.txt        Streitkräfte-Datenbank (eine Zeile pro Land, leicht editierbar)
 data/countries-50m.json  Weltkarte (world-atlas / Natural Earth, Public Domain)
-src/                     Spielcode (game.js), Layout (template.html), Design (style.css)
+src/                     Spielcode (game.js, tactical.js), Layout (template.html), Design (style.css)
 vendor/                  d3 7.8.5 und topojson-client 3.1.0 (für den Offline-Betrieb)
 build.mjs                Erzeugt index.html (+ dist/artifact.html mit CDN-Bibliotheken)
 ```

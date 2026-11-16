@@ -138,7 +138,7 @@ const data = {
 // ---------- 5. Assemble HTML ----------
 const tpl = readFileSync(join(ROOT, 'src/template.html'), 'utf8');
 const css = readFileSync(join(ROOT, 'src/style.css'), 'utf8');
-const js = readFileSync(join(ROOT, 'src/game.js'), 'utf8');
+const js = readFileSync(join(ROOT, 'src/game.js'), 'utf8').replace('/*TACTICAL*/', () => readFileSync(join(ROOT, 'src/tactical.js'), 'utf8'));
 const dataScript = `<script>window.TD_DATA=${JSON.stringify(data)};window.TD_TOPO=${JSON.stringify(topo)};</script>`;
 
 const page = libs => tpl

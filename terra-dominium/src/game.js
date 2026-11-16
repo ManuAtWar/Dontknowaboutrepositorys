@@ -10,7 +10,14 @@
   const AIR = ['ftr','bmb','heli'];
   const SEA = ['cv','amph','dd','ff','cor','ss'];
   const BUYABLE = [...LAND, ...AIR, ...SEA];
-  const WIN_SHARE = 0.6; // share of all countries needed for world domination
+  // ---- player settings (persisted per browser) ----
+  const CFG_DEF = { tempo: 'fast', aiShow: 'all', aggr: 1, win: 0.6, money: 1, name: '', color: '#f0b43c' };
+  let CFG = { ...CFG_DEF };
+  try { Object.assign(CFG, JSON.parse(localStorage.getItem('td-cfg')) || {}); } catch (e) { /* ignore */ }
+  const saveCfg = () => { try { localStorage.setItem('td-cfg', JSON.stringify(CFG)); } catch (e) { /* ignore */ } };
+  const TEMPO = { normal: 1.2, fast: 2, blitz: 3.6 };
+  const tempo = () => TEMPO[CFG.tempo] || 2;
+  let WIN_SHARE = CFG.win; // share of all countries needed for world domination
 
   // w = combat weight, cost = Mrd. US-$ per unit (soldiers: per 1.000)
   const U = {
@@ -85,7 +92,7 @@
   let shown = C.map((_, i) => i); // owner shown on the map (lags behind S.owner while animations play)
 
   function newGame(p) {
-    S = { v: 2, turn: 0, P: p, owner: C.map((_, i) => i), pools: {}, used: zero(), money: Math.max(0.05, C[p].bud * 0.25),
+    S = { v: 2, turn: 0, P: p, owner: C.map((_, i) => i), pools: {}, used: zero(), money: Math.max(0.05, C[p].bud * 0.25) * CFG.money,
       econ: 1, queue: [], prog: {}, tension: 0, log: [], over: false, won: false, ai: {}, prefs: { land: 60, air: 70, sea: 70 },
       milestones: {}, keepPlaying: false };
     C.forEach((c, i) => { S.pools[i] = { m: { ...c.mil }, t: c.t }; });
@@ -107,7 +114,7 @@
   const budEff = t => Math.max(C[t].bud, C[t].gdp * 0.004, 0.002);
   const ownerBud = o => terrOf(o).reduce((s, t) => s + budEff(t), 0);
   const deployShare = (o, t) => { const ts = terrOf(o); if (ts.length <= 1) return 1; return Math.min(1, 0.35 + 0.65 * budEff(t) / ownerBud(o)); };
-  const ownerName = o => S && o === S.P ? `Reich ${C[S.P].n}` : C[o].n;
+  const ownerName = o => S && o === S.P ? (CFG.name || `Reich ${C[S.P].n}`) : C[o].n;
   const avail = () => { const m = S.pools[S.P].m, o = zero(); KEYS.forEach(k => { o[k] = Math.max(0, (m[k] || 0) - (S.used[k] || 0)); }); return o; };
   const income = () => {
     const ts = terrOf(S.P);
@@ -151,12 +158,7 @@
   }
   const landingCap = m => (m.amph || 0) * 3 + (m.cv || 0) * 2 + ((m.dd || 0) + (m.ff || 0)) * 0.3 + (m.cor || 0) * 0.1 + 2;
 
-  function battle(att, tgt, commit, rtype, dry) {
-    const def = S.owner[tgt], Dp = S.pools[def], c = C[tgt];
-    const dm = scaleM(Dp.m, deployShare(def, tgt));
-    const tA = S.pools[att].t, tD = Dp.t;
-    const r = (a, b) => dry ? (a + b) / 2 : a + (b - a) * Math.random();
-    const rep = { kind: 'invade', att, def, tgt, rtype, commit: { ...commit }, lossA: zero(), lossD: zero(), phases: [], landCap: 1 };
+  function navalPhase(rep, commit, dm, tA, tD, rtype, r) {
     let repulsed = false, landCap = 1;
 
     if (rtype !== 'land') {
@@ -176,6 +178,17 @@
       landCap *= Math.min(1, cap / Math.max(1, commit.sol || 0));
       rep.cap = cap;
     }
+    return { landCap, repulsed };
+  }
+
+  function battle(att, tgt, commit, rtype, dry) {
+    const def = S.owner[tgt], Dp = S.pools[def], c = C[tgt];
+    const dm = scaleM(Dp.m, deployShare(def, tgt));
+    const tA = S.pools[att].t, tD = Dp.t;
+    const r = (a, b) => dry ? (a + b) / 2 : a + (b - a) * Math.random();
+    const rep = { kind: 'invade', att, def, tgt, rtype, commit: { ...commit }, lossA: zero(), lossD: zero(), phases: [], landCap: 1 };
+    const nv = navalPhase(rep, commit, dm, tA, tD, rtype, r);
+    const landCap = nv.landCap, repulsed = nv.repulsed;
     rep.landCap = landCap;
     if (repulsed) { rep.ratio = 0; rep.gain = 0; rep.repulsed = true; return rep; }
 
@@ -196,7 +209,7 @@
     addLoss(rep.lossD, dm, [...LAND, 'res'], 0.3 * (atk / tot) * r(0.7, 1.3));
     rep.phases.push({ k: 'land', a: atk, d: defv, sh: atk / tot, win: ratio > 1 });
     rep.ratio = ratio;
-    rep.gain = ratio > 0.6 ? Math.min(100, (ratio - 0.6) * 55) : 0;
+    rep.gain = ratio > 0.6 ? Math.min(100, (ratio - 0.6) * 68) : 0;
     return rep;
   }
 
@@ -292,7 +305,7 @@
       if (!pool) return;
       const ai = S.ai[o] || (S.ai[o] = { focus: -1 });
       const terrN = terrOf(o).length;
-      let pAct = idx < 5 ? 0.6 : idx < 12 ? 0.3 : idx < 30 ? 0.1 : 0.025;
+      let pAct = (idx < 5 ? 0.55 : idx < 12 ? 0.28 : idx < 30 ? 0.1 : 0.025) * CFG.aggr;
       pAct += Math.min(0.3, (terrN - 1) * 0.04);
       if (ai.focus >= 0) pAct += 0.35; // finish what was started
       if (Math.random() > pAct) return;
@@ -410,11 +423,16 @@
     events.forEach((e, i) => setTimeout(() => ticker(e.type, e.text), 200 + i * 250));
     let tEnd = 0;
     const playerFirst = battles.filter(b => b.def === P || b.att === P).concat(battles.filter(b => b.def !== P && b.att !== P));
+    const tp = tempo() * 1.5;
     playerFirst.forEach((rep, i) => {
-      const delay = i * 420;
-      const dur = playInvasion(rep, delay, 0.8, () => { if (rep.ev && (rep.def === P || rep.ev.type !== 'info' || rep.conquered)) ticker(rep.ev.type, rep.ev.text, rep); });
+      const mineB = rep.def === P || rep.att === P;
+      const tick = () => { if (rep.ev && (rep.def === P || rep.ev.type !== 'info' || rep.conquered)) ticker(rep.ev.type, rep.ev.text, rep); };
+      if (CFG.aiShow === 'none' || (CFG.aiShow === 'mine' && !mineB)) { if (rep.conquered) { shown[rep.tgt] = rep.att; } tick(); return; }
+      const delay = i * 380 / tempo();
+      const dur = playInvasion(rep, delay, tp, tick);
       tEnd = Math.max(tEnd, delay + dur);
     });
+    requestDraw();
     rebels.forEach((t, i) => { fxFlood(t, MAIN[t].c, t, i * 300, 900); tEnd = Math.max(tEnd, i * 300 + 900); });
     afterFx(tEnd + 100, () => {
       busy = false; speed = 1;
@@ -560,7 +578,7 @@
   }
 
   const hue = i => (i * 137.508) % 360;
-  const colorOf = o => (S && o === S.P) ? COL.gold : `hsl(${hue(o).toFixed(0)} ${22 + (o % 3) * 5}% ${30 + (o % 5) * 3.2}%)`;
+  const colorOf = o => (S && o === S.P) ? CFG.color : `hsl(${hue(o).toFixed(0)} ${22 + (o % 3) * 5}% ${30 + (o % 5) * 3.2}%)`;
 
   let sel = null, hover = null;
   let attackable = new Set(), seaOnly = new Set();
@@ -1072,6 +1090,7 @@
         else h += `<div class="route">Außer Reichweite (${nf0.format(r.d)} km, deine Seereichweite ${nf0.format(seaRange(S.P))} km).</div>`;
         h += `<div class="actions">
           <button class="btn danger" type="button" data-act="quick" ${r.type === 'none' || busy ? 'disabled' : ''}>Angreifen!</button>
+          <button class="btn primary" type="button" data-act="tac" ${r.type === 'none' || busy ? 'disabled' : ''}>⚔ Schlacht führen</button>
           <button class="btn" type="button" data-act="invade" ${r.type === 'none' || busy ? 'disabled' : ''}>Planen…</button>
           <button class="btn" type="button" data-act="air" ${md > ar || busy ? 'disabled' : ''}>Luftschlag</button></div>`;
         if (md > ar) h += `<div class="note" style="margin-top:6px">Luftschlag außer Reichweite (${nf0.format(ar)} km). Bomber oder Flugzeugträger erhöhen die Reichweite.</div>`;
@@ -1101,6 +1120,7 @@
     const a = b.dataset.act;
     if (a === 'close') select(null);
     else if (a === 'quick') { const r = route(S.P, sel); launch(sel, 'invade', r.type, quickCommit('invade', r.type)); }
+    else if (a === 'tac') { const r = route(S.P, sel); startTactical(sel, r.type, quickCommit('invade', r.type)); }
     else if (a === 'invade') openAttack(sel, 'invade');
     else if (a === 'air') openAttack(sel, 'air');
   });
@@ -1112,6 +1132,10 @@
     const from = nearestOwn(S.P, t).from;
     const rep = applyBattle(kind === 'invade' ? battle(S.P, t, commit, rtype, false) : airStrike(S.P, t, commit, false));
     rep.from = from;
+    afterPlayerBattle(rep, t, kind, tempo());
+    audio();
+  }
+  function afterPlayerBattle(rep, t, kind, tp) {
     const text = rep.conquered ? `${C[t].n} kapituliert und gehört nun zu deinem Reich.` : rep.repulsed ? `Landung in ${C[t].n} auf See abgewehrt.` : `${kind === 'invade' ? 'Angriff' : 'Luftschlag'} auf ${C[t].n}: Fortschritt ${pct(rep.progress)}.`;
     const type = rep.conquered ? 'good' : (rep.gain > 0 ? 'info' : 'bad');
     log(type, text, rep);
@@ -1120,14 +1144,13 @@
     playerAnims++;
     computeAttackable(); renderHud(); renderPowers();
     if (sel != null) renderPanel();
-    playInvasion(rep, 0, 1, () => {
+    playInvasion(rep, 0, tp, () => {
       playerAnims--;
       ticker(type, text, rep);
       if (rep.conquered) { shown[t] = S.P; }
       renderAll();
       if (S.over) showEnd();
     });
-    audio();
   }
 
   // =====================================================================
@@ -1141,7 +1164,7 @@
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !modal.hidden) closeModal();
-    else if ((e.key === 'e' || e.key === 'E') && modal.hidden && S && startEl.hidden && document.activeElement.tagName !== 'INPUT') endTurn();
+    else if ((e.key === 'e' || e.key === 'E') && modal.hidden && S && startEl.hidden && btEl.hidden && document.activeElement.tagName !== 'INPUT') endTurn();
   });
 
   function openAttack(t, kind) {
@@ -1183,9 +1206,16 @@
       <h2>${kind === 'invade' ? 'Invasion' : 'Luftschlag gegen'} ${esc(C[t].n)}</h2>
       <p class="sub">Verteidiger: ${esc(ownerName(def))} · Technologie ${Math.round(S.pools[def].t * 100)}/100 vs. deine ${Math.round(S.pools[S.P].t * 100)}/100. Deine Einstellung wird für „Angreifen!“ gespeichert.</p>
       <div id="atkDyn"></div>
-      <div class="actions" style="justify-content:flex-end"><button class="btn ghost" type="button" id="atkCancel">Abbrechen</button><button class="btn danger" type="button" id="atkGo">${kind === 'invade' ? 'Angriff befehlen' : 'Luftschlag befehlen'}</button></div>`);
+      <div class="actions" style="justify-content:flex-end"><button class="btn ghost" type="button" id="atkCancel">Abbrechen</button>${kind === 'invade' ? '<button class="btn primary" type="button" id="atkTac">⚔ Schlacht führen</button>' : ''}<button class="btn danger" type="button" id="atkGo">${kind === 'invade' ? 'Automatisch' : 'Luftschlag befehlen'}</button></div>`);
     render();
     $('#atkCancel').addEventListener('click', closeModal);
+    const tacBtn = $('#atkTac');
+    if (tacBtn) tacBtn.addEventListener('click', () => {
+      const commit = mk();
+      S.prefs.land = st.land; S.prefs.air = st.air; if (r.type !== 'land') S.prefs.sea = st.sea;
+      closeModal();
+      startTactical(t, r.type, commit);
+    });
     $('#atkGo').addEventListener('click', () => {
       const commit = mk();
       if (kind === 'invade') { S.prefs.land = st.land; S.prefs.air = st.air; if (r.type !== 'land') S.prefs.sea = st.sea; }
@@ -1304,6 +1334,7 @@
     if (!S) return;
     const mine = terrOf(S.P);
     $('#hudName').textContent = ownerName(S.P);
+    document.documentElement.style.setProperty('--me', CFG.color);
     $('#hudDate').textContent = dateStr(S.turn);
     $('#hudMoney').textContent = money(S.money);
     $('#hudIncome').textContent = '+' + money(income());
@@ -1412,6 +1443,7 @@
     }, 950);
   }
 
+/*TACTICAL*/
   let rzT = 0;
   window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(resize, 80); });
 
@@ -1419,5 +1451,5 @@
   resize(); homeZoom();
   showStart();
   // debugging / testing hook
-  window.__td = { get S() { return S; }, pick, endTurn, get busy() { return busy; }, C, screen: i => T.apply(MAIN[i].c), idx: n => C.findIndex(c => c.n === n), get fx() { return FX.length; } };
+  window.__td = { get TB() { return TB; }, get S() { return S; }, pick, endTurn, get busy() { return busy; }, C, screen: i => T.apply(MAIN[i].c), idx: n => C.findIndex(c => c.n === n), get fx() { return FX.length; } };
 })();

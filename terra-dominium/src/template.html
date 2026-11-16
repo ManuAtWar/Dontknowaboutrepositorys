@@ -24,6 +24,7 @@
     <div class="hud-actions">
       <button class="btn ghost" id="btnForces" type="button">Streitkräfte</button>
       <button class="btn ghost hide-s" id="btnLog" type="button">Lagebericht</button>
+      <button class="btn ghost icon" id="btnCfg" type="button" aria-label="Einstellungen">⚙</button>
       <button class="btn primary" id="btnEnd" type="button">Runde beenden</button>
     </div>
   </header>
@@ -64,9 +65,28 @@
         <option value="hard">Schwierigste zuerst</option>
       </select>
       <button class="btn ghost" id="btnRandom" type="button">Zufällig</button>
+      <button class="btn ghost" id="btnCfgStart" type="button">⚙ Einstellungen</button>
     </div>
     <div id="countryList" role="list"></div>
     <p class="fineprint">Militärdaten: Näherungswerte, Stand ca. 2024/25, nach öffentlichen Quellen (IISS Military Balance, SIPRI, Global Firepower, FAS). Karte: Natural Earth 1:50 Mio.</p>
+  </div>
+</div>
+
+<div id="battle" hidden>
+  <div class="bt-top">
+    <div class="bt-side a"><b id="btNameA">–</b><span id="btCntA"></span></div>
+    <div class="bt-mid"><div id="btTitle">Schlacht</div><div class="bt-sub" id="btSub"></div><div class="bt-bar"><i id="btBar"></i></div><div id="btTime">2:30</div></div>
+    <div class="bt-side d"><b id="btNameD">–</b><span id="btCntD"></span></div>
+  </div>
+  <div class="bt-field"><canvas id="btCanvas"></canvas><div id="btResult" hidden></div></div>
+  <div class="bt-bottom">
+    <div id="btCards"></div>
+    <div class="bt-ctl">
+      <div id="btAbil"></div>
+      <div id="btSpeed" class="bt-speed"><button class="btn sm" type="button" data-sp="1">1×</button><button class="btn sm" type="button" data-sp="2">2×</button><button class="btn sm" type="button" data-sp="4">4×</button></div>
+      <button class="btn sm" type="button" id="btAuto">Automatisch zu Ende</button>
+      <button class="btn sm ghost" type="button" id="btRetreat">Rückzug</button>
+    </div>
   </div>
 </div>
 
