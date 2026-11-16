@@ -170,6 +170,39 @@
   .ach b { display: block; font-size: 13px; }
   .ach.got b { color: var(--brass); }
   .ach span { font-size: 11px; color: var(--muted); }
+  /* Lernen */
+  .learn { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 900px) { .learn { grid-template-columns: minmax(0, 1fr); } }
+  .learn h4 { margin: 4px 0 6px; font: 700 18px/1.2 var(--f-display); text-wrap: balance; }
+  .learn p { margin: 0 0 8px; font-size: 13px; }
+  .steps { display: flex; gap: 4px; margin-bottom: 12px; }
+  .step { flex: 1; height: 6px; border-radius: 3px; background: var(--panel-2); }
+  .step.done { background: var(--brass); } .step.cur { background: var(--sel); }
+  .lkick { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--sel); }
+  .lrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .meter.gold > div { background: var(--brass); }
+  .coach { border-color: color-mix(in srgb, var(--sel) 35%, transparent); }
+  .coach h4 { color: var(--sel); }
+  button.link { background: none; border: 0; padding: 0; color: var(--brass); font-size: 12px; }
+  .info { display: inline-grid; place-items: center; width: 16px; height: 16px; padding: 0; margin-left: 5px; border-radius: 50%; font: 600 10px/1 var(--f-body); color: var(--muted); background: transparent; border: 1px solid var(--line); vertical-align: 1px; cursor: help; text-transform: none; letter-spacing: 0; }
+  .info:hover { color: var(--ink); border-color: var(--muted); }
+  button.chip { background: transparent; cursor: help; font: inherit; font-size: 12px; }
+  .crow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  .crow:last-child { border-bottom: 0; }
+  .crow .k { color: var(--muted); white-space: nowrap; }
+  .facts .lbl { white-space: nowrap; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); white-space: nowrap; }
+  .tag.good { color: var(--up); border-color: color-mix(in srgb, var(--up) 45%, transparent); }
+  .tag.mid { color: var(--brass); border-color: color-mix(in srgb, var(--brass) 45%, transparent); }
+  .tag.bad { color: var(--down); border-color: color-mix(in srgb, var(--down) 45%, transparent); }
+  .merke { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 14px; }
+  .merke b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--brass); margin-bottom: 4px; }
+  .modal button.answer { text-align: left; }
+  .lex details { border-bottom: 1px solid var(--line-soft); padding: 8px 0; }
+  .lex summary { cursor: pointer; font-weight: 600; }
+  .lex p { margin: 6px 0 0; font-size: 13px; }
+  #news li.coach { color: var(--sel); }
+  .bench { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .foot { text-align: center; color: var(--faint); font-size: 12px; margin-top: 18px; }
 
   /* Overlay */
@@ -188,17 +221,18 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand">KAPITAL<small>BÖRSENSPIEL · SPIELGELD</small></div>
+    <div class="brand">KAPITAL<small>INVESTIEREN LERNEN · SPIELGELD</small></div>
     <div class="clock">
       <span class="chip mono" id="date">Jahr 1 · Tag 1</span>
-      <span class="chip" id="regime">Normal</span>
-      <span class="chip" id="rate">Leitzins 2,50 %</span>
+      <button class="chip" id="regime" data-term="marktphase">Normal</button>
+      <button class="chip" id="rate" data-term="leitzins">Leitzins 2,50 %</button>
     </div>
     <div class="ctl">
       <button id="play">▶ Start</button>
       <div class="seg" id="speeds">
         <button data-s="1" class="on">1×</button><button data-s="4">4×</button><button data-s="15">15×</button><button data-s="50">50×</button>
       </div>
+      <button id="lexBtn" class="ghost">Lexikon</button>
       <button id="newGame" class="ghost">Neues Spiel</button>
     </div>
   </header>
@@ -208,6 +242,7 @@
       <div class="lbl">Nettovermögen</div>
       <div class="big" id="nw">10.000,00 €</div>
       <div class="sub mono" id="nwChg">±0,00 % heute</div>
+      <div class="bench" id="benchLine"></div>
     </div>
     <div class="rank">
       <div class="lbl">Rang</div>
@@ -217,6 +252,11 @@
     <div class="ladder">
       <div class="track" id="track"><div class="fill" id="trackFill"></div></div>
     </div>
+  </section>
+
+  <section class="learn">
+    <section class="panel"><div class="hd"><span class="lbl">Lernpfad</span><span class="lbl" id="lpCount"></span></div><div class="bd" id="lpBox"></div></section>
+    <section class="panel coach"><div class="hd"><span class="lbl">Dein Coach</span><button class="link" id="lexBtn2">Lexikon öffnen</button></div><div class="bd" id="coachBox"></div></section>
   </section>
 
   <main class="grid">
@@ -254,6 +294,10 @@
       <section class="panel">
         <div class="hd"><span class="lbl">Konto</span><span class="lbl" id="tgRate"></span></div>
         <div class="bd ledger" id="ledger"></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><span class="lbl">Depot-Check</span></div>
+        <div class="bd" id="checkBox"></div>
       </section>
       <section class="panel">
         <div class="hd"><span class="lbl">Lombardkredit</span><span class="lbl" id="loanRate"></span></div>
@@ -387,16 +431,150 @@ const ACH = [
   ['debtfree', 'Schuldenfrei', 'Tilge einen Kredit von mind. 100.000 € vollständig'],
   ['crypto1m', 'Krypto-Millionär', 'Halte Krypto im Wert von 1 Mio. €'],
   ['fast1m', 'Senkrechtstarter', 'Werde Millionär in weniger als 3 Spieljahren'],
+  ['quiz5', 'Musterschüler', 'Beantworte 5 Quizfragen im ersten Versuch richtig'],
+  ['scholar', 'Börsenprofi', 'Schließe den ganzen Lernpfad ab'],
+];
+
+// ---------- Lerninhalte ----------
+const GLOSSARY = {
+  aktie: ["Aktie", "Ein Anteil an einem Unternehmen. Du verdienst, wenn der Kurs steigt oder die Firma eine Dividende zahlt. Im schlimmsten Fall ist das Geld komplett weg."],
+  etf: ["ETF", "Exchange Traded Fund: ein an der Börse gehandelter Fonds, der einen Index nachbildet, zum Beispiel hunderte Aktien weltweit. Mit einem Kauf bist du breit gestreut, die Kosten sind niedrig."],
+  ter: ["Laufende Kosten (TER)", "Die jährlichen Kosten eines Fonds in Prozent des angelegten Geldes. Sie werden automatisch vom Fondsvermögen abgezogen. Breite ETFs kosten oft nur 0,1 bis 0,3 % pro Jahr."],
+  anleihe: ["Anleihe", "Ein Schuldschein: Du leihst einem Staat oder Unternehmen Geld und bekommst dafür regelmäßig Zinsen (Kupon). Am Ende der Laufzeit gibt es das Geld zurück, sofern der Schuldner nicht ausfällt."],
+  kupon: ["Kupon", "Der feste Zins einer Anleihe, bezogen auf den Nennwert (hier 100 €). Im Spiel wird er monatlich ausgezahlt."],
+  duration: ["Duration", "Misst, wie stark eine Anleihe auf Zinsänderungen reagiert. Faustregel: Steigt der Zins um 1 Prozentpunkt, fällt der Kurs um etwa Duration mal 1 %."],
+  ausfall: ["Ausfallrisiko", "Die Wahrscheinlichkeit, dass ein Schuldner nicht zahlt. Riskante Schuldner müssen deshalb höhere Zinsen bieten. Im Spiel halbiert sich der Kurs bei einem Ausfall ungefähr."],
+  leitzins: ["Leitzins", "Der Zins, zu dem sich Banken bei der Zentralbank Geld leihen. Er beeinflusst Kreditzinsen, Tagesgeld, Anleihenkurse und die Stimmung an den Märkten."],
+  dividende: ["Dividende", "Ein Teil des Gewinns, den eine Firma an ihre Aktionäre auszahlt. Angegeben als Prozent des Kurses pro Jahr (Dividendenrendite). Im Spiel quartalsweise."],
+  zinseszins: ["Zinseszins", "Erträge werden wieder angelegt und bringen selbst Erträge. Faustregel 72: 72 geteilt durch die Rendite in Prozent ergibt ungefähr die Jahre bis zur Verdopplung."],
+  volatilitaet: ["Volatilität", "Wie stark ein Kurs schwankt, als Prozent pro Jahr. Rund 15 % ist ruhig (breiter ETF), 50 % und mehr ist sehr wild (Krypto, junge Tech-Firmen). Im Spiel aus den letzten 60 Tagen berechnet."],
+  beta: ["Beta", "Wie stark ein Wert mit dem Gesamtmarkt mitgeht. Beta 1,5 heißt: Steigt der Markt um 10 %, steigt der Wert im Schnitt um 15 %. Er fällt aber auch stärker. Ein negatives Beta (Gold) bewegt sich eher gegenläufig."],
+  diversifikation: ["Diversifikation (Streuung)", "Geld auf viele verschiedene Anlagen verteilen, damit ein einzelner Verlust nicht das ganze Depot trifft. Am besten über Branchen, Länder und Anlageklassen hinweg."],
+  risikowert: ["Risikowert", "Im Spiel: die durchschnittliche Volatilität deiner Positionen, gewichtet nach ihrem Wert. Vereinfacht, denn echte Streuung senkt das Risiko zusätzlich."],
+  investitionsquote: ["Investitionsquote", "Der Anteil deines Vermögens, der in Wertpapieren steckt statt als Bargeld herumliegt."],
+  benchmark: ["Vergleich mit dem Welt-ETF", "Was wäre aus deinem Geld geworden, wenn du am ersten Tag alles in den Welt-ETF gesteckt und nie wieder etwas getan hättest? Viele Profis schlagen diesen einfachen Maßstab langfristig nicht."],
+  gebuehren: ["Ordergebühren", "Kosten für jeden Kauf und Verkauf, hier 0,25 % des Betrags. Wer viel handelt, zahlt viel."],
+  rebalancing: ["Rebalancing", "Regelmäßig zur geplanten Aufteilung zurückkehren, etwa 70 % Aktien und 30 % Anleihen. Dabei verkaufst du automatisch, was teuer geworden ist, und kaufst, was günstig ist."],
+  marktphase: ["Marktphasen", "Bullenmarkt: Die Kurse steigen über längere Zeit. Bärenmarkt: Die Kurse fallen um 20 % oder mehr. Blase: Übertreibung nach oben. Crash: schneller, heftiger Absturz."],
+  crash: ["Crash", "Ein plötzlicher, starker Kurseinbruch innerhalb weniger Tage. Breite Märkte haben sich danach bisher immer wieder erholt, manchmal aber erst nach Jahren."],
+  hebel: ["Hebel", "Verstärkt Gewinne und Verluste. Mit Hebel 3 bewegt sich dein Einsatz dreimal so stark wie der Basiswert. Hebel-ETFs verlieren bei Schwankungen über die Zeit an Wert (Volatility Decay)."],
+  option: ["Option", "Das Recht (keine Pflicht), einen Basiswert bis zu einem Datum zu einem festen Preis zu kaufen (Call) oder zu verkaufen (Put). Du zahlst dafür eine Prämie."],
+  call: ["Call", "Eine Option auf steigende Kurse. Gewinnt, wenn der Kurs bis zum Verfall deutlich über dem Basispreis liegt."],
+  put: ["Put", "Eine Option auf fallende Kurse. Kann auch ein Depot gegen Verluste absichern, wie eine Versicherung."],
+  basispreis: ["Basispreis", "Der Preis, zu dem die Option ausgeübt werden kann. „Am Geld“ heißt: Basispreis entspricht ungefähr dem aktuellen Kurs."],
+  breakeven: ["Break-even", "Der Kurs, den der Basiswert bei Verfall erreichen muss, damit du nichts verlierst: Basispreis plus Prämie (Call) oder minus Prämie (Put)."],
+  zeitwert: ["Zeitwert", "Der Teil des Optionspreises, den du für die verbleibende Zeit bezahlst. Er schmilzt jeden Tag, kurz vor Verfall besonders schnell."],
+  lombard: ["Lombardkredit", "Ein Kredit, für den dein Depot als Sicherheit dient. Damit kannst du mehr investieren, als du besitzt."],
+  beleihung: ["Beleihungsgrenze", "Wie viel Kredit die Bank auf dein Depot gibt, zum Beispiel 50 % des Depotwerts. Fällt das Depot, sinkt auch die Grenze."],
+  margincall: ["Margin Call", "Dein Kredit ist im Verhältnis zum Depot zu hoch geworden. Die Bank verlangt Geld nach oder verkauft deine Wertpapiere, meist zu schlechten Kursen."],
+  krypto: ["Kryptowährung", "Digitales Geld ohne Firma, Gewinne oder Zinsen dahinter. Der Preis entsteht allein durch Angebot und Nachfrage und schwankt extrem."],
+  ipo: ["Börsengang (IPO)", "Eine Firma bringt erstmals Aktien an die Börse. Wer zeichnet, bekommt Aktien zum Ausgabepreis, oft aber nur einen Teil der Bestellung."],
+  startup: ["Startup-Beteiligung", "Ein Anteil an einer jungen Firma, die nicht an der Börse ist. Kaum verkäuflich, oft Totalverlust, selten ein Vielfaches."],
+  insider: ["Insiderhandel", "Handeln mit Informationen, die die Öffentlichkeit nicht kennt. Im echten Leben verboten und strafbar."],
+  abgeltungsteuer: ["Abgeltungsteuer", "In Deutschland 25 % Steuer auf Kursgewinne, Dividenden und Zinsen, plus Solidaritätszuschlag und gegebenenfalls Kirchensteuer. 1.000 € pro Person und Jahr bleiben steuerfrei (Sparerpauschbetrag)."],
+  tagesgeld: ["Tagesgeld", "Ein täglich verfügbares Konto mit variablem Zins. Im Spiel: Leitzins minus 0,5 Prozentpunkte, monatlich gutgeschrieben."],
+};
+
+const COACH = {
+  baer: ["Bärenmarkt: Ruhe bewahren", "Die Kurse fallen auf breiter Front. Das passiert immer wieder. Frag dich: Hat sich an deinen Firmen etwas Grundlegendes geändert? Wenn nicht, ist Verkaufen oft der teuerste Fehler. Mit Bargeld kannst du günstiger nachkaufen.", "marktphase"],
+  crash: ["Crash! Nicht in Panik verfallen", "Heftige Einbrüche fühlen sich schlimm an, sind aber meist vorübergehend. Panikverkäufe machen Buchverluste zu echten Verlusten. Pass bei Krediten auf: Fallen die Kurse weiter, droht ein Margin Call.", "crash"],
+  blase: ["Euphorie am Markt", "Wenn alle nur noch von Gewinnen reden, steigt das Risiko eines Absturzes. Ein guter Moment, um dein Depot zurück auf die geplante Aufteilung zu bringen.", "rebalancing"],
+  zins: ["Zinsen bewegen die Märkte", "Steigt der Leitzins, fallen die Kurse bestehender Anleihen und oft auch Immobilien-Aktien. Banken profitieren eher. Tagesgeld und Kreditzinsen passen sich an.", "leitzins"],
+  ausfall: ["Hoher Zins heißt hohes Risiko", "Eine Anleihe ist ausgefallen. Darum zahlen riskante Schuldner höhere Kupons: Du wirst für das Ausfallrisiko bezahlt, aber es kann eintreten.", "ausfall"],
+  dividende: ["Deine erste Ausschüttung", "Dividenden und Kupons landen als Bargeld auf deinem Konto. Legst du sie wieder an, wirkt der Zinseszins.", "zinseszins"],
+  verfall: ["Option wertlos verfallen", "Erreicht der Kurs den Basispreis nicht rechtzeitig, ist der Einsatz weg. Das passiert bei Optionen oft. Setz deshalb nur kleine Beträge ein.", "zeitwert"],
+  margin: ["Margin Call: Was ist passiert?", "Dein Kredit war im Verhältnis zum Depot zu hoch. Die Bank hat Wertpapiere zwangsverkauft, vermutlich zu schlechten Kursen. Mit weniger Kredit bleibt dir Spielraum.", "margincall"],
+  klumpen: ["Klumpenrisiko", "Über 40 % deines Vermögens stecken in einem einzigen Wert. Geht dort etwas schief, trifft es dich hart. Verteile dein Geld auf mehrere Werte oder nimm einen ETF.", "diversifikation"],
+  meme: ["WuffCoin ist reine Spekulation", "Hinter Meme-Coins steht kein Geschäft, nur Hype. Der Preis kann sich vervielfachen oder fast auf null fallen. Setz nur Geld ein, das du verlieren kannst.", "krypto"],
+  hebeletf: ["Hebel-ETFs sind nichts zum Liegenlassen", "Ein 3×-ETF verdreifacht die tägliche Bewegung. Bei Schwankungen verliert er über die Zeit an Wert, selbst wenn der Markt am Ende gleich steht.", "hebel"],
+  overtrading: ["Viel handeln kostet viel", "Du hast in kurzer Zeit sehr oft gehandelt. Jede Order kostet 0,25 % Gebühr. Im Depot-Check siehst du, wie viel du schon bezahlt hast.", "gebuehren"],
+  panik: ["Im Minus verkauft, mitten in der Krise?", "Mit Verlust in einem fallenden Markt zu verkaufen, ist einer der häufigsten Anlegerfehler. Manchmal ist es richtig. Prüf aber, ob du aus Angst handelst oder aus einem echten Grund.", "crash"],
+  bargeld: ["Viel Bargeld liegt herum", "Über 60 % deines Vermögens ist seit Wochen nicht investiert. Bargeld ist sicher, bringt aber nur Tagesgeldzinsen. Investiertes Geld wächst langfristig meist deutlich stärker.", "investitionsquote"],
+  startup: ["Startups: viele Nieten, seltene Volltreffer", "Die meisten jungen Firmen scheitern. Profis investieren deshalb kleine Beträge in viele Startups und hoffen, dass ein Treffer alles ausgleicht.", "startup"],
+  ipo: ["Börsengang: Chance mit Unsicherheit", "Neue Aktien haben keine Kursgeschichte. Der erste Handelstag kann stark steigen oder fallen.", "ipo"],
+  geruecht: ["Vorsicht mit Gerüchten", "Im echten Leben ist Handeln mit echten Insider-Informationen verboten. Und Gerüchte stimmen oft nicht. Setz nie zu viel auf einen Tipp.", "insider"],
+};
+
+const LESSONS = [
+  { id: "aktie", title: "Was ist eine Aktie?", reward: 500,
+    text: ["Eine Aktie ist ein kleiner Anteil an einem Unternehmen. Wächst die Firma und verdient mehr, steigt meist auch der Wert deines Anteils. Läuft es schlecht, fällt er.", "Der Kurs entsteht an der Börse durch Angebot und Nachfrage. Wollen mehr Leute kaufen als verkaufen, steigt der Preis."],
+    merke: "Mit Aktien wirst du Miteigentümer. Kurse schwanken täglich, langfristig zählt, wie sich das Unternehmen entwickelt.",
+    quiz: { q: "Was kaufst du mit einer Aktie?", a: ["Einen Anteil an einem Unternehmen", "Einen Kredit an das Unternehmen", "Einen festen Zins pro Jahr"], c: 0, why: "Eine Aktie ist ein Firmenanteil. Einen Kredit an eine Firma gibst du mit einer Anleihe. Feste Zinsen gibt es bei Aktien nicht, Dividenden sind freiwillig." },
+    mission: "Kaufe Aktien im Wert von mindestens 1.000 €. Tipp: Reiter „Aktien“, Firma antippen, Betrag eingeben, „Kaufen“." },
+  { id: "halten", title: "Kurse schwanken: Geduld zahlt sich aus", reward: 750,
+    text: ["Kein Kurs steigt in einer geraden Linie. Selbst gute Aktien fallen zwischendurch um 10, 20 oder mehr Prozent. Wer bei jedem Rücksetzer verkauft, zahlt Gebühren und verpasst oft die Erholung.", "Ein Verlust ist erst echt, wenn du verkaufst. Solange du hältst, ist es ein Buchverlust."],
+    merke: "Schwankungen sind der Preis für höhere Renditen. Entscheide nach Plan, nicht nach Bauchgefühl.",
+    quiz: { q: "Deine Aktie fällt an einem Tag um 8 %. An der Firma hat sich nichts geändert. Was ist meist am klügsten?", a: ["Sofort alles verkaufen", "Ruhig bleiben und den eigenen Plan prüfen", "Mit Kredit kräftig nachkaufen"], c: 1, why: "Tagesschwankungen sagen wenig über den Wert einer Firma. Panikverkäufe und Kredit-Wetten sind die häufigsten Anlegerfehler." },
+    mission: "Halte ein Wertpapier mindestens 30 Handelstage lang." },
+  { id: "streuen", title: "Nicht alle Eier in einen Korb", reward: 1000,
+    text: ["Setzt du alles auf eine Firma, kann eine einzige schlechte Nachricht dein Depot halbieren. Verteilst du dein Geld auf viele Werte aus verschiedenen Branchen, gleichen sich Gewinne und Verluste teilweise aus.", "Das nennt man Diversifikation. Sie senkt das Risiko, ohne dass du auf Rendite verzichten musst."],
+    merke: "Streue über Firmen, Branchen und Anlageklassen. Zwei Tech-Aktien sind keine echte Streuung.",
+    quiz: { q: "Welches Depot ist am breitesten gestreut?", a: ["100 % TechNova", "50 % TechNova, 50 % Quantix (beide Tech)", "Je 20 % in fünf Firmen aus verschiedenen Branchen"], c: 2, why: "Firmen derselben Branche fallen oft gemeinsam. Fünf Firmen aus verschiedenen Branchen schwanken weniger im Gleichschritt." },
+    mission: "Halte mindestens 5 verschiedene Wertpapiere, keins davon mit mehr als 35 % deines Depots." },
+  { id: "etf", title: "ETFs: viele Aktien mit einem Kauf", reward: 1000,
+    text: ["Ein ETF ist ein Fonds, der an der Börse gehandelt wird und einen Index nachbildet. Mit einem einzigen Kauf besitzt du kleine Stücke von dutzenden oder hunderten Firmen.", "Breite ETFs sind günstig und bequem. Darum gelten sie als solide Basis für langfristiges Anlegen. Vorsicht bei Spezial-ETFs: Hebel- und Short-ETFs sind für kurzfristige Wetten gebaut."],
+    merke: "Ein breiter Welt-ETF ist für die meisten Einsteiger ein guter Kern des Depots.",
+    quiz: { q: "Warum sind breite ETFs bei Einsteigern beliebt?", a: ["Sie können nicht fallen", "Breite Streuung zu niedrigen Kosten", "Sie garantieren 7 % pro Jahr"], c: 1, why: "ETFs können sehr wohl fallen, zum Beispiel in einem Crash. Garantien gibt es nicht. Ihr Vorteil ist die breite Streuung zu kleinen Kosten." },
+    mission: "Lege mindestens 30 % deines Vermögens in ETFs an." },
+  { id: "dividende", title: "Dividenden und Zinseszins", reward: 750,
+    text: ["Viele Firmen zahlen einen Teil ihres Gewinns als Dividende aus. Anleihen zahlen Kupons, Tagesgeld bringt Zinsen.", "Legst du diese Erträge wieder an, verdienst du künftig auch auf die Erträge: der Zinseszins. Bei 7 % pro Jahr verdoppelt sich Geld in etwa 10 Jahren."],
+    merke: "Faustregel 72: 72 geteilt durch die Rendite in Prozent ergibt die Jahre bis zur Verdopplung.",
+    quiz: { q: "Wie lange dauert es bei 6 % Rendite pro Jahr ungefähr, bis sich dein Geld verdoppelt?", a: ["6 Jahre", "12 Jahre", "20 Jahre"], c: 1, why: "72 geteilt durch 6 ergibt 12 Jahre. Je früher du anfängst, desto mehr arbeitet der Zinseszins für dich." },
+    mission: "Kassiere 250 € Ausschüttungen (Dividenden, Kupons oder Tagesgeldzinsen)." },
+  { id: "anleihen", title: "Anleihen und Zinsen", reward: 1000,
+    text: ["Mit einer Anleihe leihst du einem Staat oder Unternehmen Geld und bekommst dafür regelmäßig Zinsen. Anleihen schwanken meist weniger als Aktien.", "Steigen die Leitzinsen, fallen die Kurse bestehender Anleihen, denn neue Anleihen zahlen dann mehr. Je länger die Laufzeit, desto stärker der Effekt. Ein höherer Kupon bedeutet fast immer ein höheres Ausfallrisiko."],
+    merke: "Anleihen bringen Ruhe ins Depot. Aber: Zins hoch heißt Kurs runter.",
+    quiz: { q: "Die Zentralbank erhöht den Leitzins. Was passiert meist mit dem Kurs einer bestehenden 10-jährigen Anleihe?", a: ["Er steigt", "Er fällt", "Er bleibt gleich"], c: 1, why: "Neue Anleihen bieten jetzt höhere Zinsen. Die alte Anleihe mit niedrigem Kupon ist weniger wert, ihr Kurs fällt." },
+    mission: "Halte 40 Tage lang mindestens 15 % deines Vermögens in Anleihen.", days: 40 },
+  { id: "kosten", title: "Hin und her macht Taschen leer", reward: 1500,
+    text: ["Jeder Trade kostet Gebühren, hier 0,25 %. Klingt wenig. Wer aber ständig umschichtet, verliert schnell mehrere Prozent im Jahr.", "Untersuchungen zeigen: Anleger, die viel handeln, schneiden im Schnitt schlechter ab. Zeit im Markt schlägt das Timing des Marktes."],
+    merke: "Kaufen und halten ist einfach, günstig und für die meisten die beste Strategie.",
+    quiz: { q: "Du schichtest 100-mal im Jahr dein ganzes Depot um, jeweils mit 0,25 % Gebühr. Was kostet dich das ungefähr?", a: ["0,25 % im Jahr", "2,5 % im Jahr", "25 % im Jahr"], c: 2, why: "100 × 0,25 % = 25 %. Das frisst jede Rendite auf. Kleine Gebühren summieren sich." },
+    mission: "Bleib 60 Tage am Stück zu mindestens 70 % investiert, ohne etwas zu verkaufen.", days: 60, resetOnSell: true },
+  { id: "risiko", title: "Risiko und Volatilität", reward: 1500,
+    text: ["Die Volatilität misst, wie stark ein Kurs schwankt. Ein Wert mit 40 % Volatilität bewegt sich im Jahr typischerweise um bis zu 40 % nach oben oder unten.", "Mit einer Mischung aus Aktien, Anleihen und etwas Gold senkst du die Schwankung deines Depots. Wie viel Risiko passt, hängt davon ab, wie gut du Verluste aushältst."],
+    merke: "Mehr Risiko kann mehr Rendite bringen, muss aber nicht. Wähle ein Risiko, bei dem du nachts ruhig schläfst.",
+    quiz: { q: "Was senkt die Schwankung deines Depots am ehesten?", a: ["Mehr Krypto kaufen", "Einen Teil in Anleihen und Gold anlegen", "Einen Hebel-ETF dazunehmen"], c: 1, why: "Anleihen und Gold bewegen sich oft anders als Aktien und puffern Verluste ab. Krypto und Hebel machen das Depot wilder." },
+    mission: "Halte 30 Tage lang einen Risikowert unter 22 % und sei dabei zu mindestens 80 % investiert. Den Risikowert siehst du im Depot-Check.", days: 30 },
+  { id: "crash", title: "Crashs gehören dazu", reward: 1000,
+    text: ["Immer wieder fallen die Märkte um 20 % oder mehr. Wer dann in Panik verkauft, macht Buchverluste zu echten Verlusten und ist bei der Erholung nicht dabei.", "Viele erfolgreiche Anleger kaufen in Crashs sogar nach, wenn sie Bargeld übrig haben. Im Spiel kommen Bärenmärkte und Crashs zufällig vor. Dein Coach meldet sich, wenn es so weit ist."],
+    merke: "Leg vorher fest, was du in einem Crash tust. Dann entscheidet nicht die Angst.",
+    quiz: { q: "Was tun langfristige Anleger in einem Crash typischerweise?", a: ["Alles verkaufen und abwarten", "Investiert bleiben und mit Bargeld eventuell nachkaufen", "Einen Kredit für Optionen aufnehmen"], c: 1, why: "Wer investiert bleibt, ist bei der Erholung dabei. Verkaufen im Tief und Hebel in der Krise sind besonders teure Fehler." } },
+  { id: "krypto", title: "Krypto und Spekulation", reward: 1000,
+    text: ["Kryptowährungen haben keine Gewinne oder Zinsen. Ihr Preis hängt allein von Angebot und Nachfrage ab. Darum schwanken sie extrem: Minus 70 % in einem Jahr sind schon vorgekommen.", "Meme-Coins wie WuffCoin sind reine Spekulation."],
+    merke: "Nur so viel in Spekulation stecken, wie du komplett verlieren könntest, oft höchstens 5 bis 10 % des Vermögens.",
+    quiz: { q: "Woher kommt der Preis einer Kryptowährung?", a: ["Aus Firmengewinnen", "Aus festen Zinsen", "Aus Angebot und Nachfrage"], c: 2, why: "Hinter Krypto stehen weder Gewinne noch Zinsen. Der Preis ist das, was andere gerade zu zahlen bereit sind." },
+    mission: "Halte 20 Tage lang etwas Krypto, aber höchstens 10 % deines Vermögens.", days: 20 },
+  { id: "optionen", title: "Optionen: Hebel mit Verfallsdatum", reward: 2000, rank: 1,
+    text: ["Ein Call gibt dir das Recht, einen Wert bis zu einem Datum zum Basispreis zu kaufen. Steigt der Kurs darüber, gewinnst du mit Hebel. Bleibt er darunter, verfällt die Option wertlos.", "Ein Put funktioniert umgekehrt: Er gewinnt bei fallenden Kursen und kann ein Depot absichern. Optionen verlieren jeden Tag an Zeitwert."],
+    merke: "Optionen sind Wetten mit Ablaufdatum. Nur kleine Beträge einsetzen.",
+    quiz: { q: "Was passiert mit einem Call, wenn der Kurs bis zum Verfall unter dem Basispreis bleibt?", a: ["Er verfällt wertlos", "Du bekommst den Einsatz zurück", "Du musst die Aktie kaufen"], c: 0, why: "Eine Option ist ein Recht, keine Pflicht. Lohnt sich die Ausübung nicht, verfällt sie, und die bezahlte Prämie ist weg." },
+    mission: "Kaufe eine Option für höchstens 5 % deines Vermögens (Reiter „Optionen“ im Handelsbereich)." },
+  { id: "kredit", title: "Auf Pump investieren", reward: 5000, rank: 2,
+    text: ["Mit einem Lombardkredit leihst du dir Geld gegen dein Depot. Steigen die Kurse, verdienst du mehr. Fallen sie, verlierst du schneller, und die Zinsen laufen weiter.", "Fällt dein Depot zu stark, kommt der Margin Call: Die Bank verkauft deine Wertpapiere, oft zum schlechtesten Zeitpunkt."],
+    merke: "Kredit verstärkt alles, auch Fehler. Halte immer Abstand zur Beleihungsgrenze.",
+    quiz: { q: "Dein Depot ist 100.000 € wert, 50.000 € davon auf Kredit. Die Kurse fallen um 20 %. Wie viel deines eigenen Geldes ist weg?", a: ["20 %", "40 %", "10 %"], c: 1, why: "Das Depot verliert 20.000 €. Dein eigenes Geld waren nur 50.000 €, davon sind 40 % weg. Hebel verdoppelt hier den Verlust." },
+    mission: "Nimm einen Kredit auf und halte die Auslastung 30 Tage lang unter 50 %.", days: 30 },
+  { id: "steuern", title: "Steuern auf Gewinne", reward: 1000,
+    text: ["In Deutschland zahlst du auf Kursgewinne, Dividenden und Zinsen die Abgeltungsteuer: 25 % plus Solidaritätszuschlag, zusammen gut 26 %, gegebenenfalls plus Kirchensteuer.", "1.000 € Erträge pro Person und Jahr bleiben steuerfrei, wenn du deiner Bank einen Freistellungsauftrag gibst. Auf Kursgewinne zahlst du erst, wenn du verkaufst. Im Spiel gibt es keine Steuern."],
+    merke: "Freistellungsauftrag nicht vergessen. Wer lange hält, schiebt Steuern auf und lässt das Geld länger arbeiten.",
+    quiz: { q: "Wie hoch ist der Sparerpauschbetrag für eine Person pro Jahr?", a: ["100 €", "1.000 €", "10.000 €"], c: 1, why: "Seit 2023 sind es 1.000 € pro Person (2.000 € für Verheiratete). Bis dahin bleiben Kapitalerträge steuerfrei." } },
 ];
 
 // ---------- Zustand ----------
 let S, A = {};
 const U = { tab: 'stock', sel: 'NOVA', mode: 'price', tf: 250, ttab: 'trade', oType: 'C', oK: 1, oT: 63 };
 let timer = null, speed = 1, dirty = true, modalOpen = false, wasRunning = false;
-let newsVer = 0, seenNews = -1, lowerKey = '', tabKey = '', listKey = '', listRefs = [], lastSave = 0, lastRender = 0;
+let coachVer = 0, learnVer = 0, newsVer = 0, seenNews = -1, lowerKey = '', tabKey = '', listKey = '', listRefs = [], lastSave = 0, lastRender = 0;
 
 function indexAssets() { A = {}; for (const a of S.assets) A[a.id] = a; }
 
+function migrate() {
+  S.learn = S.learn || { i: 0, quiz: false, cnt: 0, base: S.income || 0, flag: false, done: [], first: 0, miss: 0 };
+  S.fees = S.fees || 0; S.trades = S.trades || 0; S.tradeDays = S.tradeDays || []; S.coach = S.coach || {}; S.cashDays = S.cashDays || 0;
+  if (S.coachTip === undefined) S.coachTip = null;
+  if (S.bench == null) { S.bench = netWorth() / A.WELT.price; S.benchHist = S.nwHist.map(() => null); S.benchHist[S.benchHist.length - 1] = netWorth(); }
+}
 function newState() {
   newsVer++; lowerKey = ''; tabKey = ''; listKey = '';
   S = {
@@ -409,6 +587,8 @@ function newState() {
   for (let i = 0; i < YEAR; i++) stepMarket(true);
   S.day = 1; S.regime = 'normal'; S.regDays = 0; S.rate = 2.5;
   S.nwHist = [START];
+  S.bench = START / A.WELT.price; S.benchHist = [START];
+  migrate();
   addNews('Willkommen! Du startest mit ' + eur(START) + ' Spielgeld. Erstes Ziel: ' + eur(GOALS[0]) + '.', 'gold');
 }
 
@@ -419,7 +599,7 @@ function setRegime(n, silent) {
   if (n === S.regime) return;
   S.regime = n; S.regDays = 0;
   if (n === 'crash') { S.regLen = 8 + Math.floor(rnd() * 14); S.crashStartNW = silent ? 0 : netWorth(); }
-  if (!silent) addNews(REG_NEWS[n][0], REG_NEWS[n][1]);
+  if (!silent) { addNews(REG_NEWS[n][0], REG_NEWS[n][1]); if (n === 'bear') coach('baer'); else if (n === 'crash') coach('crash'); else if (n === 'bubble') coach('blase'); }
 }
 
 function centralBank(silent) {
@@ -429,6 +609,7 @@ function centralBank(silent) {
   else d = rnd() < .3 ? (rnd() < .5 ? .25 : -.25) : 0;
   d = clamp(S.rate + d, 0, 8) - S.rate;
   S.rate += d;
+  if (!silent && d !== 0) coach('zins');
   if (!silent) addNews(d > 0 ? 'Zentralbank erhöht den Leitzins auf ' + nf(S.rate) + ' %' : d < 0 ? 'Zentralbank senkt den Leitzins auf ' + nf(S.rate) + ' %' : 'Zentralbank belässt den Leitzins bei ' + nf(S.rate) + ' %', d < 0 ? 'up' : d > 0 ? 'down' : '');
   return d;
 }
@@ -466,7 +647,7 @@ function stepMarket(silent) {
       r = -a.dur * dRate / 100 + a.beta * m + a.idio * sq * gauss() + (100 - a.price) / 100 * .4 * DT;
       if (a.def && rnd() < a.def * DT * (S.regime === 'crash' || S.regime === 'bear' ? 3 : 1)) {
         r += Math.log(.5);
-        if (!silent) addNews('Zahlungsausfall! Emittent der ' + a.name + ' insolvent', 'down');
+        if (!silent) { addNews('Zahlungsausfall! Emittent der ' + a.name + ' insolvent', 'down'); coach('ausfall'); }
       }
     } else r = (a.alpha || 0) * DT + a.beta * m + a.idio * sq * gauss() + (a.rateSens || 0) * dRate / 100;
     r += (sh[a.sector] || 0) + (assetShock[a.id] || 0);
@@ -531,7 +712,7 @@ function tick() {
     if (a.cls === 'bond' && d % 21 === 0) inc += h.qty * 100 * a.coupon / 12;
     if (a.div && d % 63 === 0) inc += h.qty * a.price * a.div / 4;
   }
-  if (inc > 0) { S.cash += inc; S.income += inc; achieve('divi'); addNews('Ausschüttung erhalten: ' + eur(inc), 'up'); }
+  if (inc > 0) { S.cash += inc; S.income += inc; achieve('divi'); coach('dividende'); addNews('Ausschüttung erhalten: ' + eur(inc), 'up'); }
   // Optionen verfallen
   S.opts = S.opts.filter(o => {
     if (d < o.exp) return true;
@@ -539,6 +720,7 @@ function tick() {
     const r = pay / o.cost;
     addNews('Option verfallen (' + (o.type === 'C' ? 'Call' : 'Put') + ' ' + A[o.und].name + '): ' + (pay > 0 ? eur(pay) + ' ausgezahlt' : 'wertlos'), pay > o.cost ? 'up' : 'down');
     if (r >= 2) achieve('opt2'); if (r >= 10) achieve('opt10');
+    if (pay <= 0) coach('verfall');
     return false;
   });
   // Startups
@@ -557,13 +739,18 @@ function tick() {
     const a = A[p.id]; a.listed = true;
     const first = p.issue * Math.exp(.08 + .35 * gauss());
     a.hist = [p.issue, first]; a.prev = p.issue; a.price = first; a.ret = first / p.issue - 1;
-    if (p.qty > 0) { S.hold[p.id] = { qty: p.qty, cost: p.qty * p.issue }; if (first > p.issue) achieve('ipo'); }
+    if (p.qty > 0) { S.hold[p.id] = { qty: p.qty, cost: p.qty * p.issue, since: S.day }; if (first > p.issue) achieve('ipo'); }
     addNews(a.name + ' startet an der Börse: ' + pct((first / p.issue - 1) * 100) + ' am ersten Tag', first > p.issue ? 'up' : 'down');
     return false;
   });
   marginCheck();
   const nw = netWorth();
-  S.nwHist.push(nw); if (S.nwHist.length > 3000) S.nwHist = S.nwHist.filter((_, i) => i % 2 === 0);
+  S.nwHist.push(nw); S.benchHist.push(benchValue());
+  if (S.nwHist.length > 3000) { S.nwHist = S.nwHist.filter((_, i) => i % 2 === 0); S.benchHist = S.benchHist.filter((_, i) => i % 2 === 0); }
+  // Lernpfad und Coach
+  const inv = investedShare();
+  S.cashDays = S.day > 60 && inv < .4 ? S.cashDays + 1 : 0; if (S.cashDays >= 40) coach('bargeld');
+  learnDay(); checkLearn();
   S.maxNW = Math.max(S.maxNW, nw);
   checkAchievements(nw);
   if (S.regime === 'crash' && S.crashStartNW > 0 && nw >= S.crashStartNW * 1.2) achieve('crash');
@@ -586,7 +773,7 @@ function marginCheck() {
   S.opts = S.opts.filter(o => o.qty > 1e-9);
   S.cash += got;
   const pay = Math.min(S.cash, S.debt); S.cash -= pay; S.debt -= pay;
-  achieve('margin');
+  achieve('margin'); coach('margin'); learnSold();
   addNews('MARGIN CALL: Die Bank verkauft Positionen für ' + eur(got), 'down');
   toast('⚠ Margin Call! Zwangsverkauf: ' + eur(got));
 }
@@ -610,11 +797,13 @@ function fireEvent() {
     const pool = S.assets.filter(a => a.cls === 'stock' && a.listed), a = pick(pool), dir = rnd() < .6 ? 1 : -1;
     S.tips.push({ id: a.id, dir, truth: rnd() < .6, mag: .15 + rnd() * .25, day: S.day + 5 + Math.floor(rnd() * 15) });
     const txt = dir > 0 ? pick(['bald übernommen werden', 'einen Rekordauftrag melden', 'mit Traumzahlen überraschen']) : pick(['eine Gewinnwarnung herausgeben', 'Ärger mit der Finanzaufsicht bekommen', 'einen Großkunden verlieren']);
+    coach('geruecht');
     showModal({ kick: 'Gerücht', title: 'Psst: ' + a.name + ' soll ' + txt + '.', body: '<p>Ein Bekannter aus der Branche ist sich „ziemlich sicher“. In den nächsten 1–4 Wochen soll es passieren. Gerüchte stimmen nicht immer.</p>',
       btns: [['Zur Aktie', 'primary', () => { selectAsset(a.id); hideModal(); }], ['Ignorieren', '', hideModal]] });
   } else if (t === 'startup') {
     const amt = Math.max(500, Math.round(nw * .05 / 100) * 100), name = pick(STARTUPS), days = 120 + Math.floor(rnd() * 130);
     const go = mult => () => { const a = amt * mult; if (S.cash < a) return toast('Nicht genug Bargeld.'); S.cash -= a; S.ventures.push({ name, amt: a, day: S.day + days }); addNews('Du bist beim Startup „' + name + '“ eingestiegen: ' + eur(a), 'gold'); hideModal(); };
+    coach('startup');
     showModal({ kick: 'Startup-Pitch', title: '„' + name + '“ sucht Investoren', body: '<p>Die Gründer wollen <b>' + eur(amt) + '</b> von dir. In etwa ' + Math.round(days / 21) + ' Monaten fällt die Entscheidung: Die meisten Startups scheitern, wenige vervielfachen das Geld (bis ×60).</p><p class="hint">Dein Bargeld: ' + eur(S.cash) + '</p>',
       btns: [['Investieren (' + eurS(amt) + ')', 'primary', go(1), S.cash < amt], ['Doppelt investieren (' + eurS(amt * 2) + ')', '', go(2), S.cash < amt * 2], ['Ablehnen', 'ghost', hideModal]] });
   } else {
@@ -623,6 +812,7 @@ function fireEvent() {
     indexAssets();
     const max = Math.max(1000, Math.round(nw * .1 / 100) * 100);
     const sub = f => () => { const want = max * f; if (S.cash < want) return toast('Nicht genug Bargeld.'); const alloc = .4 + rnd() * .6, spend = want * alloc, q = spend / issue; S.cash -= spend; S.ipos.push({ id, qty: q, issue, day: S.day + 3 }); addNews('Zuteilung bei ' + name + ': ' + qty(q) + ' Aktien für ' + eur(spend) + ' (' + Math.round(alloc * 100) + ' % deiner Order)', 'gold'); hideModal(); };
+    coach('ipo');
     showModal({ kick: 'Börsengang', title: name + ' geht an die Börse', body: '<p>Ausgabepreis <b>' + px(issue) + '</b>. Erster Handelstag in 3 Tagen. Börsengänge sind oft überzeichnet, du bekommst vielleicht nur einen Teil.</p>',
       btns: [['Voll zeichnen (' + eurS(max) + ')', 'primary', sub(1), S.cash < max], ['Halb zeichnen (' + eurS(max / 2) + ')', '', sub(.5), S.cash < max / 2], ['Nicht zeichnen', 'ghost', () => { S.ipos.push({ id, qty: 0, issue, day: S.day + 3 }); hideModal(); }]] });
   }
@@ -651,9 +841,13 @@ function buy(amount) {
   if (!(amount > 0.01)) return toast(S.cash <= 0.01 ? 'Kein Bargeld übrig.' : 'Bitte einen Betrag eingeben.');
   const q = amount / (a.price * (1 + FEE));
   S.cash -= amount;
-  const h = S.hold[a.id] || (S.hold[a.id] = { qty: 0, cost: 0 });
+  const h = S.hold[a.id] || (S.hold[a.id] = { qty: 0, cost: 0, since: S.day });
   h.qty += q; h.cost += amount;
+  S.fees += amount - amount / (1 + FEE); noteTrade();
   achieve('first');
+  if (share(h.qty * a.price) > .4) coach('klumpen');
+  if (a.id === 'WUFF') coach('meme'); if (a.lev) coach('hebeletf');
+  checkLearn();
   toast('Gekauft: ' + qty(q) + ' × ' + a.name + ' für ' + eur(amount));
   dirty = true;
 }
@@ -662,6 +856,8 @@ function sellQty(q) {
   if (!h) return toast('Davon besitzt du nichts.');
   q = Math.min(q, h.qty); if (!(q > 0)) return toast('Bitte einen Betrag eingeben.');
   const got = q * a.price * (1 - FEE);
+  if (got < h.cost * q / h.qty && (S.regime === 'bear' || S.regime === 'crash')) coach('panik');
+  S.fees += q * a.price * FEE; noteTrade(); learnSold();
   h.cost *= 1 - q / h.qty; h.qty -= q; S.cash += got;
   if (h.qty < 1e-9) delete S.hold[a.id];
   toast('Verkauft: ' + qty(q) + ' × ' + a.name + ' für ' + eur(got));
@@ -676,17 +872,19 @@ function optQuote() {
 function buyOption(amount) {
   const q = optQuote(); amount = Math.min(amount, S.cash);
   if (!(amount > 0.01)) return toast('Bitte einen Betrag eingeben.');
-  const n = amount / q.ask; S.cash -= amount;
+  const n = amount / q.ask;
+  if (amount <= netWorth() * .05 + .01) S.learn.flag = true;
+  S.cash -= amount; noteTrade();
   S.opts.push({ uid: S.uid++, und: q.a.id, type: U.oType, K: q.K, exp: S.day + U.oT, qty: n, cost: amount });
   achieve('first');
   toast((U.oType === 'C' ? 'Call' : 'Put') + ' gekauft: ' + qty(n) + ' Stück für ' + eur(amount));
-  dirty = true;
+  checkLearn(); dirty = true;
 }
 function sellOption(uid) {
   const o = S.opts.find(x => x.uid === uid); if (!o) return;
   const got = optFair(o) * o.qty * .98; S.cash += got;
   const r = got / o.cost; if (r >= 2) achieve('opt2'); if (r >= 10) achieve('opt10');
-  S.opts = S.opts.filter(x => x !== o);
+  S.opts = S.opts.filter(x => x !== o); noteTrade(); learnSold();
   toast('Option verkauft für ' + eur(got) + ' (' + pct((r - 1) * 100, 0) + ')');
   dirty = true;
 }
@@ -705,6 +903,148 @@ function repay(x) {
   toast('Getilgt: ' + eur(x)); dirty = true;
 }
 
+function noteTrade() {
+  S.trades++; S.tradeDays.push(S.day); if (S.tradeDays.length > 30) S.tradeDays.shift();
+  if (S.tradeDays.filter(d => d > S.day - 20).length >= 10) coach('overtrading');
+}
+
+// ---------- Lernlogik ----------
+const term = k => GLOSSARY[k] ? '<button class="info" data-term="' + k + '" aria-label="Erklärung: ' + GLOSSARY[k][0] + '">i</button>' : '';
+function showTerm(k) {
+  const g = GLOSSARY[k]; if (!g) return;
+  showModal({ kick: 'Lexikon', title: g[0], body: '<p>' + g[1] + '</p>', btns: [['Alle Begriffe', '', showLexicon], ['Verstanden', 'primary', hideModal]] });
+}
+function showLexicon() {
+  const items = Object.values(GLOSSARY).sort((a, b) => a[0].localeCompare(b[0], 'de'));
+  showModal({ kick: 'Lexikon', title: 'Alle Begriffe', body: '<div class="lex">' + items.map(([t, x]) => '<details><summary>' + t + '</summary><p>' + x + '</p></details>').join('') + '</div>', btns: [['Schließen', 'primary', hideModal]] });
+}
+
+function coach(k) {
+  if (!S.coach || S.coach[k]) return;
+  S.coach[k] = S.day; S.coachTip = k; coachVer++;
+  addNews('Coach: ' + COACH[k][0], 'coach');
+  if (!modalOpen) toast('💡 ' + COACH[k][0]);
+}
+
+function totalAssets() { return S.cash + holdValue() + optsValue() + ventValue(); }
+function clsValue(c) { let v = 0; for (const id in S.hold) if (A[id].cls === c) v += S.hold[id].qty * A[id].price; return v; }
+function positions() { return Object.keys(S.hold).map(id => ({ id, v: S.hold[id].qty * A[id].price })); }
+function portVol() { let hv = 0, s = 0; for (const id in S.hold) { const v = S.hold[id].qty * A[id].price; hv += v; s += v * realVol(A[id]); } return hv > 0 ? s / hv : 0; }
+function investedShare() { const t = totalAssets(); return t > 0 ? (holdValue() + optsValue()) / t : 0; }
+function loanUse() { const cfg = loanCfg() || { ltv: .5 }, mc = (cfg.ltv + .1) * collateral(); return mc > 0 ? (S.debt - Math.max(S.cash, 0)) / mc : 0; }
+const benchValue = () => S.bench * A.WELT.price;
+const share = v => { const t = totalAssets(); return t > 0 ? v / t : 0; };
+const pc = v => Math.round(v * 100) + ' %';
+
+// Missionsfortschritt: { p: 0..1, txt } oder bei Tagesmissionen die Bedingung für heute
+const MISSION = {
+  aktie: () => { const v = clsValue('stock'); return { p: v / 1000, txt: eurS(v) + ' von 1.000 € in Aktien' }; },
+  halten: () => { let d = 0; for (const id in S.hold) d = Math.max(d, S.day - (S.hold[id].since ?? 0)); return { p: d / 30, txt: Math.min(d, 30) + ' von 30 Tagen gehalten' }; },
+  streuen: () => { const ps = positions(), hv = ps.reduce((s, x) => s + x.v, 0), mx = hv ? Math.max(...ps.map(x => x.v)) / hv : 0, n = ps.length; const ok = n >= 5 && mx <= .35; return { p: ok ? 1 : Math.min(.95, Math.min(n, 5) / 5 * (mx <= .35 ? 1 : .8)), txt: n + ' von 5 Werten · größte Position ' + pc(mx) + (mx > .35 ? ' (max. 35 %)' : '') }; },
+  etf: () => { const s = share(clsValue('etf')); return { p: s / .3, txt: 'ETF-Anteil ' + pc(s) + ' von 30 %' }; },
+  dividende: () => { const v = S.income - S.learn.base; return { p: v / 250, txt: eurS(v) + ' von 250 € kassiert' }; },
+  anleihen: () => { const s = share(clsValue('bond')); return { ok: s >= .15, txt: 'Anleihen-Anteil heute ' + pc(s) + ' (mind. 15 %)' }; },
+  kosten: () => { const s = investedShare(); return { ok: s >= .7, txt: 'Investiert heute ' + pc(s) + ' (mind. 70 %), Verkauf setzt zurück' }; },
+  risiko: () => { const v = portVol(), s = investedShare(); return { ok: v > 0 && v < .22 && s >= .8, txt: 'Risikowert ' + pc(v) + ' (unter 22 %) · investiert ' + pc(s) + ' (mind. 80 %)' }; },
+  krypto: () => { const s = share(clsValue('crypto')); return { ok: s > 0 && s <= .1, txt: 'Krypto-Anteil heute ' + (s > 0 && s < .01 ? '<1 %' : pc(s)) + ' (über 0, max. 10 %)' }; },
+  optionen: () => ({ p: S.learn.flag ? 1 : 0, txt: S.learn.flag ? 'Erledigt' : 'Noch keine passende Option gekauft' }),
+  kredit: () => { const u = loanUse(); return { ok: S.debt > 0 && u < .5, txt: S.debt > 0 ? 'Auslastung heute ' + pc(Math.max(0, u)) + ' (unter 50 %)' : 'Noch kein Kredit aufgenommen' }; },
+};
+function curLesson() { return S.learn.i < LESSONS.length ? LESSONS[S.learn.i] : null; }
+function lessonLocked(L) { return L && (L.rank || 0) > S.rank; }
+function missionStatus() {
+  const L = curLesson(); if (!L || !L.mission || !S.learn.quiz) return null;
+  const st = MISSION[L.id]();
+  if (L.days) return { p: S.learn.cnt / L.days, txt: S.learn.cnt + ' von ' + L.days + ' Tagen · ' + st.txt, ok: st.ok };
+  return { p: st.p, txt: st.txt };
+}
+function learnDay() {
+  const L = curLesson(); if (!L || !L.days || !S.learn.quiz || lessonLocked(L)) return;
+  S.learn.cnt = MISSION[L.id]().ok ? S.learn.cnt + 1 : 0;
+}
+function learnSold() { const L = curLesson(); if (L && L.resetOnSell && S.learn.quiz) S.learn.cnt = 0; }
+function checkLearn() {
+  const L = curLesson(); if (!L || lessonLocked(L) || !S.learn.quiz) return;
+  const st = missionStatus();
+  if (!L.mission || (st && st.p >= 1)) completeLesson();
+}
+function completeLesson() {
+  const L = curLesson(); if (!L) return;
+  S.cash += L.reward; S.bench += L.reward / A.WELT.price;
+  S.learn.done.push(L.id);
+  addNews('Lektion geschafft: „' + L.title + '“ · Belohnung ' + eur(L.reward), 'gold');
+  toast('🎓 Lektion geschafft: +' + eurS(L.reward), true);
+  S.learn.i++; S.learn.quiz = false; S.learn.cnt = 0; S.learn.base = S.income; S.learn.flag = false;
+  if (S.learn.i >= LESSONS.length) achieve('scholar');
+  learnVer++; dirty = true;
+}
+
+function openLesson() {
+  const L = curLesson(); if (!L || lessonLocked(L)) return;
+  showModal({ kick: 'Lektion ' + (S.learn.i + 1) + ' von ' + LESSONS.length, title: L.title,
+    body: L.text.map(t => '<p>' + t + '</p>').join('') + '<div class="merke"><b>Merke</b>' + L.merke + '</div>',
+    btns: [['Weiter zur Quizfrage', 'primary', openQuiz], ['Später', 'ghost', hideModal]] });
+}
+function openQuiz() {
+  const L = curLesson(), Q = L.quiz;
+  showModal({ kick: 'Quiz · ' + L.title, title: Q.q, body: '',
+    btns: Q.a.map((t, j) => [t, 'answer', () => answer(j)]).concat([['Später', 'ghost', hideModal]]) });
+}
+function answer(j) {
+  const L = curLesson(), Q = L.quiz;
+  if (j !== Q.c) {
+    S.learn.miss = (S.learn.miss || 0) + 1;
+    showModal({ kick: 'Quiz', title: 'Nicht ganz.', body: '<p>' + Q.why + '</p>', btns: [['Nochmal versuchen', 'primary', openQuiz], ['Später', 'ghost', hideModal]] });
+    return;
+  }
+  if (!S.learn.miss) { S.learn.first = (S.learn.first || 0) + 1; if (S.learn.first >= 5) achieve('quiz5'); }
+  S.learn.miss = 0; S.learn.quiz = true; S.learn.cnt = 0; S.learn.base = S.income; learnVer++;
+  if (!L.mission) {
+    completeLesson();
+    showModal({ kick: 'Richtig!', title: 'Gut gemacht.', body: '<p>' + Q.why + '</p><p>Belohnung: <b style="color:var(--brass)">+' + eur(L.reward) + '</b></p>', btns: [['Weiter', 'primary', hideModal]] });
+    return;
+  }
+  showModal({ kick: 'Richtig!', title: 'Deine Mission', body: '<p>' + Q.why + '</p><div class="merke"><b>Mission</b>' + L.mission + '</div><p>Belohnung: <b style="color:var(--brass)">+' + eur(L.reward) + '</b></p>',
+    btns: [['Los geht’s', 'primary', () => { hideModal(); checkLearn(); }]] });
+}
+
+function setHTML(id, html) { const el = $(id); if (el._h !== html) { el._h = html; el.innerHTML = html; } }
+function renderLearn() {
+  const L = curLesson();
+  const steps = LESSONS.map((x, i) => '<span class="step' + (i < S.learn.i ? ' done' : i === S.learn.i ? ' cur' : '') + '" title="' + x.title + '"></span>').join('');
+  $('lpCount').textContent = Math.min(S.learn.i, LESSONS.length) + ' / ' + LESSONS.length + ' geschafft';
+  let h = '<div class="steps">' + steps + '</div>';
+  if (!L) h += '<h4>Lernpfad abgeschlossen 🎓</h4><p class="muted">Du kennst jetzt die wichtigsten Grundlagen. Spiel weiter Richtung Milliarde und behalte den Depot-Check im Blick.</p>';
+  else if (lessonLocked(L)) h += '<div class="lkick">Nächste Lektion</div><h4>' + L.title + '</h4><p class="muted">Wird ab Rang ' + RANKS[L.rank].name + ' freigeschaltet (' + eurS(GOALS[L.rank - 1]) + ' Vermögen).</p>';
+  else if (!S.learn.quiz) h += '<div class="lkick">Lektion ' + (S.learn.i + 1) + '</div><h4>' + L.title + '</h4><p class="muted">' + L.text[0] + '</p><div class="lrow"><button class="primary" data-learn="open">Lektion starten</button><span class="hint">Belohnung +' + eurS(L.reward) + '</span></div>';
+  else {
+    const st = missionStatus();
+    h += '<div class="lkick">Mission · Lektion ' + (S.learn.i + 1) + '</div><h4>' + L.title + '</h4><p>' + L.mission + '</p>' +
+      '<div class="meter gold"><div style="width:' + clamp(st.p, 0, 1) * 100 + '%"></div></div><div class="hint mono">' + st.txt + '</div>' +
+      '<div class="lrow"><button class="ghost" data-learn="open">Lektion nochmal lesen</button><span class="hint">Belohnung +' + eurS(L.reward) + '</span></div>';
+  }
+  setHTML('lpBox', h);
+  const k = S.coachTip, c = k && COACH[k];
+  setHTML('coachBox', c ? '<h4>' + c[0] + '</h4><p>' + c[1] + '</p><div class="lrow">' + (c[2] ? '<button class="ghost" data-term="' + c[2] + '">Begriff erklären</button>' : '') + '<button class="ghost" data-learn="dismiss">Verstanden</button></div>'
+    : '<h4>Ich schaue dir über die Schulter</h4><p class="muted">Wenn etwas Wichtiges passiert, etwa ein Crash, ein Zinsentscheid oder ein Klumpenrisiko in deinem Depot, erkläre ich es dir hier. Tippe auf ein <span class="info" style="cursor:default">i</span>, um einen Begriff nachzuschlagen.</p>');
+}
+function renderCheck(nw) {
+  const ps = positions(), hv = ps.reduce((s, x) => s + x.v, 0), n = ps.length, mx = hv ? Math.max(...ps.map(x => x.v)) / hv : 0;
+  const tag = (t, k) => '<span class="tag ' + k + '">' + t + '</span>';
+  const div = !n ? tag('leer', 'mid') : n >= 5 && mx <= .35 ? tag('gut', 'good') : n >= 3 && mx <= .5 ? tag('mittel', 'mid') : tag('riskant', 'bad');
+  const pv = portVol(), risk = !n ? tag('–', 'mid') : pv < .18 ? tag('niedrig', 'good') : pv < .32 ? tag('mittel', 'mid') : tag('hoch', 'bad');
+  const inv = investedShare(), invt = inv >= .6 ? tag('investiert', 'good') : inv >= .3 ? tag('teilweise', 'mid') : tag('viel Bargeld', 'mid');
+  const bv = benchValue(), diff = bv > 0 ? (nw / bv - 1) * 100 : 0;
+  const rows = [
+    ['Streuung' + term('diversifikation'), n ? n + ' Werte · größte ' + pc(mx) : 'keine Werte', div],
+    ['Risikowert' + term('risikowert'), n ? nf(pv * 100, 0) + ' % p.a.' : '–', risk],
+    ['Investiert' + term('investitionsquote'), pc(inv), invt],
+    ['Gebühren' + term('gebuehren'), eurS(S.fees) + ' · ' + S.trades + ' Trades', ''],
+    ['vs. Welt-ETF' + term('benchmark'), eurS(bv), tag((diff >= 0 ? 'du +' : 'du −') + nf(Math.abs(diff), 1) + ' %', diff >= 0 ? 'good' : 'bad')],
+  ];
+  setHTML('checkBox', rows.map(([k, v, t]) => '<div class="crow"><span class="k">' + k + '</span><span class="v mono">' + v + '</span>' + (t || '<span></span>') + '</div>').join(''));
+}
+
 // ---------- Nachrichten / Toast ----------
 function addNews(t, k = '') { newsVer++; S.news.unshift({ d: S.day, t, k }); if (S.news.length > 80) S.news.length = 80; dirty = true; }
 let toastT;
@@ -712,7 +1052,7 @@ function toast(msg, gold) { const t = $('toast'); t.textContent = msg; t.classNa
 
 // ---------- Modal ----------
 function showModal({ kick, title, body, btns }) {
-  wasRunning = !!timer; pause(); modalOpen = true;
+  if (!modalOpen) wasRunning = !!timer; pause(); modalOpen = true;
   $('mKick').textContent = kick || ''; $('mTitle').textContent = title; $('mBody').innerHTML = body || '';
   const box = $('mBtns'); box.innerHTML = '';
   for (const [label, kind, fn, disabled] of btns) { const b = document.createElement('button'); b.textContent = label; if (kind) b.className = kind; b.disabled = !!disabled; b.onclick = fn; box.appendChild(b); }
@@ -839,12 +1179,12 @@ function renderDetail() {
     $('dPrice').textContent = px(a.price);
     $('dChg').innerHTML = '<span class="' + cls(c) + '">' + pct(c) + ' heute</span> · <span class="' + cls(cy) + '">' + pct(cy, 1) + ' 1J</span>';
   }
-  const vol = realVol(a), facts = [['Volatilität', nf(vol * 100, 0) + ' % p.a.']];
-  if (a.cls === 'bond') facts.push(['Kupon', nf(a.coupon * 100, 2) + ' % mtl.'], ['Duration', nf(a.dur, 1) + ' J.'], ['Ausfallrisiko', a.def ? nf(a.def * 100, 0) + ' % p.a.' : 'keins']);
-  else if (a.cls === 'crypto') facts.push(['Krypto-Beta', nf(a.cb, 2)]);
-  else { if (a.beta != null) facts.push(['Beta', nf(a.beta, 2)]); facts.push([a.cls === 'etf' ? 'Ausschüttung' : 'Dividende', a.div ? nf(a.div * 100, 1) + ' % p.a.' : 'keine']); }
+  const vol = realVol(a), facts = [['Volatilität' + term('volatilitaet'), nf(vol * 100, 0) + ' % p.a.']];
+  if (a.cls === 'bond') facts.push(['Kupon' + term('kupon'), nf(a.coupon * 100, 2) + ' % p.a.'], ['Duration' + term('duration'), nf(a.dur, 1) + ' J.'], ['Ausfallrisiko' + term('ausfall'), a.def ? nf(a.def * 100, 0) + ' % p.a.' : 'keins']);
+  else if (a.cls === 'crypto') facts.push(['Krypto-Beta' + term('beta'), nf(a.cb, 2)]);
+  else { if (a.beta != null) facts.push(['Beta' + term('beta'), nf(a.beta, 2)]); facts.push([a.cls === 'etf' ? 'Ausschüttung' + term('dividende') : 'Dividende' + term('dividende'), a.div ? nf(a.div * 100, 1) + ' % p.a.' : 'keine']); if (a.ter) facts.push(['Kosten (TER)' + term('ter'), nf(a.ter * 100, 1) + ' % p.a.']); }
   if (h) { const v = h.qty * a.price, g = v - h.cost; facts.push(['Bestand', qty(h.qty) + ' Stk.'], ['Wert', eurS(v)], ['Ø Einstand', px(h.cost / h.qty)], ['Gewinn/Verlust', '<span class="' + cls(g) + '">' + (g >= 0 ? '+' : '−') + eurS(Math.abs(g)) + '</span>']); }
-  $('facts').innerHTML = facts.map(([k, v]) => '<div><div class="lbl">' + k + '</div><div class="v">' + v + '</div></div>').join('');
+  setHTML('facts', facts.map(([k, v]) => '<div><div class="lbl">' + k + '</div><div class="v">' + v + '</div></div>').join(''));
   for (const b of $('modeSeg').children) b.classList.toggle('on', b.dataset.m === U.mode);
   for (const b of $('tfSeg').children) b.classList.toggle('on', +b.dataset.t === U.tf);
   $('tt-trade').classList.toggle('on', U.ttab === 'trade'); $('tt-opt').classList.toggle('on', U.ttab === 'opt');
@@ -879,7 +1219,7 @@ function renderOpt() {
   for (const b of $('oK').children) b.classList.toggle('on', +b.dataset.v === U.oK);
   for (const b of $('oT').children) b.classList.toggle('on', +b.dataset.v === U.oT);
   const q = optQuote(), v = parseFloat($('oAmt').value);
-  $('oKv').innerHTML = [['Basispreis', px(q.K)], ['Preis je Option', px(q.ask)], ['Break-even', px(q.be)], ['Hebel', '×' + nf(q.lev, 1)]].map(([k, x]) => '<div><div class="lbl">' + k + '</div><div class="v">' + x + '</div></div>').join('');
+  $('oKv').innerHTML = [['Basispreis' + term('basispreis'), px(q.K)], ['Preis je Option' + term('option'), px(q.ask)], ['Break-even' + term('breakeven'), px(q.be)], ['Hebel' + term('hebel'), '×' + nf(q.lev, 1)]].map(([k, x]) => '<div><div class="lbl">' + k + '</div><div class="v">' + x + '</div></div>').join('');
   $('oHint').textContent = v > 0 ? '≈ ' + qty(v / q.ask) + ' Optionen' : 'Bargeld: ' + eurS(S.cash);
   $('oBuy').textContent = (U.oType === 'C' ? 'Call' : 'Put') + ' auf ' + a.name + ' kaufen';
 }
@@ -887,6 +1227,7 @@ function renderOpt() {
 function renderSide(nw) {
   const hv = holdValue(), ov = optsValue(), vv = ventValue();
   $('tgRate').textContent = 'Tagesgeld ' + nf(tgRate()) + ' %';
+  renderCheck(nw);
   $('ledger').innerHTML = [['Bargeld', S.cash], ['Wertpapiere', hv], ['Optionen', ov], ['Beteiligungen', vv], ['Kredit', -S.debt]].filter(([k, v]) => v !== 0 || k === 'Bargeld' || k === 'Wertpapiere')
     .map(([k, v]) => '<div><span class="muted">' + k + '</span><span class="v ' + (v < 0 ? 'down' : '') + '">' + eur(v) + '</span></div>').join('') +
     '<div class="tot"><span>Netto</span><span class="v">' + eur(nw) + '</span></div>';
@@ -900,7 +1241,7 @@ function renderSide(nw) {
     box.dataset.k = 'form';
   }
   const col = collateral(), lim = cfg.ltv * col, mc = (cfg.ltv + .1) * col, use = mc > 0 ? (S.debt - Math.max(S.cash, 0)) / mc : 0;
-  $('loanLedger').innerHTML = '<div><span class="muted">Beleihungsgrenze (' + Math.round(cfg.ltv * 100) + ' %)</span><span class="v">' + eurS(lim) + '</span></div><div><span class="muted">Offener Kredit</span><span class="v">' + eurS(S.debt) + '</span></div><div><span class="muted">Noch verfügbar</span><span class="v">' + eurS(Math.max(0, lim - S.debt)) + '</span></div>';
+  $('loanLedger').innerHTML = '<div><span class="muted">Beleihungsgrenze (' + Math.round(cfg.ltv * 100) + ' %)' + term('beleihung') + '</span><span class="v">' + eurS(lim) + '</span></div><div><span class="muted">Offener Kredit</span><span class="v">' + eurS(S.debt) + '</span></div><div><span class="muted">Noch verfügbar</span><span class="v">' + eurS(Math.max(0, lim - S.debt)) + '</span></div>';
   const m = $('loanMeter'); m.style.width = clamp(use, 0, 1) * 100 + '%'; m.style.background = use > .85 ? COL.down : use > .6 ? COL.brass : COL.up;
   $('loanHint').textContent = S.debt > 0 ? 'Auslastung bis Margin Call: ' + Math.round(clamp(use, 0, 9) * 100) + ' %. Bei 100 % verkauft die Bank Teile deines Depots.' : 'Sicherheiten: deine Wertpapiere und Optionen.';
 }
@@ -913,6 +1254,8 @@ function renderHeader(nw) {
   $('nw').textContent = eur(nw);
   const ch = S.lastNW ? (nw / S.lastNW - 1) * 100 : 0;
   $('nwChg').innerHTML = '<span class="' + cls(ch) + '">' + pct(ch) + ' heute</span> <span class="muted">· Start ' + eurS(START) + ' · ×' + nf(nw / START, nw / START >= 100 ? 0 : 2) + '</span>';
+  const bv = benchValue(), bd = bv > 0 ? (nw / bv - 1) * 100 : 0;
+  $('benchLine').innerHTML = 'Nur Welt-ETF gekauft und gehalten: ' + eurS(bv) + ' · du liegst <span class="' + cls(bd) + '">' + (bd >= 0 ? 'vorne' : 'hinten') + ' (' + pct(bd, 1) + ')</span>';
   $('rankName').textContent = RANKS[S.rank].name;
   $('nextGoal').textContent = S.rank < GOALS.length ? 'Nächstes Ziel: ' + eurS(GOALS[S.rank]) + ' · noch ' + eurS(Math.max(0, GOALS[S.rank] - nw)) : 'Alle Ziele erreicht!';
   const pos = v => clamp((Math.log10(Math.max(v, 1)) - 4) / 5, 0, 1) * 100;
@@ -944,6 +1287,8 @@ function drawChart() {
   const log = isNW && S.maxNW > 2e5;
   const f = v => log ? Math.log(Math.max(v, 1)) : v, inv = t => log ? Math.exp(t) : t;
   let mn = Infinity, mx = -Infinity; for (const v of data) { const t = f(v); if (t < mn) mn = t; if (t > mx) mx = t; }
+  const bench = isNW && S.benchHist && S.benchHist.length === data.length ? S.benchHist : null;
+  if (bench) for (const v of bench) if (v != null) { const t = f(v); if (t < mn) mn = t; if (t > mx) mx = t; }
   const hold = !isNW && S.hold[a.id], avg = hold ? hold.cost / hold.qty : null;
   if (avg && f(avg) > mn - (mx - mn) * .5 && f(avg) < mx + (mx - mn) * .5) { mn = Math.min(mn, f(avg)); mx = Math.max(mx, f(avg)); }
   if (mx - mn < 1e-9) { mx += 1; mn -= 1; }
@@ -962,6 +1307,11 @@ function drawChart() {
   c.lineTo(X(data.length - 1), h - B); c.lineTo(X(0), h - B); c.closePath(); c.fillStyle = g; c.fill();
   c.beginPath(); data.forEach((v, i) => i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)));
   c.strokeStyle = col; c.lineWidth = 2; c.lineJoin = 'round'; c.stroke();
+  if (bench) {
+    c.beginPath(); let st = false; bench.forEach((v, i) => { if (v == null) return; if (st) c.lineTo(X(i), Y(v)); else { c.moveTo(X(i), Y(v)); st = true; } });
+    c.setLineDash([6, 4]); c.strokeStyle = COL.muted; c.lineWidth = 1.5; c.stroke(); c.setLineDash([]);
+    c.fillStyle = COL.brass; c.fillText('— Du', L + 4, T + 8); c.fillStyle = COL.muted; c.fillText('- - nur Welt-ETF', L + 50, T + 8);
+  }
   if (isNW) for (const gl of GOALS) { if (f(gl) > mn && f(gl) < mx) { const y = Y(gl); c.setLineDash([3, 5]); c.strokeStyle = COL.muted; c.lineWidth = 1; c.beginPath(); c.moveTo(L, y); c.lineTo(w - R, y); c.stroke(); c.setLineDash([]); c.fillStyle = COL.muted; c.fillText('Ziel', L + 4, y - 8); } }
   if (avg) { const y = Y(avg); if (y > T && y < h - B) { c.setLineDash([5, 4]); c.strokeStyle = COL.brass; c.lineWidth = 1; c.beginPath(); c.moveTo(L, y); c.lineTo(w - R, y); c.stroke(); c.setLineDash([]); c.fillStyle = COL.brass; c.fillText('Ø Einstand', L + 4, y - 9); } }
   const lx = X(data.length - 1), ly = Y(data[data.length - 1]);
@@ -973,7 +1323,7 @@ function render() {
   const nw = netWorth();
   renderHeader(nw);
   if (tabKey !== U.tab) { tabKey = U.tab; renderTabs(); }
-  renderList(); renderDetail(); renderSide(nw);
+  renderList(); renderDetail(); renderSide(nw); renderLearn();
   if (seenNews !== newsVer) { seenNews = newsVer; renderNews(); }
   const lk = S.rank + '|' + Object.keys(S.ach).length;
   if (lk !== lowerKey) { lowerKey = lk; renderLower(); }
@@ -1015,22 +1365,26 @@ $('loanBox').onclick = e => {
   else if (b.id === 'loanTake') borrow(v); else if (b.id === 'loanPay') repay(v);
 };
 window.addEventListener('resize', () => { dirty = true; if (modalOpen) placeModal(); });
+document.addEventListener('click', e => { const t = e.target.closest('[data-term]'); if (t && !t.closest('.modal')) { e.preventDefault(); e.stopPropagation(); showTerm(t.dataset.term); } else if (t) { showTerm(t.dataset.term); } }, true);
+$('lexBtn').onclick = showLexicon; $('lexBtn2').onclick = showLexicon;
+$('lpBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'open') openLesson(); };
+$('coachBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'dismiss') { S.coachTip = null; dirty = true; } };
 $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) dismissModal(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') return dismissModal(); if (e.key === ' ' && !modalOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); timer ? pause() : play(); } });
 
 function intro() {
-  showModal({ kick: 'Kapital · Börsenspiel', title: 'Von 10.000 € zur Milliarde', body:
-    '<p>Du startest mit <b>10.000 € Spielgeld</b>. Kaufe Aktien, ETFs, Anleihen, Rohstoffe und Krypto. Die Zeit läuft, sobald du auf Start drückst. Ein Tag pro Sekunde, schneller mit 4× bis 50×.</p>' +
-    '<p>Jedes Ziel schaltet etwas frei: <b>Optionen</b> ab 30.000 €, <b>Kredite</b> ab 100.000 €. Danach geht es um Millionen.</p>' +
-    '<p>Achte auf Marktphasen, Zinsentscheide, Gerüchte, Startups und Börsengänge. Mit Kredit kannst du hebeln, aber ein Margin Call kann dich ruinieren.</p>',
-    btns: [['Los geht’s', 'primary', hideModal]] });
+  showModal({ kick: 'Kapital · Investieren lernen', title: 'Lerne investieren, ganz ohne echtes Geld', body:
+    '<p>Du startest mit <b>10.000 € Spielgeld</b>. Die Zeit läuft, sobald du auf Start drückst: ein Börsentag pro Sekunde, schneller mit 4× bis 50×.</p>' +
+    '<p>Der <b>Lernpfad</b> führt dich in 13 Lektionen von der ersten Aktie bis zu Optionen und Krediten. Jede Lektion hat eine Quizfrage und eine Mission, für die es Spielgeld gibt. Dein <b>Coach</b> meldet sich, wenn etwas Lehrreiches passiert.</p>' +
+    '<p>Im <b>Depot-Check</b> siehst du, wie gut du streust und ob du besser bist als jemand, der nur den Welt-ETF kauft und liegen lässt. Ziel ganz oben: die Milliarde.</p>',
+    btns: [['Erste Lektion starten', 'primary', () => { hideModal(); openLesson(); }], ['Erst mal umschauen', 'ghost', hideModal]] });
 }
 
 function start(data) {
   S = (data && data.S) || load();
   let fresh = false;
-  if (!S) { newState(); fresh = true; } else indexAssets();
+  if (!S) { newState(); fresh = true; } else { indexAssets(); migrate(); }
   if (data && data.U) Object.assign(U, data.U);
   if (!A[U.sel]) U.sel = 'NOVA';
   dirty = true; requestAnimationFrame(loop);
