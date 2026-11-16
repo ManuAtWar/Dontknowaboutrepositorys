@@ -64,13 +64,13 @@
   .rank .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .ladder { min-width: 0; padding-bottom: 4px; }
   .track { position: relative; height: 8px; border-radius: 99px; background: var(--panel-2); margin: 26px 30px 22px; }
-  .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: linear-gradient(90deg, #3a7d8c, var(--brass)); width: 0; transition: width .25s; }
+  .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: linear-gradient(90deg, #3a7d8c, var(--brass)); width: 0; }
   .track .node { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line); }
   .track .node.hit { border-color: var(--brass); background: var(--brass); }
   .track .node span { position: absolute; left: 50%; transform: translateX(-50%); font: 11px var(--f-mono); color: var(--muted); white-space: nowrap; }
   .track .node .a { bottom: 16px; } .track .node .b { top: 16px; font-family: var(--f-body); font-size: 10px; color: var(--faint); }
   .track .node.hit span { color: var(--brass); }
-  .track .me { position: absolute; top: 50%; width: 4px; height: 20px; margin: -10px 0 0 -2px; background: var(--ink); border-radius: 2px; transition: left .25s; }
+  .track .me { position: absolute; top: 50%; width: 4px; height: 20px; margin: -10px 0 0 -2px; background: var(--ink); border-radius: 2px; }
   @media (max-width: 900px) { .hero { grid-template-columns: 1fr 1fr; } .ladder { grid-column: 1 / -1; } }
   @media (max-width: 560px) { .hero { grid-template-columns: 1fr; gap: 14px; } .track { margin-inline: 18px; } .track .node .b { display: none; } .track .node span.a { font-size: 9px; } .track .node[data-i="1"] .a, .track .node[data-i="2"] .a { display: none; } }
 
@@ -78,7 +78,7 @@
   .grid { display: grid; grid-template-columns: 330px minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
   @media (max-width: 1180px) { .grid { grid-template-columns: 300px minmax(0, 1fr); } .side { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; } }
   @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-  .panel { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 14px; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 14px; min-width: 0; contain: layout paint; }
   .panel > .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px 0; }
   .panel > .bd { padding: 12px 14px 14px; }
   .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -147,7 +147,7 @@
   .ledger .v { font-family: var(--f-mono); }
   .ledger .tot { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; font-weight: 600; }
   .meter { height: 8px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; margin: 8px 0 4px; }
-  .meter > div { height: 100%; width: 0; background: var(--up); transition: width .2s, background .2s; }
+  .meter > div { height: 100%; width: 0; background: var(--up); }
   #news { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; }
   #news li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; }
   #news li .d { font: 11px var(--f-mono); color: var(--faint); padding-top: 2px; }
@@ -287,12 +287,14 @@ function gauss() { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd();
 const pick = arr => arr[Math.floor(rnd() * arr.length)];
 
 // ---------- Formatierung ----------
-const nf = (v, d = 2) => v.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const NF = {};
+const nf = (v, d = 2) => (NF[d] || (NF[d] = new Intl.NumberFormat('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }))).format(v);
+const NFQ = [0, 3, 6].map(m => new Intl.NumberFormat('de-DE', { maximumFractionDigits: m }));
 function eur(v) { const a = Math.abs(v); if (a >= 1e9) return nf(v / 1e9) + ' Mrd. €'; if (a >= 1e6) return nf(v / 1e6) + ' Mio. €'; return nf(v) + ' €'; }
 function eurS(v) { const a = Math.abs(v); if (a >= 1e9) return nf(v / 1e9, a >= 1e10 ? 0 : 1) + ' Mrd. €'; if (a >= 1e6) return nf(v / 1e6, a >= 1e7 ? 0 : 1) + ' Mio. €'; if (a >= 1e4) return nf(v / 1e3, 0) + ' Tsd. €'; return nf(v, 0) + ' €'; }
 function px(v) { return (v < 1 ? nf(v, 4) : v < 10 ? nf(v, 3) : nf(v, 2)) + ' €'; }
 function pct(v, d = 2) { return (v > 0 ? '+' : v < 0 ? '−' : '±') + nf(Math.abs(v), d) + ' %'; }
-function qty(v) { return v.toLocaleString('de-DE', { maximumFractionDigits: v < 1 ? 6 : v < 100 ? 3 : 0 }); }
+function qty(v) { return NFQ[v < 1 ? 2 : v < 100 ? 1 : 0].format(v); }
 const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -391,10 +393,12 @@ const ACH = [
 let S, A = {};
 const U = { tab: 'stock', sel: 'NOVA', mode: 'price', tf: 250, ttab: 'trade', oType: 'C', oK: 1, oT: 63 };
 let timer = null, speed = 1, dirty = true, modalOpen = false, wasRunning = false;
+let newsVer = 0, seenNews = -1, lowerKey = '', tabKey = '', listKey = '', listRefs = [], lastSave = 0, lastRender = 0;
 
 function indexAssets() { A = {}; for (const a of S.assets) A[a.id] = a; }
 
 function newState() {
+  newsVer++; lowerKey = ''; tabKey = ''; listKey = '';
   S = {
     v: 2, day: 1, cash: START, debt: 0, rate: 2.5, regime: 'normal', regDays: 0, regLen: 0,
     hold: {}, opts: [], ventures: [], ipos: [], ipoCount: 0, news: [], nwHist: [], maxNW: START, rank: 0,
@@ -480,6 +484,11 @@ function stepMarket(silent) {
 
 // ---------- Bewertung ----------
 function realVol(a) {
+  const key = a.hist.length + ':' + a.price;
+  if (a._vk === key) return a._v;
+  a._vk = key; a._v = calcVol(a); return a._v;
+}
+function calcVol(a) {
   const h = a.hist, n = Math.min(60, h.length - 1); if (n < 5) return .3;
   let s = 0, s2 = 0; for (let i = h.length - n; i < h.length; i++) { const r = Math.log(h[i] / h[i - 1]); s += r; s2 += r * r; }
   const mu = s / n; return clamp(Math.sqrt(Math.max(s2 / n - mu * mu, 0) * YEAR), .08, 3);
@@ -562,7 +571,7 @@ function tick() {
   if (nw <= 0) { S.over = true; pause(); save(); showModal({ kick: 'Spielende', title: 'Pleite.', body: '<p>Deine Schulden sind höher als dein Vermögen. Du hast es bis zum Rang <b>' + RANKS[S.rank].name + '</b> geschafft, Höchststand ' + eur(S.maxNW) + '.</p>', btns: [['Neues Spiel', 'primary', () => { newState(); hideModal(); }]] }); }
   else if (S.rank < GOALS.length && nw >= GOALS[S.rank]) rankUp();
   else if (d >= S.nextEvent) { S.nextEvent = d + 25 + Math.floor(rnd() * 35); fireEvent(); }
-  if (d % 10 === 0) save();
+  if (Date.now() - lastSave > 10000) save();
   dirty = true;
 }
 
@@ -697,7 +706,7 @@ function repay(x) {
 }
 
 // ---------- Nachrichten / Toast ----------
-function addNews(t, k = '') { S.news.unshift({ d: S.day, t, k }); if (S.news.length > 80) S.news.length = 80; dirty = true; }
+function addNews(t, k = '') { newsVer++; S.news.unshift({ d: S.day, t, k }); if (S.news.length > 80) S.news.length = 80; dirty = true; }
 let toastT;
 function toast(msg, gold) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (gold ? ' gold' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 2200); }
 
@@ -745,11 +754,15 @@ function dismissModal() { if (modalOpen) $('mBtns').lastElementChild?.click(); }
 function hideModal() { $('overlay').hidden = true; modalOpen = false; dirty = true; if (wasRunning && !S.over) play(); wasRunning = false; }
 
 // ---------- Steuerung ----------
-function play() { if (S.over || modalOpen) return; clearInterval(timer); timer = setInterval(tick, 1000 / speed); $('play').textContent = '❚❚ Pause'; $('play').classList.add('running'); }
+function play() {
+  if (S.over || modalOpen) return; clearInterval(timer);
+  // Bei hohem Tempo mehrere Tage pro Takt rechnen statt 50 Wecker pro Sekunde
+  const every = Math.max(1000 / speed, 100), per = Math.round(speed * every / 1000);
+  timer = setInterval(() => { for (let i = 0; i < per && !modalOpen && !S.over; i++) tick(); }, every); $('play').textContent = '❚❚ Pause'; $('play').classList.add('running'); }
 function pause() { clearInterval(timer); timer = null; $('play').textContent = '▶ Start'; $('play').classList.remove('running'); }
 function selectAsset(id) { U.sel = id; const a = A[id]; if (U.tab !== 'depot') U.tab = a.cls; if (a.cls === 'bond' && U.ttab === 'opt') U.ttab = 'trade'; $('amt').value = ''; U.mode = 'price'; dirty = true; }
 
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+function save() { lastSave = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
 function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.v === 2 && s.assets) return s; } catch (e) {} return null; }
 
 // ---------- Darstellung ----------
@@ -757,11 +770,12 @@ const CSSV = getComputedStyle(document.documentElement);
 const C = n => CSSV.getPropertyValue(n).trim();
 const COL = { up: C('--up'), down: C('--down'), line: C('--line-soft'), muted: C('--muted'), brass: C('--brass'), ink: C('--ink') };
 
-function spark(h) {
+function sparkPts(h) {
   const d = h.slice(-40); let mn = Infinity, mx = -Infinity; for (const v of d) { if (v < mn) mn = v; if (v > mx) mx = v; }
-  const r = mx - mn || 1, pts = d.map((v, i) => (i / (d.length - 1) * 60).toFixed(1) + ',' + (20 - (v - mn) / r * 18).toFixed(1)).join(' ');
-  return '<svg viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="' + (d[d.length - 1] >= d[0] ? COL.up : COL.down) + '" stroke-width="1.5" points="' + pts + '"/></svg>';
+  const r = mx - mn || 1, n = Math.max(1, d.length - 1);
+  return { pts: d.map((v, i) => (i / n * 60).toFixed(1) + ',' + (20 - (v - mn) / r * 18).toFixed(1)).join(' '), col: d[d.length - 1] >= d[0] ? COL.up : COL.down };
 }
+function spark(h) { const s = sparkPts(h); return '<svg viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="' + s.col + '" stroke-width="1.5" points="' + s.pts + '"/></svg>'; }
 function extra(a) {
   if (a.cls === 'bond') return 'Kupon ' + nf(a.coupon * 100, 1) + ' %';
   if (a.lev) return (a.lev > 0 ? a.lev + '× Hebel' : 'Short');
@@ -775,7 +789,23 @@ function assetRow(a) {
 }
 function renderTabs() { $('tabs').innerHTML = CLASSES.map(([k, n]) => '<button data-tab="' + k + '" class="' + (U.tab === k ? 'on' : '') + '">' + n + '</button>').join(''); }
 function renderList() {
-  if (U.tab !== 'depot') { $('list').innerHTML = S.assets.filter(a => a.cls === U.tab && a.listed).map(assetRow).join(''); return; }
+  if (U.tab !== 'depot') {
+    const items = S.assets.filter(a => a.cls === U.tab && a.listed);
+    const key = U.tab + '|' + U.sel + '|' + items.map(a => a.id + (S.hold[a.id] ? '*' : '')).join(',');
+    if (key !== listKey) {
+      listKey = key; $('list').innerHTML = items.map(assetRow).join('');
+      listRefs = [...$('list').children].map(el => ({ a: A[el.dataset.id], p: el.querySelector('.p'), s: el.querySelector('.p span'), pl: el.querySelector('polyline') }));
+      return;
+    }
+    // Nur Kurse und Mini-Charts aktualisieren, statt die Liste neu aufzubauen
+    for (const r of listRefs) {
+      const a = r.a, c = (a.price / a.prev - 1) * 100, sp = sparkPts(a.hist);
+      r.p.firstChild.nodeValue = px(a.price); r.s.textContent = pct(c); r.s.className = cls(c);
+      r.pl.setAttribute('points', sp.pts); r.pl.setAttribute('stroke', sp.col);
+    }
+    return;
+  }
+  listKey = '';
   let h = '';
   const ids = Object.keys(S.hold);
   h += '<div class="sect">Wertpapiere</div>';
@@ -901,7 +931,7 @@ function renderLower() {
 function renderNews() { $('news').innerHTML = S.news.map(n => '<li class="' + n.k + '"><span class="d">J' + (Math.floor((n.d - 1) / YEAR) + 1) + ' T' + ((n.d - 1) % YEAR + 1) + '</span><span>' + esc(n.t) + '</span></li>').join(''); }
 
 function drawChart() {
-  const cv = $('chart'), dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  const cv = $('chart'), dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
   if (!w || !h) return;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
@@ -938,12 +968,21 @@ function drawChart() {
 function render() {
   if (!dirty) return; dirty = false;
   const nw = netWorth();
-  renderHeader(nw); renderTabs(); renderList(); renderDetail(); renderSide(nw); renderNews(); renderLower();
+  renderHeader(nw);
+  if (tabKey !== U.tab) { tabKey = U.tab; renderTabs(); }
+  renderList(); renderDetail(); renderSide(nw);
+  if (seenNews !== newsVer) { seenNews = newsVer; renderNews(); }
+  const lk = S.rank + '|' + Object.keys(S.ach).length;
+  if (lk !== lowerKey) { lowerKey = lk; renderLower(); }
 }
-function loop() { render(); requestAnimationFrame(loop); }
+// Bei laufender Zeit höchstens 5–10 Bilder pro Sekunde zeichnen, damit Handys flüssig bleiben
+function loop(t) {
+  if (dirty && (!timer || modalOpen || t - lastRender >= (speed >= 15 ? 200 : 100))) { lastRender = t; render(); }
+  requestAnimationFrame(loop);
+}
 
 // ---------- Ereignis-Bindungen ----------
-$('play').onclick = () => timer ? pause() : play();
+$('play').onclick = () => { if (timer) { pause(); save(); } else play(); };
 $('speeds').onclick = e => { const b = e.target.closest('button'); if (!b) return; speed = +b.dataset.s; for (const x of $('speeds').children) x.classList.toggle('on', x === b); if (timer) play(); };
 $('newGame').onclick = () => showModal({ kick: 'Neues Spiel', title: 'Wirklich von vorn anfangen?', body: '<p>Dein aktueller Spielstand (' + eurS(netWorth()) + ', Rang ' + RANKS[S.rank].name + ') wird gelöscht.</p>', btns: [['Ja, neues Spiel', 'sell', () => { newState(); optBuilt = ''; $('loanBox').dataset.k = ''; U.sel = 'NOVA'; U.tab = 'stock'; save(); hideModal(); intro(); }], ['Abbrechen', '', hideModal]] });
 $('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; U.tab = b.dataset.tab; if (U.tab !== 'depot' && A[U.sel].cls !== U.tab) U.sel = S.assets.find(a => a.cls === U.tab && a.listed).id; dirty = true; };
@@ -991,7 +1030,7 @@ function start(data) {
   if (!S) { newState(); fresh = true; } else indexAssets();
   if (data && data.U) Object.assign(U, data.U);
   if (!A[U.sel]) U.sel = 'NOVA';
-  dirty = true; loop();
+  dirty = true; requestAnimationFrame(loop);
   if (fresh) intro();
 }
 window.claude?.hot?.snapshot?.(() => ({ S, U }));
