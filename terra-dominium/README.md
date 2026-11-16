@@ -9,6 +9,17 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
   Zerstörer, Fregatten, Korvetten, U-Boote, Atomsprengköpfe, Militärbudget, Technologiestand und die wichtigsten Waffensysteme
   (z. B. Leopard 2A7V, F-35A, Type 055, K9 Thunder).
 
+## Neu in Version 4
+
+* **Karte wieder wie in Version 2:** „Angreifen!“ ist die Hauptaktion, und das Tempo ist ruhig und flüssig (Standard: Normal).
+* **„⚔ 3D-Schlacht“ (three.js):** Echtes 3D-Schlachtfeld mit Hügeln, Wäldern, Felsen, Sandsack-Verteidigungslinie und Strand mit Landungsbooten bei Seelandungen.
+  * Soldaten mit Helm, Weste, Rucksack und Gewehr laufen animiert in der **Tarnung ihres Landes** (Bundeswehr Flecktarn, US Army Multicam,
+    Russland/China digital, Wüstentarn im Nahen Osten …). Farbige Helm- und Armbänder zeigen die Seite.
+  * Fahrzeuge je nach realer Ausrüstung: westliche Kampfpanzer (Leopard/Abrams-Stil), russische (T-90-Stil mit Reaktivpanzerung), chinesische;
+    Apache-, Mi-24- oder Ka-52-Hubschrauber (Koaxialrotor); F-16-, Flanker- oder Stealth-Jets.
+  * Explosionen mit Feuerball, Rauch und Funken, Mündungsfeuer, Leuchtspur, brennende Wracks, fallende Soldaten, Krater.
+  * Kamera folgt der Front; Ziehen dreht, Mausrad oder zwei Finger zoomen.
+
 ## Neu in Version 3
 
 * **Taktische Schlachten:** Mit „⚔ Schlacht führen“ öffnet sich ein Schlachtfeld. Du schickst Infanterie, Panzer, Artillerie, Hubschrauber
