@@ -571,7 +571,7 @@ function tick() {
   if (nw <= 0) { S.over = true; pause(); save(); showModal({ kick: 'Spielende', title: 'Pleite.', body: '<p>Deine Schulden sind höher als dein Vermögen. Du hast es bis zum Rang <b>' + RANKS[S.rank].name + '</b> geschafft, Höchststand ' + eur(S.maxNW) + '.</p>', btns: [['Neues Spiel', 'primary', () => { newState(); hideModal(); }]] }); }
   else if (S.rank < GOALS.length && nw >= GOALS[S.rank]) rankUp();
   else if (d >= S.nextEvent) { S.nextEvent = d + 25 + Math.floor(rnd() * 35); fireEvent(); }
-  if (Date.now() - lastSave > 10000) save();
+  if (Date.now() - lastSave > 4000) save();
   dirty = true;
 }
 
@@ -762,7 +762,10 @@ function play() {
 function pause() { clearInterval(timer); timer = null; $('play').textContent = '▶ Start'; $('play').classList.remove('running'); }
 function selectAsset(id) { U.sel = id; const a = A[id]; if (U.tab !== 'depot') U.tab = a.cls; if (a.cls === 'bond' && U.ttab === 'opt') U.ttab = 'trade'; $('amt').value = ''; U.mode = 'price'; dirty = true; }
 
-function save() { lastSave = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+// Kursverläufe mit 6 gültigen Stellen speichern: halbiert die Größe, für Charts reicht es völlig
+const round6 = x => +x.toPrecision(6);
+function saveReplacer(k, v) { if (k === '_vk' || k === '_v') return undefined; if (k === 'hist' || k === 'nwHist') return v.map(round6); return v; }
+function save() { lastSave = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S, saveReplacer)); } catch (e) {} }
 function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.v === 2 && s.assets) return s; } catch (e) {} return null; }
 
 // ---------- Darstellung ----------
