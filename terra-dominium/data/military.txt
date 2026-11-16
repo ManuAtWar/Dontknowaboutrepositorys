@@ -1,0 +1,219 @@
+# TERRA DOMINIUM – Streitkräfte-Datenbank
+# Stand: ca. 2024/2025. Näherungswerte, zusammengetragen aus öffentlichen Quellen
+# (u. a. IISS Military Balance, SIPRI Military Expenditure Database, Global Firepower, FAS Nuclear Notebook).
+# Einzelne Zahlen schwanken je nach Quelle und Zählweise (aktiv vs. eingelagert).
+#
+# Spalten:
+# id;Name;Bevölkerung(Mio);BIP(Mrd$);Militärbudget(Mrd$);Aktive(Tsd);Reserve(Tsd);
+# Kampfpanzer;Schützen-/Transportpanzer;Rohrartillerie;Raketenartillerie;
+# Kampfflugzeuge;Bomber;Kampfhubschrauber;Flugzeugträger;Amphibische Schiffe;
+# Zerstörer/Kreuzer;Fregatten;Korvetten;U-Boote;Atomsprengköpfe;Technologie(0-1);Gelände(1=neutral);Hauptsysteme
+#
+# --- Nordamerika ---
+840;USA;335;27700;997;1328;800;4640;39000;2000;640;2700;141;900;11;31;84;0;26;68;5044;1.00;1.0;M1A2 SEPv3 Abrams · F-35A/B/C, F-22A, F/A-18E/F · B-2A, B-1B, B-52H · AH-64E Apache · Nimitz-/Ford-Klasse · Arleigh-Burke-Klasse · Virginia-Klasse SSN
+124;Kanada;40;2140;29.3;68;37;80;1100;37;0;85;0;0;0;0;0;12;6;4;0;0.85;1.25;Leopard 2A6M CAN · CF-18 Hornet (F-35A bestellt) · LAV 6.0 · Halifax-Fregatten · Victoria-U-Boote
+484;Mexiko;129;1790;11;216;80;0;700;250;0;20;0;0;0;2;0;2;10;0;0;0.40;1.1;DN-XI · Sand Cat · T-6C Texan II · ARM Reformador (SIGMA 10514)
+# --- Mittelamerika & Karibik ---
+320;Guatemala;18;105;0.4;18;63;0;50;50;0;2;0;0;0;0;0;0;0;0;0;0.20;1.2;A-37 Dragonfly · Bell 212
+340;Honduras;10.5;34;0.4;15;60;0;50;40;0;10;0;0;0;0;0;0;0;0;0;0.20;1.2;F-5E Tiger II · Scorpion
+222;El Salvador;6.3;35;0.3;25;10;0;40;50;0;8;0;0;0;0;0;0;0;0;0;0.20;1.1;A-37B · UH-1H
+558;Nicaragua;7;17;0.1;12;0;60;100;100;30;0;0;0;0;0;0;0;0;0;0;0.15;1.15;T-55 · BM-21 Grad · Mi-17
+188;Costa Rica;5.2;85;0.05;14;0;0;10;0;0;0;0;0;0;0;0;0;2;0;0;0.15;1.1;Keine Armee seit 1948 – nur Fuerza Pública (Polizei)
+591;Panama;4.5;83;0.9;27;0;0;30;0;0;0;0;0;0;0;0;0;3;0;0;0.20;1.1;Keine Armee – SENAFRONT/SENAN Sicherheitskräfte
+084;Belize;0.4;3;0.03;1.5;0.7;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.1;Belize Defence Force (leichte Infanterie)
+192;Kuba;11;110;1.5;49;39;500;700;600;175;25;0;4;0;0;0;0;3;1;0;0.25;1.1;T-55/T-62 · MiG-23, MiG-29 · BM-21 · Delfin-U-Boot
+332;Haiti;11.7;20;0.02;0.5;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.10;1.1;Forces Armées d'Haïti (im Aufbau)
+214;Dominikanische Republik;11.3;120;0.8;56;0;0;20;40;0;8;0;0;0;0;0;0;2;0;0;0.20;1.1;A-29 Super Tucano
+388;Jamaika;2.8;19;0.2;6;1;0;12;0;0;0;0;0;0;0;0;0;1;0;0;0.20;1.0;Jamaica Defence Force
+780;Trinidad und Tobago;1.5;28;0.2;5;0;0;0;0;0;0;0;0;0;0;0;0;2;0;0;0.20;1.0;Küstenwache-OPV
+044;Bahamas;0.4;14;0.1;1.5;0;0;0;0;0;0;0;0;0;0;0;0;2;0;0;0.20;1.0;Royal Bahamas Defence Force
+052;Barbados;0.28;6;0.04;0.6;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.20;1.0;Barbados Defence Force
+028;Antigua und Barbuda;0.1;2;0.01;0.2;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.20;1.0;Antigua and Barbuda Defence Force
+212;Dominica;0.07;0.7;0.005;0.1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.1;Polizei
+308;Grenada;0.13;1.3;0.005;0.1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;Polizei
+659;St. Kitts und Nevis;0.05;1.1;0.005;0.3;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;St Kitts-Nevis Defence Force
+662;St. Lucia;0.18;2.4;0.005;0.1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;Polizei
+670;St. Vincent und die Grenadinen;0.1;1.1;0.005;0.1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;Polizei
+# --- Südamerika ---
+076;Brasilien;216;2170;22.9;366;1340;290;1500;400;60;100;0;12;0;3;0;6;2;7;0;0.55;1.2;Leopard 1A5BR · Gripen E, F-5EM, A-29 Super Tucano · VBTP Guarani · ASTROS II · NAM Atlântico · Riachuelo-Klasse (Scorpène)
+032;Argentinien;46;630;4;75;0;230;600;160;20;30;0;0;0;0;4;0;9;1;0;0.40;1.1;TAM 2C · F-16AM/BM, IA-63 Pampa III · MEKO-360-Zerstörer · Espora-Korvetten
+152;Chile;20;340;6;77;40;230;1100;300;0;46;0;0;0;1;0;7;4;4;0;0.60;1.25;Leopard 2A4CHL · F-16 MLU/Block 50 · Type-23-Fregatten · Scorpène-U-Boote
+170;Kolumbien;52;360;11;290;35;0;200;150;0;20;0;15;0;0;0;4;4;4;0;0.45;1.2;Kfir C10/C12 (Gripen E bestellt) · AH-60L Arpía · EE-9 Cascavel · Almirante-Padilla-Fregatten
+862;Venezuela;28;100;1;123;220;170;600;150;60;35;0;8;0;4;0;2;4;1;0;0.35;1.15;T-72B1, AMX-30V · Su-30MK2V, F-16A · BM-30 Smerch · S-300VM · Mi-35M
+604;Peru;34;270;2.6;81;188;165;300;300;40;30;0;16;0;2;0;4;6;6;0;0.35;1.25;T-55 · MiG-29, Mirage 2000P, Su-25 · Mi-35 · Type-209-U-Boote
+218;Ecuador;18;120;2.4;41;118;0;300;100;20;15;0;0;0;0;0;1;6;2;0;0.30;1.2;AMX-13 · A-29 Super Tucano · Type-209-U-Boote
+068;Bolivien;12.4;46;0.6;34;0;0;150;60;0;6;0;0;0;0;0;0;0;0;0;0.25;1.3;SK-105 Kürassier · K-8 Karakorum
+600;Paraguay;6.9;43;0.5;14;165;0;40;30;0;6;0;0;0;0;0;0;2;0;0;0.20;1.0;EMB-312 Tucano · Flusskanonenboote
+858;Uruguay;3.4;77;1.2;21;0;15;200;60;0;10;0;0;0;0;0;0;2;0;0;0.25;1.0;T-55 · A-37B · OPV
+328;Guyana;0.8;17;0.2;4;1;0;10;10;0;0;0;0;0;0;0;0;1;0;0;0.20;1.2;Guyana Defence Force
+740;Suriname;0.6;4;0.05;2;0;0;15;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.2;Nationaal Leger
+# --- Westeuropa ---
+826;Vereinigtes Königreich;68;3300;81.8;138;75;213;2000;160;35;175;0;50;2;5;6;9;0;10;225;0.95;1.15;Challenger 2/3 · Eurofighter Typhoon, F-35B · AH-64E · HMS Queen Elizabeth/Prince of Wales · Type-45-Zerstörer · Astute-Klasse · Trident II D5
+250;Frankreich;68;3050;64.7;203;41;215;3500;110;9;225;0;67;1;3;2;14;6;9;290;0.92;1.1;Leclerc XLR · Rafale F4, Mirage 2000D · Tigre HAD · Charles de Gaulle · FREMM · Triomphant-/Suffren-Klasse · CAESAR
+276;Deutschland;84;4500;88.5;181;34;313;2400;105;34;223;0;51;0;0;0;11;8;6;0;0.90;1.05;Leopard 2A7V, Puma SPz, Boxer · Eurofighter Typhoon, Tornado (F-35A bestellt) · Tiger UHT · PzH 2000 · Fregatte F125 · U-Boot 212A · IRIS-T SLM, Patriot
+380;Italien;59;2250;38;165;18;150;2000;220;21;200;0;48;2;4;4;12;10;8;0;0.85;1.2;C1 Ariete, Centauro II · Eurofighter, F-35A/B · AW129 Mangusta · Cavour, Trieste · FREMM · U212A
+724;Spanien;48;1580;24.6;122;15;327;1600;220;0;155;0;18;1;2;0;11;6;3;0;0.85;1.15;Leopard 2E · Eurofighter, EF-18M Hornet, AV-8B+ · Tigre HAD-E · Juan Carlos I · F-100 Álvaro de Bazán · S-80 Plus
+620;Portugal;10.3;290;4.5;27;211;34;400;50;0;28;0;0;0;0;0;5;4;2;0;0.75;1.1;Leopard 2A6 · F-16 MLU · Pandur II · Tridente-U-Boote
+528;Niederlande;17.9;1120;22.8;34;6;18;900;30;0;52;0;28;0;2;4;2;4;3;0;0.90;1.0;Leopard 2A6 (2A8 bestellt) · F-35A · AH-64E · CV9035NL · De-Zeven-Provinciën-Fregatten · Walrus-U-Boote
+056;Belgien;11.8;630;7.4;23;6;0;600;14;0;45;0;0;0;0;0;2;0;0;0;0.85;1.0;Piranha IIIC, Dingo 2 · F-16AM (F-35A im Zulauf) · Karel-Doorman-Fregatten
+442;Luxemburg;0.66;85;0.6;1;0;0;80;0;0;0;0;0;0;0;0;0;0;0;0;0.85;1.0;Dingo 2 · A400M (Anteil)
+756;Schweiz;8.8;885;6;20;140;134;600;133;0;30;0;0;0;0;0;0;0;0;0;0.88;1.6;Panzer 87 Leopard WE · F/A-18C/D (F-35A bestellt) · CV9030 · M109 KAWEST · Milizarmee
+040;Österreich;9.1;520;4.3;23;125;56;450;33;0;15;0;0;0;0;0;0;0;0;0;0.80;1.35;Leopard 2A4 · Eurofighter Typhoon · Ulan, Pandur Evolution
+372;Irland;5.3;550;1.4;7.5;1.6;0;120;24;0;0;0;0;0;0;0;0;4;0;0;0.70;1.05;Piranha III · L118 · Samuel-Beckett-OPV
+352;Island;0.39;31;0.05;0.25;0;0;0;0;0;0;0;0;0;0;0;0;3;0;0;0.50;1.1;Keine Armee – Küstenwache
+470;Malta;0.54;22;0.1;2;0;0;0;0;0;0;0;0;0;0;0;0;2;0;0;0.50;1.0;Armed Forces of Malta
+492;Monaco;0.04;9;0.01;0.1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.40;1.0;Compagnie des Carabiniers du Prince
+674;San Marino;0.03;2;0.005;0.08;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.40;1.3;Guardia di Rocca
+336;Vatikanstadt;0.001;0.3;0.001;0.135;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.40;1.0;Päpstliche Schweizergarde
+020;Andorra;0.08;3.7;0;0.05;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.40;1.5;Keine Armee – Polizei
+438;Liechtenstein;0.04;7;0;0.1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.40;1.5;Keine Armee seit 1868 – Landespolizei
+# --- Nordeuropa ---
+208;Dänemark;5.9;400;9.9;15;44;44;400;15;0;40;0;0;0;0;0;5;4;0;0;0.88;1.05;Leopard 2A7 · F-35A, F-16AM · Piranha V · Iver-Huitfeldt-Fregatten
+578;Norwegen;5.5;485;9.3;25;40;36;400;24;0;50;0;0;0;0;0;4;6;4;0;0.90;1.3;Leopard 2A4NO (2A8 bestellt) · F-35A · K9 Vidar · Fridtjof-Nansen-Fregatten · NASAMS
+752;Schweden;10.5;590;12;24;32;110;1100;40;0;90;0;0;0;0;0;0;7;4;0;0.92;1.2;Strv 122 · JAS 39 Gripen C/D/E · CV90 · Archer · Visby-Korvetten · Gotland-U-Boote
+246;Finnland;5.6;300;6.7;24;870;200;1100;700;75;62;0;0;0;0;0;0;8;0;0;0.85;1.35;Leopard 2A6/2A4 · F/A-18 Hornet (F-35A bestellt) · K9 Moukari · M270 · Patria AMV · Reserve 870.000
+233;Estland;1.37;41;1.4;7.5;18;0;200;36;6;0;0;0;0;0;0;0;3;0;0;0.72;1.1;CV90 · K9 Thunder · HIMARS · Patria 6x6
+428;Lettland;1.88;43;1.4;7;16;0;200;47;2;0;0;0;0;0;0;0;4;0;0;0.68;1.1;M109A5Ö · CVR(T) · Patria 6x6 · HIMARS
+440;Litauen;2.9;80;2.5;23;7;0;500;18;8;0;0;0;0;0;0;0;4;0;0;0.72;1.05;Boxer Vilkas · PzH 2000, CAESAR · HIMARS · JLTV (Leopard 2A8 bestellt)
+# --- Mittel- & Osteuropa ---
+616;Polen;37;840;38;216;33;750;2600;450;170;75;0;28;0;0;0;2;2;1;0;0.78;1.0;K2PL, M1A2 SEPv3, Leopard 2PL, PT-91 · F-16C/D, FA-50 (F-35A bestellt) · K9PL/Krab · HIMARS, K239 Chunmoo · Rosomak · Patriot
+203;Tschechien;10.9;340;7;28;3;44;500;50;20;30;0;10;0;0;0;0;0;0;0;0.75;1.1;T-72M4CZ, Leopard 2A4 · JAS 39 Gripen C/D, L-159 · AH-1Z · Pandur II · RM-70 Vampire
+703;Slowakei;5.4;140;2.7;13;0;30;300;30;30;8;0;0;0;0;0;0;0;0;0;0.65;1.2;T-72M1 · F-16 Block 70 · Zuzana 2 · CV90 MkIV (bestellt)
+348;Ungarn;9.6;220;4.6;32;20;56;600;24;0;14;0;8;0;0;0;0;0;0;0;0.72;1.0;Leopard 2A7HU · JAS 39 Gripen C/D · KF41 Lynx · PzH 2000 · Gidrán
+705;Slowenien;2.1;70;1.1;6.5;1;0;100;18;0;0;0;0;0;0;0;0;1;0;0;0.70;1.25;Patria AMV (Svarun) · TN-90
+191;Kroatien;3.9;82;1.4;16;20;70;300;50;30;12;0;0;0;0;0;0;5;0;0;0.68;1.15;M-84A4 · Rafale F3R · M2 Bradley · Patria AMV · PzH 2000
+070;Bosnien und Herzegowina;3.2;27;0.2;11;0;50;100;150;40;0;0;0;0;0;0;0;0;0;0;0.35;1.25;M-84 · T-55 · BM-21
+688;Serbien;6.6;75;2.2;28;50;230;600;250;80;30;0;12;0;0;0;0;0;0;0;0.50;1.15;M-84AS, T-72MS · MiG-29SM+, J-22 Orao (Rafale bestellt) · Nora B-52 · Lazar 3 · Mi-35M
+499;Montenegro;0.62;7;0.1;2;0;0;20;20;0;0;0;0;0;0;0;0;1;0;0;0.50;1.3;Kotor-Fregatte (Reserve) · Bell 412
+008;Albanien;2.8;23;0.5;7;0;0;50;20;0;0;0;0;0;0;0;0;4;0;0;0.45;1.25;Patrouillenboote · Bell 412
+807;Nordmazedonien;1.8;15;0.3;8;5;0;100;50;0;0;0;0;0;0;0;0;0;0;0;0.45;1.25;JLTV · M-55
+XKX;Kosovo;1.8;10;0.15;5;3;0;20;0;0;0;0;0;0;0;0;0;0;0;0;0.40;1.2;Kosovo Security Force · Javelin
+100;Bulgarien;6.4;100;2.2;37;3;90;500;200;30;16;0;6;0;0;0;3;3;1;0;0.50;1.1;T-72M2 · MiG-29 (F-16 Block 70 im Zulauf) · Mi-24 · Wielingen-Fregatten
+642;Rumänien;19;350;8.5;71;55;375;1200;600;160;32;0;0;0;0;0;3;4;0;0;0.60;1.1;TR-85M1 (M1A2 bestellt) · F-16AM · Piranha V · LAROM, HIMARS · Patriot
+498;Moldau;2.5;16;0.12;6.5;58;0;150;50;11;0;0;0;0;0;0;0;0;0;0;0.30;1.0;BMD-1, BTR-80 · BM-27 Uragan
+112;Belarus;9.2;72;1.3;63;290;500;1400;600;220;40;0;20;0;0;0;0;0;0;0;0.50;1.05;T-72B3 · Su-30SM, MiG-29 · Polonez · Iskander-M (russ.)
+804;Ukraine;37;180;64.7;900;1200;1100;3500;1800;600;85;0;35;0;0;0;0;1;0;0;0.60;1.15;T-64BV, Leopard 2A6, M1A1, CV90, M2 Bradley · MiG-29, Su-27, F-16AM, Mirage 2000 · HIMARS, CAESAR · Seedrohnen · FPV-Drohnen
+643;Russland;144;2000;149;1320;2000;5750;13000;8000;3000;1500;120;550;1;17;14;12;80;63;5580;0.75;1.35;T-90M, T-72B3M, T-80BVM · Su-57, Su-35S, Su-34 · Tu-160M, Tu-95MS, Tu-22M3 · Ka-52 · Admiral Kusnezow · Borei-/Yasen-Klasse · Iskander-M, Kinschal · S-400
+300;Griechenland;10.4;240;8.2;132;289;1240;2200;800;190;220;0;29;0;5;0;12;10;10;0;0.75;1.2;Leopard 2A6 HEL, Leopard 1A5 · F-16 Viper, Rafale F3R, Mirage 2000-5 · AH-64A/D · Hydra-/Elli-Fregatten · Type-214-U-Boote
+196;Zypern;1.3;34;0.6;12;50;130;350;150;30;0;0;11;0;0;0;0;4;0;0;0.50;1.1;T-80U, AMX-30B2 · BMP-3 · Zuzana · Mi-35P
+792;Türkei;86;1100;25;355;380;2200;7000;1800;300;290;0;110;0;6;0;16;10;12;0;0.75;1.25;Altay, Leopard 2A4, M60T Sabra · F-16C/D Block 50+ · T129 ATAK · Bayraktar TB2/Akıncı/Kızılelma · TCG Anadolu · T-155 Fırtına · Reis-Klasse U-Boote
+# --- Kaukasus & Zentralasien ---
+268;Georgien;3.7;30;0.5;21;0;120;250;200;40;3;0;6;0;0;0;0;1;0;0;0.40;1.35;T-72SIM-1 · Dana · Su-25KM · Mi-24
+051;Armenien;2.8;24;1.4;42;210;100;300;200;50;15;0;10;0;0;0;0;0;0;0;0.40;1.35;T-72B · Su-30SM, Su-25 · BM-30 Smerch · Pinaka (bestellt)
+031;Aserbaidschan;10.4;75;3.9;64;300;550;1300;500;150;30;0;24;0;0;0;0;4;0;0;0.50;1.2;T-90S, T-72 Aslan · MiG-29, Su-25 (JF-17 bestellt) · Bayraktar TB2, Harop · Polonez, LYNX · Mi-35M
+398;Kasachstan;20;260;2;39;0;350;1300;400;140;100;0;20;0;0;0;0;4;0;0;0.40;1.0;T-72BA · Su-30SM, MiG-31BM, Su-27 · Mi-35M · BM-30 Smerch
+860;Usbekistan;36;100;1.5;48;0;340;1000;400;100;60;0;30;0;0;0;0;0;0;0;0.35;1.1;T-72, T-64 · MiG-29, Su-27, Su-25 · Mi-24/35
+795;Turkmenistan;6.5;60;0.7;36;0;650;1800;500;120;30;0;10;0;0;0;0;4;0;0;0.30;1.1;T-72UMG · MiG-29, Su-25 · BM-30 Smerch
+762;Tadschikistan;10;12;0.1;9;0;40;60;25;10;0;0;4;0;0;0;0;0;0;0;0.25;1.5;T-72 · BM-21 · Mi-24
+417;Kirgisistan;7.2;14;0.2;11;0;150;400;200;30;0;0;2;0;0;0;0;0;0;0;0.25;1.45;T-72 · BM-21 · Bayraktar TB2
+496;Mongolei;3.4;20;0.15;10;137;350;400;300;130;0;0;0;0;0;0;0;0;0;0;0.25;1.1;T-54/55, T-72A · BM-21
+# --- Naher Osten ---
+376;Israel;9.8;520;46.5;170;465;1300;6000;530;100;340;0;48;0;0;0;0;7;5;90;0.95;1.1;Merkava Mk.4 Barak · Namer, Eitan · F-35I Adir, F-15I Ra'am, F-16I Sufa · AH-64D Saraf · Iron Dome, David's Sling, Arrow 3 · Sa'ar-6-Korvetten · Dolphin-U-Boote
+275;Palästina;5.4;18;0.1;30;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.2;Palästinensische Sicherheitskräfte (Polizei)
+400;Jordanien;11.5;53;2.2;100;65;300;1500;400;20;45;0;25;0;0;0;0;0;0;0;0.60;1.15;Al-Hussein (Challenger 1), M60 Phoenix · F-16AM · AH-1F · HIMARS
+422;Libanon;5.5;20;0.6;60;0;200;1300;400;30;6;0;0;0;0;0;0;0;0;0;0.30;1.25;M48A5, T-55 · M113 · A-29 Super Tucano
+760;Syrien;23;20;0.5;100;0;300;600;300;100;0;0;0;0;0;0;0;0;0;0;0.25;1.15;Nach Umsturz 12/2024 – Bestände großteils zerstört · T-72/T-55 (Reste)
+368;Irak;45;250;7.6;193;150;400;2500;500;100;55;0;40;0;0;0;0;4;0;0;0.40;1.0;M1A1M, T-90S, T-72 · F-16IQ, Su-25, T-50IQ · Mi-28NE · Volksmobilisierungskräfte
+364;Iran;89;400;7.9;610;350;1700;1300;3000;1500;190;20;50;0;4;0;7;6;19;0;0.45;1.25;Karrar, T-72S, Zulfiqar · F-14A Tomcat, F-4E, MiG-29, Su-24 · Shahed-136 · Fateh/Kheibar-Raketen · Kilo-/Ghadir-U-Boote
+682;Saudi-Arabien;33;1100;80.3;257;0;1060;5000;760;120;370;0;80;0;0;0;7;9;0;0;0.70;1.15;M1A2S Abrams · F-15SA, Eurofighter Typhoon, Tornado IDS · AH-64E · Al-Riyadh-Fregatten · Patriot, THAAD
+887;Jemen;34;21;0.5;120;0;200;500;300;100;0;0;0;0;0;0;0;0;0;0;0.25;1.3;T-55/T-62 (Altbestände) · Ballistische Raketen & Drohnen (Huthi)
+512;Oman;5.2;108;6.5;43;0;117;300;200;0;50;0;0;0;0;0;0;6;0;0;0.60;1.2;Challenger 2, M60A3 · F-16 Block 50, Eurofighter Typhoon · Khareef-Korvetten
+784;Vereinigte Arabische Emirate;10;510;23;63;0;340;2700;300;70;137;0;28;0;1;0;1;12;0;0;0.78;1.1;Leclerc · BMP-3, NIMR · F-16E/F Block 60, Mirage 2000-9 (Rafale F4 bestellt) · AH-64E · THAAD · Baynunah-Korvetten
+634;Katar;2.7;220;9;16.5;0;62;550;50;6;96;0;24;0;1;0;0;4;0;0;0.75;1.0;Leopard 2A7+ · VBCI · Rafale, F-15QA, Eurofighter Typhoon · AH-64E · Al-Zubarah-Korvetten
+048;Bahrain;1.5;47;1.4;8.2;0;180;500;100;10;28;0;28;0;0;0;1;2;0;0;0.65;1.0;M60A3 · F-16 Block 70, F-5 · AH-1E/F · M270
+414;Kuwait;4.3;160;7.8;17.5;24;300;700;110;27;55;0;16;0;0;0;0;8;0;0;0.70;1.0;M1A2K, M-84AB · Desert Warrior · Eurofighter Typhoon, F/A-18E/F · AH-64D · BM-30 Smerch
+# --- Nordafrika ---
+818;Ägypten;112;400;5;440;480;3600;7000;2000;1200;380;0;100;0;2;0;10;10;8;0;0.55;1.15;M1A1 Abrams, T-90 · F-16, Rafale, MiG-29M2 · AH-64D, Ka-52 · Mistral-Klasse · FREMM, MEKO A-200
+434;Libyen;7;45;1;40;0;150;500;200;200;20;0;10;0;0;0;0;2;0;0;0.25;1.2;T-72/T-62 · MiG-21/23, Mirage F1 · Grad (zersplitterte Kräfte)
+788;Tunesien;12.4;50;1.2;36;0;84;400;120;0;12;0;0;0;0;0;0;6;0;0;0.40;1.1;M60A3 · F-5E · UH-60M
+012;Algerien;46;260;21.8;140;150;1200;2700;800;200;180;0;80;0;3;0;5;8;8;0;0.60;1.2;T-90SA, T-72M1 · Su-30MKA, MiG-29M2 · Mi-28NE · S-400 · MEKO A-200AN · Kilo-U-Boote
+504;Marokko;38;145;5.5;195;150;800;1400;600;75;85;0;18;0;0;0;6;1;0;0;0.50;1.15;M1A1/A2 Abrams, VT-1A · F-16C/D Block 52/72, Mirage F1 · AH-64E · PHL-03 · FREMM Mohammed VI
+# --- Afrika südlich der Sahara ---
+729;Sudan;49;30;1.5;120;0;300;500;400;300;30;0;30;0;0;0;0;0;0;0;0.25;1.15;T-72, T-55 · MiG-29, Su-25, Su-24 · Mi-24/35 (Bürgerkrieg mit RSF)
+728;Südsudan;11;4;0.1;53;0;80;50;50;30;0;0;5;0;0;0;0;0;0;0;0.15;1.2;T-72AV · Mi-24
+231;Äthiopien;127;160;1;160;0;350;400;500;150;22;0;18;0;0;0;0;0;0;0;0.30;1.35;T-72UA1 · Su-27, MiG-23 · Mi-35 · Bayraktar TB2, Wing Loong
+232;Eritrea;3.7;2.5;0.1;200;120;270;100;250;50;10;0;0;0;0;0;0;2;0;0;0.20;1.3;T-54/55 · MiG-29, Su-27 · Dauer-Wehrpflicht
+262;Dschibuti;1.1;4;0.2;10;0;0;100;50;0;0;0;0;0;0;0;0;0;0;0;0.30;1.1;Leichte Kräfte · Ausländische Basen (USA, FR, CN, JP, IT)
+706;Somalia;18;11;0.1;25;0;0;30;20;0;0;0;0;0;0;0;0;0;0;0;0.15;1.15;Somali National Army · Somaliland-Streitkräfte
+404;Kenia;55;110;1.3;24;0;76;200;100;0;20;0;20;0;0;0;0;4;0;0;0.35;1.1;Vickers Mk3 · F-5E/F · MD 530F, AH-1F
+800;Uganda;49;50;1.1;45;10;230;300;200;20;10;0;5;0;0;0;0;0;0;0;0.30;1.15;T-90S, T-55 · Su-30MK2 · Mi-24/35
+834;Tansania;67;80;1;27;80;50;100;300;60;15;0;0;0;0;0;0;4;0;0;0.25;1.1;Type 59G · J-7 · Type-062-Kanonenboote
+646;Ruanda;14;14;0.2;33;0;34;100;150;6;0;0;5;0;0;0;0;0;0;0;0.35;1.3;T-54/55 · RG-31 · Mi-24/35
+108;Burundi;13;3;0.07;30;0;0;50;40;0;0;0;0;0;0;0;0;0;0;0;0.15;1.3;Leichte Infanterie
+180;DR Kongo;102;70;0.8;134;0;160;300;500;50;4;0;8;0;0;0;0;0;0;0;0.15;1.3;T-55, T-72AV, Type 59 · Su-25 · Mi-24/35
+178;Republik Kongo;6;15;0.4;10;0;40;100;100;20;0;0;2;0;0;0;0;0;0;0;0.20;1.25;T-54/55 · BM-21
+266;Gabun;2.4;21;0.3;5;0;0;150;20;0;2;0;0;0;0;0;0;2;0;0;0.30;1.25;ERC-90 Sagaie · Mirage F1
+226;Äquatorialguinea;1.7;12;0.2;2;0;3;30;0;0;0;0;0;0;0;0;1;2;0;0;0.20;1.2;T-55 · Wele-Nzas-Fregatte
+120;Kamerun;28;50;0.5;25;0;0;300;100;20;6;0;4;0;0;0;0;2;0;0;0.25;1.2;Ratel, Panhard · Alpha Jet · Mi-24
+140;Zentralafrikanische Republik;5.7;2.5;0.04;9;0;0;20;0;0;0;0;0;0;0;0;0;0;0;0;0.10;1.2;FACA (leichte Kräfte)
+148;Tschad;18;13;0.4;33;0;60;400;50;20;5;0;6;0;0;0;0;0;0;0;0.25;1.05;T-55 · Eland, ERC-90 · Su-25 · Mi-24/35
+566;Nigeria;225;250;3.2;143;0;260;1200;350;40;37;0;15;0;0;0;1;6;0;0;0.30;1.15;VT-4, T-72, Vickers Mk3 · JF-17, A-29 Super Tucano, Alpha Jet · Mi-35M · OPV
+562;Niger;27;18;0.3;33;0;0;200;40;0;3;0;0;0;0;0;0;0;0;0;0.20;1.05;Leichte Kräfte · Su-25
+466;Mali;23;21;0.9;41;0;20;300;50;30;10;0;6;0;0;0;0;0;0;0;0.20;1.1;T-54/55 · BTR-60 · L-39, Super Tucano · Mi-24/35 · Bayraktar TB2
+854;Burkina Faso;23;20;0.9;11;50;0;300;30;0;3;0;2;0;0;0;0;0;0;0;0.20;1.0;Leichte Kräfte · VDP-Miliz · Bayraktar TB2
+478;Mauretanien;4.8;11;0.2;16;0;35;70;80;10;4;0;0;0;0;0;0;3;0;0;0.20;1.0;T-54/55 · A-29 Super Tucano
+686;Senegal;18;31;0.6;18;0;0;150;40;0;0;0;0;0;0;0;0;4;0;0;0.30;1.0;Bastion APC · OPV 58S
+270;Gambia;2.8;2.3;0.02;1.5;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;Gambia Armed Forces
+624;Guinea-Bissau;2.1;2;0.02;4.4;0;0;20;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.1;Leichte Infanterie
+324;Guinea;14;23;0.3;10;0;20;70;30;0;0;0;0;0;0;0;0;0;0;0;0.15;1.2;T-55 · BTR-40
+694;Sierra Leone;8.7;4;0.03;8.5;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.12;1.2;Republic of Sierra Leone Armed Forces
+430;Liberia;5.4;4.3;0.02;2;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.12;1.2;Armed Forces of Liberia
+384;Elfenbeinküste;29;79;0.9;27;0;10;100;50;6;0;0;2;0;0;0;0;3;0;0;0.25;1.1;T-55 · Mi-24
+288;Ghana;34;76;0.4;16;0;0;100;50;3;4;0;0;0;0;0;0;4;0;0;0.30;1.1;K-8 · Snake-Klasse Patrouillenboote
+768;Togo;9;9;0.2;9;0;0;60;20;0;0;0;0;0;0;0;0;0;0;0;0.20;1.1;Leichte Kräfte
+204;Benin;13.7;20;0.2;11;0;0;70;20;0;0;0;0;0;0;0;0;0;0;0;0.20;1.1;Leichte Kräfte
+678;São Tomé und Príncipe;0.23;0.7;0.003;0.3;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;Küstenwache
+132;Kap Verde;0.6;2.5;0.01;1.2;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.20;1.0;Küstenwache
+174;Komoren;0.85;1.3;0.01;0.5;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.0;Armée Nationale de Développement
+690;Seychellen;0.1;2.1;0.03;0.4;0;0;0;0;0;0;0;0;0;0;0;0;2;0;0;0.30;1.0;Seychelles Coast Guard
+480;Mauritius;1.3;14;0.03;2.5;0;0;0;0;0;0;0;0;0;0;0;0;2;0;0;0.30;1.0;National Coast Guard (keine Armee)
+462;Malediven;0.52;7;0.1;4;0;0;0;0;0;0;0;0;0;0;0;0;2;0;0;0.30;1.0;Maldives National Defence Force
+024;Angola;36;85;1.4;107;0;300;800;550;100;50;0;25;0;0;0;0;2;0;0;0.30;1.2;T-72, T-55 · Su-30K, Su-27, Su-24 · Mi-24/35
+894;Sambia;20;28;0.4;15;3;30;60;100;50;12;0;0;0;0;0;0;0;0;0;0.20;1.1;T-55, Type 59 · K-8, L-15
+716;Simbabwe;16.5;35;0.2;29;0;40;100;50;50;10;0;6;0;0;0;0;0;0;0;0.20;1.1;Type 59/69 · K-8, F-7 · Mi-35
+454;Malawi;21;13;0.07;10.7;0;0;40;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.15;Leichte Infanterie
+508;Mosambik;33;21;0.2;11;0;30;200;100;12;0;0;0;0;0;0;0;0;0;0;0.15;1.15;T-55 · BTR-60
+072;Botswana;2.7;20;0.6;9;0;0;300;50;20;0;0;0;0;0;0;0;0;0;0;0.35;1.0;SK-105 Kürassier · Piranha
+516;Namibia;2.6;13;0.4;10;0;20;120;70;5;12;0;0;0;0;0;0;1;0;0;0.30;1.05;T-54/55 · K-8, F-7
+710;Südafrika;61;380;2.9;73;15;100;1300;100;25;30;0;11;0;0;0;4;3;3;0;0.50;1.1;Olifant Mk2 · Ratel, Rooikat · JAS 39 Gripen C/D, Hawk · Rooivalk · G6 · Valour-Fregatten (MEKO A-200SAN)
+426;Lesotho;2.3;2.3;0.05;2;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.45;Lesotho Defence Force
+748;Eswatini;1.2;4.8;0.1;3;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.2;Umbutfo Eswatini Defence Force
+450;Madagaskar;30;16;0.1;13.5;0;12;30;20;0;0;0;0;0;0;0;0;0;0;0;0.15;1.15;PT-76 · BRDM-2
+# --- Süd- & Ostasien ---
+356;Indien;1430;3700;86.1;1455;1155;4200;3500;4100;270;590;0;110;2;6;13;14;18;18;180;0.65;1.15;T-90S Bhishma, Arjun Mk1A · Su-30MKI, Rafale, Tejas · AH-64E, LCH Prachand · INS Vikrant, INS Vikramaditya · Arihant-Klasse · BrahMos, Agni-V · S-400
+586;Pakistan;240;340;10;660;550;2600;3000;4300;600;390;0;50;0;0;0;10;6;8;170;0.50;1.25;Al-Khalid, T-80UD · JF-17 Thunder, F-16, J-10CE · AH-1F, Z-10ME · Agosta 90B · Tughril-Fregatten · Babur/Shaheen-Raketen
+050;Bangladesch;172;450;4;163;0;320;500;400;70;45;0;0;0;0;0;7;8;2;0;0.35;1.15;MBT-2000, Type 59G · F-7BGI, MiG-29, Yak-130 · Type-035G-U-Boote
+524;Nepal;30;41;0.4;96;0;0;80;100;0;0;0;0;0;0;0;0;0;0;0;0.15;1.6;Leichte Infanterie (Gurkha-Tradition)
+064;Bhutan;0.8;3;0.04;8;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.12;1.6;Royal Bhutan Army
+144;Sri Lanka;22;84;1.3;255;0;60;300;300;30;15;0;10;0;0;0;0;6;0;0;0.35;1.1;T-55 · Kfir, F-7, K-8 · Mi-24/35
+004;Afghanistan;41;17;0.5;150;0;20;800;100;20;0;0;0;0;0;0;0;0;0;0;0.20;1.6;Taliban-Kräfte · erbeutete Humvees/MRAPs · Mi-17
+104;Myanmar;54;65;2.7;150;0;250;700;400;70;80;0;12;0;0;0;5;6;2;0;0.30;1.25;MBT-2000, T-72S · MiG-29, JF-17, Su-30SME · Mi-35P (Bürgerkrieg)
+764;Thailand;71.8;515;5.7;360;200;400;1500;700;50;100;0;15;1;2;0;7;7;0;0;0.55;1.15;VT-4, T-84 Oplot, M60 · JAS 39 Gripen C/D, F-16 · AH-1F · Chakri Naruebet · Bhumibol-Adulyadej-Fregatte
+418;Laos;7.6;15;0.03;29;100;25;100;80;10;4;0;0;0;0;0;0;0;0;0;0.20;1.3;T-72B1, T-54/55 · Yak-130
+116;Kambodscha;17;32;0.9;124;0;200;300;400;70;0;0;0;0;0;0;0;2;0;0;0.20;1.15;T-55 · BM-21, PHL-03
+704;Vietnam;100;430;7;482;5000;1300;2000;2300;700;74;0;25;0;6;0;9;15;6;0;0.45;1.3;T-90S, T-54/55 · Su-30MK2, Su-22 · Mi-24 · Gepard-Fregatten · Kilo-U-Boote · Bastion-P
+458;Malaysia;34;420;4;113;52;48;1000;200;36;38;0;6;0;0;0;2;10;2;0;0.50;1.15;PT-91M · Su-30MKM, F/A-18D, Hawk (FA-50 bestellt) · AV-8 Gempita · ASTROS II · Scorpène-U-Boote
+096;Brunei;0.45;15;0.45;7.2;0.7;0;100;20;0;0;0;0;0;0;0;0;4;0;0;0.50;1.15;Darussalam-OPV · Scorpion
+702;Singapur;5.9;500;13;51;252;170;1900;250;18;100;0;19;0;4;0;6;8;4;0;0.90;1.0;Leopard 2SG · Hunter AFV · F-15SG, F-16C/D (F-35B bestellt) · AH-64D · HIMARS · Formidable-Fregatten · Invincible-Klasse (Typ 218SG)
+360;Indonesien;278;1370;9;400;400;120;1200;500;63;90;0;14;0;7;0;8;24;4;0;0.45;1.2;Leopard 2RI, Harimau · Su-30MK2, F-16, Rafale (Zulauf) · AH-64E · CAESAR · ASTROS II · Nagapasa-U-Boote
+608;Philippinen;115;440;4.5;145;130;18;700;250;0;12;0;8;0;4;0;5;4;0;0;0.35;1.2;Sabrah · FA-50PH · T129 ATAK · BrahMos · Jose-Rizal-Fregatten
+598;Papua-Neuguinea;10;31;0.1;4;0;0;0;0;0;0;0;0;0;0;0;0;4;0;0;0.20;1.4;Guardian-Patrouillenboote
+626;Osttimor;1.4;2;0.04;2.3;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.15;1.2;F-FDTL (leichte Kräfte)
+156;China;1410;18500;314;2035;510;5000;20000;6900;2700;1600;220;280;3;12;50;47;72;61;600;0.85;1.25;Type 99A, Type 15 · J-20, J-16, J-10C, J-35 · H-6K/N · Z-10, Z-19 · Liaoning, Shandong, Fujian · Type-055-Zerstörer · Typ 093/094 · DF-21D, DF-26, DF-41 · HQ-9
+158;Taiwan;23.4;790;16.5;169;1660;900;1500;1100;200;380;0;90;0;2;4;20;12;3;0;0.80;1.4;M1A2T, CM-11 · CM-32 Yunpao · F-16V, F-CK-1, Mirage 2000-5 · AH-64E, AH-1W · HIMARS · Harpoon · Kee-Lung-Zerstörer · Hai Kun
+408;Nordkorea;26;30;4;1280;600;3500;2500;8600;5500;400;80;20;0;0;1;3;6;71;50;0.30;1.3;Chonma-216, Pokpung-ho · MiG-29, MiG-23, Su-25 · KN-25 600-mm · Hwasong-ICBM · Choe-Hyon-Zerstörer · Sinpo-/Romeo-U-Boote
+410;Südkorea;52;1710;47.6;500;3100;2200;3000;5300;600;420;0;110;0;6;12;15;10;21;0;0.88;1.25;K2 Black Panther, K1A2 · K21 · KF-21 Boramae, F-15K, F-35A, KF-16 · AH-64E · K9 Thunder, K239 Chunmoo · Sejong-the-Great-Klasse · KSS-III Dosan Ahn Changho
+392;Japan;124;4200;55.3;247;56;500;1500;380;45;330;0;57;2;3;36;10;6;24;0;0.92;1.25;Type 10, Type 90 · Type 16 MCV · F-15J, F-35A/B, F-2 · AH-64DJ · JS Izumo/Kaga · Maya-Klasse · Mogami-Klasse · Taigei-/Sōryū-Klasse
+# --- Ozeanien ---
+036;Australien;27;1730;33.8;60;30;75;1400;54;10;107;0;22;0;3;3;8;0;6;0;0.92;1.1;M1A1/M1A2 Abrams · F-35A, F/A-18F Super Hornet, EA-18G · Tiger ARH (AH-64E im Zulauf) · Canberra-LHD · Hobart-Zerstörer · Collins-U-Boote (AUKUS)
+554;Neuseeland;5.2;250;3;9;2.4;0;100;24;0;0;0;0;0;0;0;2;2;0;0;0.80;1.15;NZLAV · L118 · Anzac-Fregatten · P-8A Poseidon
+242;Fidschi;0.9;5.5;0.06;4;6;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.20;1.1;Republic of Fiji Military Forces
+090;Salomonen;0.75;1.6;0.01;0.2;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.10;1.2;Keine Armee – Polizei
+548;Vanuatu;0.33;1.1;0.01;0.3;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.10;1.1;Vanuatu Mobile Force
+882;Samoa;0.22;0.9;0.005;0.05;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.10;1.0;Keine Armee – Polizei
+776;Tonga;0.1;0.5;0.01;0.6;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.15;1.0;His Majesty's Armed Forces
+296;Kiribati;0.13;0.3;0;0.05;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.10;1.0;Keine Armee – Polizei
+520;Nauru;0.01;0.15;0;0.03;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0.10;1.0;Keine Armee – Polizei
+583;Mikronesien;0.11;0.5;0;0.05;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.10;1.0;Keine Armee (Verteidigung durch USA)
+584;Marshallinseln;0.04;0.3;0;0.05;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.10;1.0;Keine Armee (Verteidigung durch USA)
+585;Palau;0.02;0.3;0;0.05;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0.10;1.0;Keine Armee (Verteidigung durch USA)

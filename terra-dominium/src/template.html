@@ -1,0 +1,77 @@
+<title>Terra Dominium</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>/*CSS*/</style>
+
+<div id="app">
+  <header id="hud">
+    <div class="hud-id">
+      <span class="dot" aria-hidden="true"></span>
+      <div>
+        <div class="hud-name" id="hudName">Terra Dominium</div>
+        <div class="hud-sub" id="hudDate">–</div>
+      </div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat"><span class="lbl">Kasse</span><span class="val" id="hudMoney">–</span></div>
+      <div class="stat"><span class="lbl">Einnahmen/Monat</span><span class="val" id="hudIncome">–</span></div>
+      <div class="stat"><span class="lbl">Länder</span><span class="val" id="hudLands">–</span></div>
+      <div class="stat hide-s"><span class="lbl">Weltbevölkerung</span><span class="val" id="hudPop">–</span></div>
+    </div>
+    <div class="hud-actions">
+      <button class="btn ghost" id="btnForces" type="button">Streitkräfte</button>
+      <button class="btn ghost hide-s" id="btnLog" type="button">Lagebericht</button>
+      <button class="btn primary" id="btnEnd" type="button">Runde beenden</button>
+    </div>
+  </header>
+  <main id="stage">
+    <svg id="map" role="img" aria-label="Weltkarte"></svg>
+    <div id="tip" hidden></div>
+    <div id="legend">
+      <span><i class="sw me"></i>Dein Reich</span>
+      <span><i class="sw tgt"></i>Angreifbar</span>
+      <span><i class="sw tgts"></i>Per Seeweg</span>
+      <span><i class="sw war"></i>Im Krieg</span>
+    </div>
+    <div id="zoomctl">
+      <button type="button" id="zIn" aria-label="Hineinzoomen">+</button>
+      <button type="button" id="zOut" aria-label="Herauszoomen">−</button>
+      <button type="button" id="zHome" aria-label="Zum eigenen Reich">⌖</button>
+    </div>
+    <aside id="panel" aria-live="polite"></aside>
+  </main>
+</div>
+
+<div id="start" class="overlay">
+  <div class="start-wrap">
+    <div class="start-head">
+      <div class="brand">TERRA<b>DOMINIUM</b></div>
+      <p class="tag">Wähle ein Land, irgendeins der Welt. Seine echten Streitkräfte sind dein Startkapital. Erobere den Rest durch Taktik, Logistik und Geduld.</p>
+      <div id="resumeBox"></div>
+    </div>
+    <div class="start-tools">
+      <input id="search" type="search" placeholder="Land suchen … (z. B. Deutschland, Vietnam, Fidschi)" autocomplete="off">
+      <select id="sortSel" aria-label="Sortierung">
+        <option value="rank">Nach Militärstärke</option>
+        <option value="name">Alphabetisch</option>
+        <option value="hard">Schwierigste zuerst</option>
+      </select>
+      <button class="btn ghost" id="btnRandom" type="button">Zufällig</button>
+    </div>
+    <div id="countryList" role="list"></div>
+    <p class="fineprint">Militärdaten: Näherungswerte, Stand ca. 2024/25, nach öffentlichen Quellen (IISS Military Balance, SIPRI, Global Firepower, FAS). Karte: Natural Earth 1:50 Mio.</p>
+  </div>
+</div>
+
+<div id="modal" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <button class="x" id="modalX" type="button" aria-label="Schließen">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!--LIBS-->
+<!--DATA-->
+<script>/*GAME*/</script>
