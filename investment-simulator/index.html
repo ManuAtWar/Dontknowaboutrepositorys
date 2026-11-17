@@ -84,9 +84,14 @@
   .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
   /* Markt */
-  .tabs { display: flex; gap: 4px; overflow-x: auto; padding: 10px 10px 0; scrollbar-width: none; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs button { flex: 0 0 auto; background: transparent; border-color: transparent; padding: 6px 10px; font-size: 13px; color: var(--muted); }
+  .tabwrap { position: relative; }
+  .tabs { position: relative; display: flex; gap: 4px; overflow-x: auto; padding: 10px 36px 8px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { height: 4px; }
+  .tabs::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  .tabs button { flex: 0 0 auto; background: transparent; border-color: transparent; padding: 7px 12px; font-size: 13px; color: var(--muted); }
+  .tarrow { position: absolute; top: 8px; bottom: 10px; width: 32px; z-index: 2; padding: 0; border: 0; border-radius: 8px; background: var(--panel-2); color: var(--brass); font: 600 20px/1 var(--f-display); }
+  .tarrow.l { left: 4px; } .tarrow.r { right: 4px; }
+  @media (max-width: 760px) { .tabs button { padding: 9px 14px; font-size: 14px; } }
   .tabs button.on { color: var(--ink); background: var(--panel-2); border-color: var(--line); }
   .list { display: flex; flex-direction: column; padding: 8px; gap: 2px; max-height: 640px; overflow-y: auto; }
   @media (max-width: 760px) { .list { max-height: 330px; } }
@@ -170,6 +175,55 @@
   .ach b { display: block; font-size: 13px; }
   .ach.got b { color: var(--brass); }
   .ach span { font-size: 11px; color: var(--muted); }
+  /* Ansichten */
+  body.v-akademie .gameonly, body.v-spiel .acadonly { display: none !important; }
+  .views button { padding: 8px 14px; font-weight: 600; }
+  .acad { display: grid; gap: 14px; padding-block: 18px 0; }
+  .ahero { padding: 22px; }
+  .ahero h1 { margin: 6px 0 8px; font: 700 clamp(24px, 4vw, 36px)/1.1 var(--f-display); text-wrap: balance; }
+  .ahero p { color: var(--muted); max-width: 65ch; margin: 0; }
+  .astats { display: flex; gap: 12px 28px; flex-wrap: wrap; margin: 16px 0 4px; }
+  .astats b { display: block; font: 600 22px/1.2 var(--f-mono); }
+  .astats span { font-size: 12px; color: var(--muted); }
+  .lesson h3, h3.big { margin: 6px 0 10px; font: 700 22px/1.2 var(--f-display); text-wrap: balance; }
+  .lesson p { max-width: 68ch; line-height: 1.6; font-size: 15px; margin: 0 0 10px; }
+  .quiz { display: grid; gap: 8px; margin-top: 14px; max-width: 68ch; }
+  .quiz .q { font-weight: 600; font-size: 15px; }
+  .quiz .ans { text-align: left; padding: 10px 14px; }
+  .quiz .ans:disabled { opacity: .5; cursor: default; }
+  .quiz .ans.right { opacity: 1; border-color: var(--up); color: var(--up); }
+  .quiz .ans.wrong { border-color: var(--down); color: var(--down); }
+  .why { padding: 10px 12px; border-radius: 10px; background: var(--panel-2); font-size: 14px; }
+  .why.good { border: 1px solid color-mix(in srgb, var(--up) 45%, transparent); }
+  .why.good b { color: var(--up); } .why.bad b { color: var(--down); }
+  .ahead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; margin-top: 6px; }
+  .ahead h2 { margin: 0; font: 700 22px var(--f-display); }
+  .courses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+  @media (max-width: 760px) { .courses { grid-template-columns: minmax(0, 1fr); } }
+  .course.open { grid-column: 1 / -1; }
+  .course.core { border-color: color-mix(in srgb, var(--up) 40%, transparent); }
+  .chead { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; width: 100%; text-align: left; background: transparent; border: 0; padding: 14px 14px 10px; border-radius: 14px; }
+  .chead .cnum { font: 700 18px/1.3 var(--f-display); color: var(--brass); }
+  .chead b { display: block; font: 700 16px/1.3 var(--f-display); }
+  .chead small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .chead .tag { font-family: var(--f-body); font-weight: 500; vertical-align: 2px; margin-left: 4px; }
+  .cprog { font: 12px var(--f-mono); color: var(--muted); white-space: nowrap; padding-top: 3px; }
+  .meter.thin { height: 4px; margin: 0 14px 12px; }
+  .llist { display: grid; gap: 4px; padding: 0 14px 14px; }
+  .lrowb { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; text-align: left; background: var(--bg); border: 1px solid var(--line-soft); padding: 9px 12px; border-radius: 10px; }
+  .lrowb.on { border-color: var(--sel); }
+  .lrowb .ck { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font: 11px var(--f-mono); color: var(--muted); }
+  .lrowb.done .ck { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+  .inl { padding: 16px; background: var(--bg); border: 1px solid color-mix(in srgb, var(--sel) 40%, transparent); border-radius: 12px; margin: 2px 0 6px; }
+  .calcin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 560px) { .calcin { grid-template-columns: minmax(0, 1fr); } }
+  .calcin label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  .cres { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .cres b { display: block; font-size: 14px; } .cres span { font-size: 12px; color: var(--muted); }
+  .cres .v { text-align: right; font-size: 15px; } .cres .v .hint { display: block; }
+  .cbar { grid-column: 1 / -1; position: relative; height: 8px; border-radius: 99px; background: var(--bg); overflow: hidden; }
+  .cbar > div { position: absolute; inset: 0 auto 0 0; background: var(--up); border-radius: 99px; }
+  .cbar > .paid { background: color-mix(in srgb, var(--ink) 35%, transparent); }
   /* Lernen */
   .learn { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
   @media (max-width: 900px) { .learn { grid-template-columns: minmax(0, 1fr); } }
@@ -221,13 +275,14 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand">KAPITAL<small>INVESTIEREN LERNEN · SPIELGELD</small></div>
-    <div class="clock">
+    <div class="brand">KAPITAL<small>FINANZ-AKADEMIE · SPIELGELD</small></div>
+    <div class="seg views" id="views"><button data-v="akademie">Akademie</button><button data-v="spiel">Börsenspiel</button></div>
+    <div class="clock gameonly">
       <span class="chip mono" id="date">Jahr 1 · Tag 1</span>
       <button class="chip" id="regime" data-term="marktphase">Normal</button>
       <button class="chip" id="rate" data-term="leitzins">Leitzins 2,50 %</button>
     </div>
-    <div class="ctl">
+    <div class="ctl gameonly">
       <button id="play">▶ Start</button>
       <div class="seg" id="speeds">
         <button data-s="1" class="on">1×</button><button data-s="4">4×</button><button data-s="15">15×</button><button data-s="50">50×</button>
@@ -237,6 +292,8 @@
     </div>
   </header>
 
+  <div id="academyView" class="acad acadonly"></div>
+  <div id="gameView" class="gameonly">
   <section class="hero">
     <div class="nw">
       <div class="lbl">Nettovermögen</div>
@@ -255,13 +312,13 @@
   </section>
 
   <section class="learn">
-    <section class="panel"><div class="hd"><span class="lbl">Lernpfad</span><span class="lbl" id="lpCount"></span></div><div class="bd" id="lpBox"></div></section>
+    <section class="panel"><div class="hd"><span class="lbl">Praxis-Missionen</span><span class="lbl" id="lpCount"></span></div><div class="bd" id="lpBox"></div></section>
     <section class="panel coach"><div class="hd"><span class="lbl">Dein Coach</span><button class="link" id="lexBtn2">Lexikon öffnen</button></div><div class="bd" id="coachBox"></div></section>
   </section>
 
   <main class="grid">
     <section class="panel">
-      <div class="tabs" id="tabs"></div>
+      <div class="tabwrap"><button class="tarrow l" id="tabL" aria-label="Weiter nach links" hidden>‹</button><div class="tabs" id="tabs"></div><button class="tarrow r" id="tabR" aria-label="Weiter nach rechts">›</button></div>
       <div class="list" id="list"></div>
     </section>
 
@@ -314,12 +371,15 @@
     <section class="panel"><div class="hd"><span class="lbl">Meilensteine</span></div><div class="bd ranks" id="ranks"></div></section>
     <section class="panel"><div class="hd"><span class="lbl">Erfolge</span><span class="lbl" id="achCount"></span></div><div class="bd achs" id="achs"></div></section>
   </section>
-  <p class="foot">Alles fiktiv: Spielgeld, erfundene Firmen, simulierte Kurse. Keine Anlageberatung.</p>
+  </div>
+  <p class="foot gameonly">Alles fiktiv: Spielgeld, erfundene Firmen, simulierte Kurse. Keine Anlageberatung.</p>
 </div>
 
 <div class="overlay" id="overlay" hidden><div class="modal" role="dialog" aria-modal="true"><div class="kick" id="mKick"></div><h3 id="mTitle"></h3><div id="mBody"></div><div class="mbtns" id="mBtns"></div></div></div>
 <div class="toast" id="toast"></div>
 
+<script src="academy-1.js"></script>
+<script src="academy-2.js"></script>
 <script>
 (() => {
 'use strict';
@@ -432,7 +492,9 @@ const ACH = [
   ['crypto1m', 'Krypto-Millionär', 'Halte Krypto im Wert von 1 Mio. €'],
   ['fast1m', 'Senkrechtstarter', 'Werde Millionär in weniger als 3 Spieljahren'],
   ['quiz5', 'Musterschüler', 'Beantworte 5 Quizfragen im ersten Versuch richtig'],
-  ['scholar', 'Börsenprofi', 'Schließe den ganzen Lernpfad ab'],
+  ['scholar', 'Börsenprofi', 'Schließe alle Praxis-Missionen ab'],
+  ['acad10', 'Wissbegierig', 'Schaffe 10 Lektionen in der Finanz-Akademie'],
+  ['acadAll', 'Finanz-Profi', 'Schaffe alle Lektionen der Finanz-Akademie'],
 ];
 
 // ---------- Lerninhalte ----------
@@ -572,6 +634,7 @@ function indexAssets() { A = {}; for (const a of S.assets) A[a.id] = a; }
 function migrate() {
   S.learn = S.learn || { i: 0, quiz: false, cnt: 0, base: S.income || 0, flag: false, done: [], first: 0, miss: 0 };
   S.fees = S.fees || 0; S.trades = S.trades || 0; S.tradeDays = S.tradeDays || []; S.coach = S.coach || {}; S.cashDays = S.cashDays || 0;
+  if (S.introSeen === undefined) S.introSeen = S.day > 1;
   if (S.coachTip === undefined) S.coachTip = null;
   if (S.bench == null) { S.bench = netWorth() / A.WELT.price; S.benchHist = S.nwHist.map(() => null); S.benchHist[S.benchHist.length - 1] = netWorth(); }
 }
@@ -1045,6 +1108,150 @@ function renderCheck(nw) {
   setHTML('checkBox', rows.map(([k, v, t]) => '<div class="crow"><span class="k">' + k + '</span><span class="v mono">' + v + '</span>' + (t || '<span></span>') + '</div>').join(''));
 }
 
+// ---------- Finanz-Akademie ----------
+const ACAD = window.ACADEMY || [];
+const AKEY = 'kapital-academy-v1';
+const ACAD_TOTAL = ACAD.reduce((s, m) => s + m.lessons.length, 0);
+const ACAD_BONUS = 100;
+function loadAP() { try { const x = JSON.parse(localStorage.getItem(AKEY)); if (x && x.done) return x; } catch (e) {} return { done: {}, xp: 0, streak: 0, last: '', first: 0 }; }
+function saveAP() { try { localStorage.setItem(AKEY, JSON.stringify(AP)); } catch (e) {} }
+let AP = loadAP();
+const akey = (mi, li) => ACAD[mi].id + '-' + (li + 1);
+const doneIn = mi => ACAD[mi].lessons.reduce((s, _, li) => s + (AP.done[akey(mi, li)] ? 1 : 0), 0);
+const doneAll = () => Object.keys(AP.done).length;
+function nextOf(mi, li) { return li + 1 < ACAD[mi].lessons.length ? [mi, li + 1] : mi + 1 < ACAD.length ? [mi + 1, 0] : null; }
+function firstOpen(from) {
+  let p = from || [0, 0];
+  for (let n = 0; n < ACAD_TOTAL && p; n++) { if (!AP.done[akey(p[0], p[1])]) return p; p = nextOf(p[0], p[1]) || [0, 0]; }
+  return null;
+}
+const PERMS = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+function order(key) { let h = 7; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PERMS[h % 6]; }
+const AV = { cur: null, openM: null, openL: null, picks: {} };
+
+function localDay(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function bumpStreak() {
+  const now = new Date(), today = localDay(now), y = new Date(now); y.setDate(now.getDate() - 1);
+  if (AP.last === today) return;
+  AP.streak = AP.last === localDay(y) ? AP.streak + 1 : 1; AP.last = today;
+}
+function completeAcad(mi, li, first) {
+  const key = akey(mi, li); if (AP.done[key]) return;
+  const xp = first ? 15 : 10;
+  AP.done[key] = 1; AP.xp += xp; if (first) AP.first = (AP.first || 0) + 1; bumpStreak(); saveAP();
+  if (S && A.WELT) { S.cash += ACAD_BONUS; S.bench += ACAD_BONUS / A.WELT.price; addNews('Akademie-Bonus: +' + eur(ACAD_BONUS) + ' für „' + ACAD[mi].lessons[li][0] + '“', 'gold'); if (doneAll() >= 10) achieve('acad10'); if (doneAll() >= ACAD_TOTAL) achieve('acadAll'); save(); dirty = true; }
+  toast('🎓 +' + xp + ' XP · +' + eurS(ACAD_BONUS) + ' im Börsenspiel', true);
+}
+function pickAnswer(mi, li, j) {
+  const key = akey(mi, li), L = ACAD[mi].lessons[li], p = AV.picks[key] || (AV.picks[key] = []);
+  if (p.includes(L[5]) || p.includes(j)) return;
+  p.push(j);
+  if (j === L[5]) completeAcad(mi, li, p.length === 1);
+  renderAcademy();
+}
+function goNext(mi, li, where) {
+  const n = firstOpen(nextOf(mi, li) || [0, 0]) || nextOf(mi, li);
+  if (where === 'top') AV.cur = n;
+  else if (n) { AV.openM = n[0]; AV.openL = n[1]; }
+  renderAcademy();
+}
+
+function lessonHTML(mi, li, where) {
+  const M = ACAD[mi], L = M.lessons[li], key = akey(mi, li), p = AV.picks[key] || [], solved = p.includes(L[5]);
+  let h = '<article class="lesson"><div class="lkick">Kurs ' + (mi + 1) + ' · ' + esc(M.title) + ' · Lektion ' + (li + 1) + ' von ' + M.lessons.length + (AP.done[key] ? ' · ✓ geschafft' : '') + '</div>';
+  h += '<h3>' + esc(L[0]) + '</h3>' + L[1].split('\n').map(t => '<p>' + esc(t) + '</p>').join('');
+  h += '<div class="merke"><b>Merke</b>' + esc(L[2]) + '</div>';
+  h += '<div class="quiz"><div class="q">' + esc(L[3]) + '</div>';
+  for (const j of order(key)) {
+    const st = p.includes(j) ? (j === L[5] ? ' right' : ' wrong') : '';
+    h += '<button class="ans' + st + '" data-a="' + mi + ',' + li + ',' + j + ',' + where + '"' + (solved || p.includes(j) ? ' disabled' : '') + '>' + esc(L[4][j]) + '</button>';
+  }
+  if (p.length) h += '<div class="why ' + (solved ? 'good' : 'bad') + '"><b>' + (solved ? 'Richtig! ' : 'Nicht ganz. ') + '</b>' + esc(L[6]) + (solved ? '' : ' Versuch es noch einmal.') + '</div>';
+  h += '</div>';
+  if (solved) h += '<div class="lrow"><button class="primary" data-next="' + mi + ',' + li + ',' + where + '">Nächste Lektion →</button>' + (AP.done[key] ? '<span class="hint">+' + eurS(ACAD_BONUS) + ' im Börsenspiel gutgeschrieben</span>' : '') + '</div>';
+  return h + '</article>';
+}
+
+const CALC = [
+  ['Tagesgeld / Festgeld', .02, '±0 %', 'sicher, Einlagensicherung'],
+  ['Kurze Staatsanleihen', .025, 'etwa −5 %', 'sehr geringes Risiko'],
+  ['Ausgewogen 50/50', .045, 'etwa −20 %', 'halb sicher, halb Welt-ETF'],
+  ['Welt-Aktien-ETF', .07, 'etwa −40 bis −50 %', 'langfristig am meisten, schwankt stark'],
+];
+function calcHTML() {
+  return '<div class="calcin"><label>Startbetrag (€)<input type="number" id="cStart" min="0" step="100" value="1000" inputmode="decimal"></label>' +
+    '<label>Pro Monat (€)<input type="number" id="cMonth" min="0" step="10" value="100" inputmode="decimal"></label>' +
+    '<label>Jahre<input type="number" id="cYears" min="1" max="60" step="1" value="20" inputmode="numeric"></label></div><div id="calcOut"></div>' +
+    '<p class="hint">Beispielrenditen pro Jahr als grobe Annahme, keine Prognose. „Schlechtes Jahr“ zeigt, wie tief es in Krisen zeitweise gehen kann. Mehr Rendite gibt es nur mit mehr Schwankung.</p>';
+}
+function calcUpdate() {
+  const st = Math.max(0, parseFloat($('cStart').value) || 0), mo = Math.max(0, parseFloat($('cMonth').value) || 0), y = clamp(Math.round(parseFloat($('cYears').value) || 0), 1, 60);
+  const paid = st + mo * 12 * y;
+  const rows = CALC.map(([n, r, worst, d]) => { const rm = Math.pow(1 + r, 1 / 12) - 1, fv = st * Math.pow(1 + r, y) + mo * ((Math.pow(1 + rm, 12 * y) - 1) / rm); return { n, r, worst, d, fv }; });
+  const max = Math.max(...rows.map(x => x.fv), 1);
+  $('calcOut').innerHTML = '<div class="hint mono">Eingezahlt: ' + eur(paid) + ' (grauer Teil des Balkens)</div>' + rows.map(x =>
+    '<div class="cres"><div><b>' + x.n + '</b><span>' + nf(x.r * 100, 1) + ' % p.a. · ' + x.d + '</span></div><div class="mono v">' + eurS(x.fv) + '<span class="hint">schlechtes Jahr ' + x.worst + '</span></div>' +
+    '<div class="cbar"><div style="width:' + (x.fv / max * 100).toFixed(1) + '%"></div><div class="paid" style="width:' + (paid / max * 100).toFixed(1) + '%"></div></div></div>').join('');
+}
+
+function renderAcademy() {
+  if (!AV.cur) AV.cur = firstOpen() || [0, 0];
+  const done = doneAll(), cur = AV.cur, allDone = done >= ACAD_TOTAL;
+  let h = '<section class="panel ahero"><div class="lbl">Finanz-Akademie</div><h1>Geld anlegen lernen, mit möglichst wenig Risiko</h1>' +
+    '<p>' + ACAD_TOTAL + ' Lektionen in ' + ACAD.length + ' Kursen, vom ersten Notgroschen bis zum fertigen Depot. Jede Lektion dauert etwa zwei Minuten und endet mit einer Quizfrage. Für jede geschaffte Lektion gibt es ' + eur(ACAD_BONUS) + ' Spielgeld im Börsenspiel.</p>' +
+    '<div class="astats"><div><b>' + done + ' / ' + ACAD_TOTAL + '</b><span>Lektionen</span></div><div><b>' + AP.xp + '</b><span>Erfahrungspunkte</span></div><div><b>' + (AP.streak || 0) + (AP.streak === 1 ? ' Tag' : ' Tage') + '</b><span>Lern-Serie</span></div><div><b>' + (AP.first || 0) + '</b><span>im ersten Versuch richtig</span></div></div>' +
+    '<div class="meter gold"><div style="width:' + (done / ACAD_TOTAL * 100).toFixed(1) + '%"></div></div></section>';
+  h += '<section class="panel acur"><div class="hd"><span class="lbl">' + (allDone ? 'Alles geschafft' : 'Weiterlernen') + '</span><button class="link" data-lex="1">Lexikon</button></div><div class="bd">' +
+    (allDone && !AV.picks[akey(cur[0], cur[1])] ? '<h3 class="big">Du hast alle ' + ACAD_TOTAL + ' Lektionen geschafft 🎓</h3><p>Wende dein Wissen im Börsenspiel an und vergleiche dich mit der Welt-ETF-Strategie. Du kannst jede Lektion unten jederzeit wiederholen.</p><div class="lrow"><button class="primary" data-view="spiel">Zum Börsenspiel</button></div>' : lessonHTML(cur[0], cur[1], 'top')) + '</div></section>';
+  h += '<section class="panel"><div class="hd"><span class="lbl">Sparplan-Rechner: sicher gegen renditestark</span></div><div class="bd calc">' + calcHTML() + '</div></section>';
+  h += '<div class="ahead"><h2>Alle Kurse</h2><span class="hint">Empfohlen: der Reihe nach. Kurs 7 ist der Kern für risikoarmes Investieren.</span></div><div class="courses">';
+  ACAD.forEach((M, mi) => {
+    const d = doneIn(mi), n = M.lessons.length, open = AV.openM === mi;
+    h += '<section class="panel course' + (open ? ' open' : '') + (M.level === 'Kernkurs' ? ' core' : '') + '"><button class="chead" data-mod="' + mi + '" aria-expanded="' + open + '"><span class="cnum">' + String(mi + 1).padStart(2, '0') + '</span><span><b>' + esc(M.title) + ' <span class="tag ' + (M.level === 'Kernkurs' ? 'good' : M.level === 'Fortgeschritten' ? 'bad' : 'mid') + '">' + M.level + '</span></b><small>' + esc(M.desc) + '</small></span><span class="cprog">' + d + '/' + n + (d === n ? ' ✓' : '') + '</span></button>' +
+      '<div class="meter gold thin"><div style="width:' + (d / n * 100).toFixed(1) + '%"></div></div>';
+    if (open) {
+      h += '<div class="llist">';
+      M.lessons.forEach((L, li) => {
+        const k = akey(mi, li), isOpen = AV.openL === li;
+        h += '<button class="lrowb' + (AP.done[k] ? ' done' : '') + (isOpen ? ' on' : '') + '" data-les="' + mi + ',' + li + '"><span class="ck">' + (AP.done[k] ? '✓' : li + 1) + '</span><span>' + esc(L[0]) + '</span><span class="hint">' + (isOpen ? '▲' : '▼') + '</span></button>';
+        if (isOpen) h += '<div class="inl">' + lessonHTML(mi, li, 'list') + '</div>';
+      });
+      h += '</div>';
+    }
+    h += '</section>';
+  });
+  h += '</div><p class="foot">Allgemeine Finanzbildung, keine Anlageberatung. Steuer- und Rentenregeln mit Stand 2026, sie können sich ändern. Völlig risikofreie Geldanlagen gibt es nicht.</p>';
+  const el = $('academyView');
+  const keep = el.querySelector('#cStart') ? { s: $('cStart').value, m: $('cMonth').value, y: $('cYears').value } : null;
+  el.innerHTML = h;
+  if (keep) { $('cStart').value = keep.s; $('cMonth').value = keep.m; $('cYears').value = keep.y; }
+  calcUpdate();
+}
+function onAcademyClick(e) {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  const d = b.dataset;
+  if (d.a) { const [mi, li, j] = d.a.split(','); pickAnswer(+mi, +li, +j); }
+  else if (d.next) { const [mi, li, w] = d.next.split(','); goNext(+mi, +li, w); }
+  else if (d.mod != null) { const mi = +d.mod; AV.openL = null; AV.openM = AV.openM === mi ? null : mi; renderAcademy(); }
+  else if (d.les) { const [mi, li] = d.les.split(',').map(Number); AV.openM = mi; AV.openL = AV.openL === li ? null : li; renderAcademy(); }
+  else if (d.view) setView(d.view);
+  else if (d.lex) showLexicon();
+}
+
+// ---------- Ansichten ----------
+let VIEW = 'akademie';
+function setView(v) {
+  if (v !== 'spiel' && v !== 'akademie') return;
+  VIEW = v;
+  document.body.classList.toggle('v-akademie', v === 'akademie');
+  document.body.classList.toggle('v-spiel', v === 'spiel');
+  for (const b of $('views').children) b.classList.toggle('on', b.dataset.v === v);
+  try { localStorage.setItem('kapital-view', v); } catch (e) {}
+  if (location.hash !== '#' + v) { try { history.replaceState(null, '', '#' + v); } catch (e) {} }
+  if (v === 'akademie') { if (timer) { pause(); save(); } renderAcademy(); }
+  else { dirty = true; requestAnimationFrame(updateTabArrows); if (!S.introSeen) { S.introSeen = true; intro(); } }
+}
+
 // ---------- Nachrichten / Toast ----------
 function addNews(t, k = '') { newsVer++; S.news.unshift({ d: S.day, t, k }); if (S.news.length > 80) S.news.length = 80; dirty = true; }
 let toastT;
@@ -1130,7 +1337,13 @@ function assetRow(a) {
   const c = (a.price / a.prev - 1) * 100;
   return '<button class="arow' + (a.id === U.sel ? ' on' : '') + '" data-id="' + a.id + '"><div class="n"><b>' + esc(a.name) + '</b><span>' + extra(a) + (S.hold[a.id] ? ' · <span class="own">im Depot</span>' : '') + '</span></div>' + spark(a.hist) + '<div class="p">' + px(a.price) + '<span class="' + cls(c) + '">' + pct(c) + '</span></div></button>';
 }
-function renderTabs() { $('tabs').innerHTML = CLASSES.map(([k, n]) => '<button data-tab="' + k + '" class="' + (U.tab === k ? 'on' : '') + '">' + n + '</button>').join(''); }
+function renderTabs() {
+  const t = $('tabs'); t.innerHTML = CLASSES.map(([k, n]) => '<button data-tab="' + k + '" class="' + (U.tab === k ? 'on' : '') + '">' + n + '</button>').join('');
+  const on = t.querySelector('.on');
+  if (on) { if (on.offsetLeft - 36 < t.scrollLeft) t.scrollLeft = on.offsetLeft - 36; else if (on.offsetLeft + on.offsetWidth + 36 > t.scrollLeft + t.clientWidth) t.scrollLeft = on.offsetLeft + on.offsetWidth + 36 - t.clientWidth; }
+  updateTabArrows();
+}
+function updateTabArrows() { const t = $('tabs'); $('tabL').hidden = t.scrollLeft <= 2; $('tabR').hidden = t.scrollLeft + t.clientWidth >= t.scrollWidth - 2; }
 function renderList() {
   if (U.tab !== 'depot') {
     const items = S.assets.filter(a => a.cls === U.tab && a.listed);
@@ -1319,7 +1532,7 @@ function drawChart() {
 }
 
 function render() {
-  if (!dirty) return; dirty = false;
+  if (!dirty || VIEW !== 'spiel') return; dirty = false;
   const nw = netWorth();
   renderHeader(nw);
   if (tabKey !== U.tab) { tabKey = U.tab; renderTabs(); }
@@ -1364,19 +1577,26 @@ $('loanBox').onclick = e => {
   if (b.id === 'loanMax') { const cfg = loanCfg(); $('loanAmt').value = Math.floor(Math.max(0, cfg.ltv * collateral() - S.debt)); }
   else if (b.id === 'loanTake') borrow(v); else if (b.id === 'loanPay') repay(v);
 };
-window.addEventListener('resize', () => { dirty = true; if (modalOpen) placeModal(); });
+window.addEventListener('resize', () => { dirty = true; updateTabArrows(); if (modalOpen) placeModal(); });
+$('tabs').addEventListener('scroll', updateTabArrows, { passive: true });
+$('tabL').onclick = () => $('tabs').scrollBy({ left: -$('tabs').clientWidth * .7 });
+$('tabR').onclick = () => $('tabs').scrollBy({ left: $('tabs').clientWidth * .7 });
+$('views').onclick = e => { const b = e.target.closest('button'); if (b) setView(b.dataset.v); };
+$('academyView').onclick = onAcademyClick;
+$('academyView').oninput = e => { if (e.target.closest('.calcin')) calcUpdate(); };
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h === 'spiel' || h === 'akademie') setView(h); });
 document.addEventListener('click', e => { const t = e.target.closest('[data-term]'); if (t && !t.closest('.modal')) { e.preventDefault(); e.stopPropagation(); showTerm(t.dataset.term); } else if (t) { showTerm(t.dataset.term); } }, true);
 $('lexBtn').onclick = showLexicon; $('lexBtn2').onclick = showLexicon;
 $('lpBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'open') openLesson(); };
 $('coachBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'dismiss') { S.coachTip = null; dirty = true; } };
 $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) dismissModal(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') return dismissModal(); if (e.key === ' ' && !modalOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); timer ? pause() : play(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') return dismissModal(); if (e.key === ' ' && VIEW === 'spiel' && !modalOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); timer ? pause() : play(); } });
 
 function intro() {
   showModal({ kick: 'Kapital · Investieren lernen', title: 'Lerne investieren, ganz ohne echtes Geld', body:
     '<p>Du startest mit <b>10.000 € Spielgeld</b>. Die Zeit läuft, sobald du auf Start drückst: ein Börsentag pro Sekunde, schneller mit 4× bis 50×.</p>' +
-    '<p>Der <b>Lernpfad</b> führt dich in 13 Lektionen von der ersten Aktie bis zu Optionen und Krediten. Jede Lektion hat eine Quizfrage und eine Mission, für die es Spielgeld gibt. Dein <b>Coach</b> meldet sich, wenn etwas Lehrreiches passiert.</p>' +
+    '<p>Die <b>Praxis-Missionen</b> führen dich in 13 Schritten von der ersten Aktie bis zu Optionen und Krediten. Dein <b>Coach</b> meldet sich, wenn etwas Lehrreiches passiert. Das Wissen dazu findest du in der <b>Akademie</b> (oben umschalten), jede Lektion dort bringt zusätzlich Spielgeld.</p>' +
     '<p>Im <b>Depot-Check</b> siehst du, wie gut du streust und ob du besser bist als jemand, der nur den Welt-ETF kauft und liegen lässt. Ziel ganz oben: die Milliarde.</p>',
     btns: [['Erste Lektion starten', 'primary', () => { hideModal(); openLesson(); }], ['Erst mal umschauen', 'ghost', hideModal]] });
 }
@@ -1388,7 +1608,9 @@ function start(data) {
   if (data && data.U) Object.assign(U, data.U);
   if (!A[U.sel]) U.sel = 'NOVA';
   dirty = true; requestAnimationFrame(loop);
-  if (fresh) intro();
+  let v = location.hash.slice(1);
+  if (v !== 'spiel' && v !== 'akademie') { try { v = localStorage.getItem('kapital-view'); } catch (e) {} }
+  setView(v === 'spiel' ? 'spiel' : 'akademie');
 }
 window.claude?.hot?.snapshot?.(() => ({ S, U }));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
