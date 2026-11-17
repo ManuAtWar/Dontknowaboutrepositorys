@@ -19,7 +19,9 @@ Dein Licht ist dein Leben: Jeder Treffer und jede Sekunde in der Dunkelheit kost
 ## Inhalt
 
 - Automatisches Zielen, du konzentrierst dich aufs Ausweichen
-- 12 Upgrades mit Stufen (Funkenregen, Glutnova, Kreisende Glut, Splitterglut …)
-- 4 Gegnertypen plus Boss „Der Verschlinger“ alle 2:30 Minuten
+- 14 Upgrades mit Stufen (Funkenregen, Glutnova, Kettenblitz, Scharfes Auge, Splitterglut …)
+- 5 Gegnertypen mit Klauen, Zahnreihen und blinzelnden Augen, darunter der Flüsterer, der durch die Dunkelheit springt
+- Boss „Der Verschlinger“ alle 2:30 Minuten: elf Augen, Tentakel, frisst dein Licht
+- Dröhnender Ambient-Sound, Herzschlag bei wenig Licht, Kritische Treffer, Ketten-Ansagen
 - Mottenschwärme, Kettenbonus, Rekord wird lokal gespeichert
 - Prozedurale Soundeffekte über die Web Audio API
