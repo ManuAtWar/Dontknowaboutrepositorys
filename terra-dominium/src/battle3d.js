@@ -274,9 +274,13 @@
 
     // ---------- kits (materials + geometry per side) ----------
     const kits = [null, null];
+    const HQ = () => !lowFx;
+    function stdMat(map, rough, metal, extra) {
+      return HQ() ? new T3.MeshStandardMaterial(Object.assign({ map, roughness: rough, metalness: metal }, extra || {})) : new T3.MeshLambertMaterial(Object.assign({ map }, extra || {}));
+    }
     function makeKit(look) {
-      const mat = new T3.MeshLambertMaterial({ map: atlas(look, 'inf') });
-      const vmat = new T3.MeshLambertMaterial({ map: atlas(look, 'veh') });
+      const mat = stdMat(atlas(look, 'inf'), 0.92, 0);
+      const vmat = stdMat(atlas(look, 'veh'), 0.6, 0.2);
       return { look, mat, vmat, sol: soldierGeo(), tank: tankGeo(look.tank, false), art: tankGeo(look.tank === 'west' ? 'west' : 'east', true), heli: heliGeo(look.heli), jet: jetGeo(look.jet), boat: boatGeo(), bunker: bunkerGeo(), aa: aaGeo() };
     }
     const kitGeos = k => [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat, k.bunker, k.aa.base, k.aa.tur, k.aa.radar];
@@ -287,7 +291,9 @@
     }
 
     // ---------- scene ----------
-    let glowT, smokeT, burnt, tracerGeo, tracerMat = [], shellGeo, shellMat;
+    let glowT, smokeT, burnt, tracerGeo, tracerMat = [], shellGeo, shellMat, ringGeo, debrisGeo, debrisMat;
+    let hemi = null, composer = null, bloom = null, sky = null, envRT = null, pmrem = null, sunOff = null;
+    const windU = { value: 0 };
     function height(x, z) {
       const inField = Math.abs(z) < 34 && Math.abs(x) < 64;
       const base = Math.sin(x * 0.11) * Math.cos(z * 0.13) * terA + Math.sin(x * 0.037 + z * 0.05) * terA * 0.8;
@@ -295,6 +301,72 @@
       const out = Math.max(0, Math.abs(z) - 34) + Math.max(0, Math.abs(x) - 64);
       return base + out * (terA > 0.9 ? 0.55 : 0.12) * (0.6 + 0.4 * Math.sin(x * 0.07 + z * 0.09));
     }
+    // wind sway for instanced vegetation (vertex shader patch)
+    function windify(mat, amp) {
+      mat.onBeforeCompile = sh => {
+        sh.uniforms.uTime = windU;
+        sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+          #ifdef USE_INSTANCING
+            float wph = instanceMatrix[3].x * 0.31 + instanceMatrix[3].z * 0.23;
+            float wy = max(position.y, 0.0);
+            transformed.x += sin(uTime * 1.7 + wph) * ${amp.toFixed(3)} * wy;
+            transformed.z += cos(uTime * 1.3 + wph) * ${(amp * 0.6).toFixed(3)} * wy;
+          #endif`);
+      };
+      return mat;
+    }
+    function mergeSimple(list) {
+      const pos = [], nor = [];
+      list.forEach(g => { const n = g.index ? g.toNonIndexed() : g; const P2 = n.attributes.position, N2 = n.attributes.normal;
+        for (let i = 0; i < P2.count; i++) { pos.push(P2.getX(i), P2.getY(i), P2.getZ(i)); nor.push(N2.getX(i), N2.getY(i), N2.getZ(i)); } g.dispose(); if (n !== g) n.dispose(); });
+      const geo = new T3.BufferGeometry();
+      geo.setAttribute('position', new T3.Float32BufferAttribute(pos, 3)); geo.setAttribute('normal', new T3.Float32BufferAttribute(nor, 3));
+      geo.computeBoundingSphere(); return geo;
+    }
+    function grassGeo() {
+      const pos = [], col = [];
+      for (let k = 0; k < 3; k++) {
+        const a = k * Math.PI / 3 + 0.3, cx = Math.cos(a), sz = Math.sin(a);
+        for (let b = 0; b < 2; b++) {
+          const ox = (b - 0.5) * 0.25, h = 0.7 + b * 0.35;
+          pos.push(-0.12 * cx + ox, 0, -0.12 * sz, 0.12 * cx + ox, 0, 0.12 * sz, ox + 0.08, h, 0.05);
+          col.push(0.45, 0.5, 0.35, 0.45, 0.5, 0.35, 1, 1, 0.85);
+        }
+      }
+      const g = new T3.BufferGeometry();
+      g.setAttribute('position', new T3.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new T3.Float32BufferAttribute(col, 3));
+      g.computeVertexNormals(); return g;
+    }
+    function groundTex() {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 512; const g = cv.getContext('2d'), rnd = seeded(31);
+      g.fillStyle = '#d9d9d9'; g.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 9000; i++) { const v = 170 + Math.floor(rnd() * 85); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(rnd() * 512, rnd() * 512, 2, 2); }
+      for (let i = 0; i < 70; i++) { g.globalAlpha = 0.18; g.fillStyle = rnd() < 0.5 ? '#9a9a9a' : '#f2f2f2'; g.beginPath(); g.ellipse(rnd() * 512, rnd() * 512, 10 + rnd() * 40, 6 + rnd() * 24, rnd() * 3, 0, 7); g.fill(); }
+      g.globalAlpha = 0.35; g.strokeStyle = '#8c8c8c'; g.lineWidth = 1;
+      for (let i = 0; i < 2600; i++) { const x = rnd() * 512, y = rnd() * 512; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rnd() - 0.5) * 3, y - 3 - rnd() * 5); g.stroke(); }
+      g.globalAlpha = 1;
+      const t = new T3.CanvasTexture(cv); t.wrapS = t.wrapT = T3.RepeatWrapping; t.repeat.set(30, 19);
+      t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
+    }
+    function skyDome(top, hor, bot, sunDir, sunCol) {
+      const m = new T3.ShaderMaterial({
+        side: T3.BackSide, depthWrite: false, fog: false,
+        uniforms: { top: { value: new T3.Color(top) }, hor: { value: new T3.Color(hor) }, bot: { value: new T3.Color(bot) }, sd: { value: sunDir.clone().normalize() }, sc: { value: new T3.Color(sunCol) } },
+        vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: 'uniform vec3 top, hor, bot, sd, sc; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(hor, top, pow(clamp(h, 0.0, 1.0), 0.5)) : mix(hor, bot, clamp(-h * 5.0, 0.0, 1.0)); float s = max(dot(vP, sd), 0.0); c += sc * (pow(s, 900.0) * 3.0 + pow(s, 18.0) * 0.3 + pow(s, 4.0) * 0.08); gl_FragColor = vec4(c, 1.0); }',
+      });
+      const o = new T3.Mesh(new T3.SphereGeometry(450, 32, 16), m); o.renderOrder = -1; o.frustumCulled = false; return o;
+    }
+    const TOD = {
+      morning: { sun: [-80, 38, -60], sunC: 0xffd8ae, sunI: 1.2, hs: 0xbfd6f2, hg: 0x564a3a, hi: 0.55, top: 0x4c84c8, hor: 0xf1d8be },
+      noon:    { sun: [-35, 95, 35], sunC: 0xfff6e6, sunI: 1.3, hs: 0xcfe3ff, hg: 0x4f4636, hi: 0.6, top: 0x3a7ccf, hor: 0xc6dded },
+      dusk:    { sun: [150, 24, -80], sunC: 0xffa564, sunI: 1.15, hs: 0x92a2d2, hg: 0x4a3a32, hi: 0.48, top: 0x2a3d72, hor: 0xffaa78 },
+    };
+    const GradeShader = {
+      uniforms: { tDiffuse: { value: null }, exposure: { value: 1.0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform sampler2D tDiffuse; uniform float exposure; varying vec2 vUv; vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); } void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb * exposure; c = mix(c, aces(c * 1.5), 0.55); float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, 1.12); gl_FragColor = vec4(c, 1.0); }',
+    };
     function init() {
       if (renderer || !ok) return;
       try { renderer = new T3.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); }
@@ -305,23 +377,36 @@
       renderer.shadowMap.type = T3.PCFSoftShadowMap;
       host.appendChild(renderer.domElement);
       scene = new T3.Scene();
-      camera = new T3.PerspectiveCamera(48, 1, 0.5, 600);
-      scene.add(new T3.HemisphereLight(0xcfe3ff, 0x4a4030, 0.75));
-      sun = new T3.DirectionalLight(0xfff1d6, 0.95);
-      sun.position.set(-40, 70, 30);
+      camera = new T3.PerspectiveCamera(46, 1, 0.5, 900);
+      hemi = new T3.HemisphereLight(0xcfe3ff, 0x4a4030, 0.6); scene.add(hemi);
+      sun = new T3.DirectionalLight(0xfff1d6, 1.2);
       sun.castShadow = !lowFx;
-      Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 50, bottom: -50, near: 10, far: 200 });
-      sun.shadow.mapSize.set(1024, 1024);
-      scene.add(sun);
-      flash = new T3.PointLight(0xffa040, 0, 40); scene.add(flash);
+      Object.assign(sun.shadow.camera, { left: -85, right: 85, top: 55, bottom: -55, near: 10, far: 320 });
+      sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
+      scene.add(sun, sun.target);
+      flash = new T3.PointLight(0xffa040, 0, 45); scene.add(flash);
       glowT = softTex('rgba(255,255,255,1)', 'rgba(255,255,255,0)');
       smokeT = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'); const rnd = seeded(99);
         for (let i = 0; i < 18; i++) { const x = 18 + rnd() * 28, y = 18 + rnd() * 28, r = 8 + rnd() * 14; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
         return new T3.CanvasTexture(cv); })();
-      burnt = new T3.MeshLambertMaterial({ color: 0x1c1a17 });
+      burnt = HQ() ? new T3.MeshStandardMaterial({ color: 0x1c1a17, roughness: 1 }) : new T3.MeshLambertMaterial({ color: 0x1c1a17 });
       tracerGeo = new T3.CylinderGeometry(0.06, 0.06, 1, 4); tracerGeo.rotateX(H); tracerGeo.translate(0, 0, 0.5);
       tracerMat = [new T3.MeshBasicMaterial({ color: 0xffe08a, transparent: true, blending: T3.AdditiveBlending, depthWrite: false }), new T3.MeshBasicMaterial({ color: 0xff8a70, transparent: true, blending: T3.AdditiveBlending, depthWrite: false })];
       shellGeo = new T3.SphereGeometry(0.28, 6, 4); shellMat = new T3.MeshBasicMaterial({ color: 0xffd27a });
+      ringGeo = new T3.RingGeometry(0.75, 1, 32).rotateX(-H);
+      debrisGeo = new T3.BoxGeometry(0.45, 0.3, 0.6); debrisMat = new T3.MeshLambertMaterial({ color: 0x2a2724 });
+      if (HQ()) {
+        pmrem = new T3.PMREMGenerator(renderer);
+        if (T3.EffectComposer && T3.UnrealBloomPass) {
+          const size = renderer.getDrawingBufferSize(new T3.Vector2());
+          const rt = renderer.capabilities.isWebGL2 && T3.WebGLMultisampleRenderTarget ? new T3.WebGLMultisampleRenderTarget(size.x, size.y, { format: T3.RGBAFormat }) : undefined;
+          composer = new T3.EffectComposer(renderer, rt);
+          composer.addPass(new T3.RenderPass(scene, camera));
+          bloom = new T3.UnrealBloomPass(new T3.Vector2(size.x, size.y), 0.55, 0.5, 0.82);
+          composer.addPass(bloom);
+          composer.addPass(new T3.ShaderPass(GradeShader));
+        }
+      }
       // pointer controls
       const el = renderer.domElement;
       const pts = new Map(); let dragDist = 0, pinch0 = 0;
@@ -329,84 +414,127 @@
       el.addEventListener('pointermove', e => {
         const p = pts.get(e.pointerId); if (!p) return;
         const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
-        if (pts.size === 1) { dragDist += Math.abs(dx) + Math.abs(dy); cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.18, 1.35); }
-        else if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0) cam.dist = clamp(cam.dist * pinch0 / d, 25, 160); pinch0 = d; dragDist += 20; }
+        if (pts.size === 1) { dragDist += Math.abs(dx) + Math.abs(dy); cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.14, 1.35); }
+        else if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0) cam.dist = clamp(cam.dist * pinch0 / d, 18, 160); pinch0 = d; dragDist += 20; }
       });
       const up = e => {
         const was = pts.size; pts.delete(e.pointerId); if (pts.size < 2) pinch0 = 0;
         if (was === 1 && dragDist < 8 && e.type === 'pointerup' && onTap) onTap(e.clientX, e.clientY);
       };
       el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-      el.addEventListener('wheel', e => { e.preventDefault(); cam.dist = clamp(cam.dist * (1 + Math.sign(e.deltaY) * 0.1), 25, 160); }, { passive: false });
+      el.addEventListener('wheel', e => { e.preventDefault(); cam.dist = clamp(cam.dist * (1 + Math.sign(e.deltaY) * 0.1), 18, 160); }, { passive: false });
     }
     let onTap = null;
 
     function setup(opts) {
       init(); if (!ok) return false;
       clear();
+      const rnd = seeded(opts.seed || 7);
       terA = opts.ter >= 1.3 ? 1.1 : opts.ter >= 1.15 ? 0.6 : 0.3;
-      const pal = opts.ter >= 1.3 ? [0x5d5a4c, 0x4b4a3f, 0x76705d] : opts.arid ? [0xb49c6c, 0x9c8458, 0xc9b383] : opts.ter >= 1.15 ? [0x3f5a2c, 0x2f4422, 0x56703a] : [0x5f7238, 0x4c5e2c, 0x7a8a48];
-      const sky = opts.arid ? 0xcdb999 : opts.ter >= 1.3 ? 0x9fb0bf : 0xa9c1d2;
-      scene.background = new T3.Color(sky);
-      scene.fog = new T3.Fog(sky, 90, 260);
+      // time of day & atmosphere
+      const todKey = opts.tod || ['morning', 'noon', 'dusk'][Math.floor(Math.random() * 3)];
+      const tod = TOD[todKey];
+      const hor = new T3.Color(tod.hor); if (opts.arid) hor.lerp(new T3.Color(0xe6cfa2), 0.45);
+      sunOff = new T3.Vector3(...tod.sun);
+      sun.color.setHex(tod.sunC); sun.intensity = tod.sunI;
+      hemi.color.setHex(tod.hs); hemi.groundColor.setHex(tod.hg); hemi.intensity = tod.hi;
+      scene.background = hor.clone();
+      scene.fog = new T3.Fog(hor.clone(), 85, 340);
       world = new T3.Group(); scene.add(world);
-      // ground with vertex colours
-      const gg = new T3.PlaneGeometry(320, 200, 96, 60); gg.rotateX(-H);
-      const pos = gg.attributes.position, col = []; const rnd = seeded(opts.seed || 7);
+      sky = skyDome(tod.top, hor, hor.clone().multiplyScalar(0.8), sunOff, tod.sunC);
+      scene.add(sky);
+      if (pmrem) { if (envRT) envRT.dispose(); const es = new T3.Scene(); es.add(skyDome(tod.top, hor, new T3.Color(0x3a3a30), sunOff, tod.sunC)); envRT = pmrem.fromScene(es, 0.02); scene.environment = envRT.texture; }
+      const pal = opts.ter >= 1.3 ? [0x6d6a58, 0x575548, 0x86806a] : opts.arid ? [0xc2a874, 0xa88f60, 0xd6bf8c] : opts.ter >= 1.15 ? [0x4b6a32, 0x384f27, 0x668244] : [0x6f8440, 0x596d32, 0x8a9a52];
+      // ground: vertex colours (hue) × tiled detail texture
+      const gg = new T3.PlaneGeometry(340, 220, 110, 70); gg.rotateX(-H);
+      const pos = gg.attributes.position, col = [];
       const cs = pal.map(h => new T3.Color(h));
       for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i), z = pos.getZ(i), y = height(x, z); pos.setY(i, y);
         const k = rnd(), c = cs[0].clone().lerp(k < 0.5 ? cs[1] : cs[2], Math.abs(Math.sin(x * 0.21 + z * 0.17)) * 0.6 + k * 0.25);
-        if (y > 6) c.lerp(new T3.Color(0xe8ecef), clamp((y - 9) / 8, 0, 1));
+        if (Math.abs(z) < 3 + Math.sin(x * 0.2) * 1.5 && Math.abs(x) < 70) c.lerp(new T3.Color(opts.arid ? 0xb39a70 : 0x7d6c50), 0.55); // dirt track
+        if (y > 6) c.lerp(new T3.Color(0xeef1f3), clamp((y - 9) / 8, 0, 1));
         col.push(c.r, c.g, c.b);
       }
       gg.setAttribute('color', new T3.Float32BufferAttribute(col, 3)); gg.computeVertexNormals();
-      ground = new T3.Mesh(gg, new T3.MeshLambertMaterial({ vertexColors: true }));
+      const gtex = groundTex();
+      ground = new T3.Mesh(gg, HQ() ? new T3.MeshStandardMaterial({ map: gtex, vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.4 }) : new T3.MeshLambertMaterial({ map: gtex, vertexColors: true }));
       ground.receiveShadow = true; world.add(ground);
-      // sea for amphibious landings
+      // sea for amphibious landings (animated waves)
       if (opts.sea) {
-        water = new T3.Mesh(new T3.PlaneGeometry(140, 200, 1, 1).rotateX(-H), new T3.MeshPhongMaterial({ color: 0x1f5674, transparent: true, opacity: 0.88, shininess: 90 }));
-        water.position.set(-121, 0.15, 0); world.add(water);
-        const beach = new T3.Mesh(new T3.PlaneGeometry(8, 200).rotateX(-H), new T3.MeshLambertMaterial({ color: 0xc9b98a }));
-        beach.position.set(-48, 0.2, 0); world.add(beach);
+        const wg = new T3.PlaneGeometry(150, 220, 36, 50).rotateX(-H);
+        water = new T3.Mesh(wg, HQ() ? new T3.MeshStandardMaterial({ color: 0x1d5876, roughness: 0.12, metalness: 0.35, transparent: true, opacity: 0.93 }) : new T3.MeshPhongMaterial({ color: 0x1f5674, transparent: true, opacity: 0.9, shininess: 90 }));
+        water.position.set(-125, 0.15, 0); world.add(water);
+        const beach = new T3.Mesh(new T3.PlaneGeometry(9, 220).rotateX(-H), new T3.MeshLambertMaterial({ color: 0xd2c194 }));
+        beach.position.set(-48, 0.22, 0); beach.receiveShadow = true; world.add(beach);
       }
-      // vegetation / rocks (instanced)
-      const nTree = opts.ter >= 1.3 ? 70 : opts.arid ? 12 : opts.ter >= 1.15 ? 260 : 120;
-      const trunk = new T3.InstancedMesh(new T3.CylinderGeometry(0.18, 0.25, 1.6, 5), new T3.MeshLambertMaterial({ color: 0x4a3826 }), nTree);
-      const crown = new T3.InstancedMesh(opts.arid ? new T3.SphereGeometry(1.1, 6, 4) : new T3.ConeGeometry(1.5, 4.2, 6), new T3.MeshLambertMaterial({ color: opts.arid ? 0x6d7a45 : opts.ter >= 1.3 ? 0x2f4a33 : 0x2d4a24 }), nTree);
-      crown.castShadow = !lowFx;
-      const m = new T3.Matrix4();
-      for (let i = 0; i < nTree; i++) {
-        let x, z; do { x = (rnd() - 0.5) * 300; z = (rnd() - 0.5) * 190; } while (Math.abs(z) < 26 && Math.abs(x) < 60 && rnd() < 0.85);
-        if (opts.sea && x < -48) { x = -40 + rnd() * 100; }
-        const s = 0.8 + rnd() * 0.7, y = height(x, z);
-        m.makeScale(s, s, s).setPosition(x, y + 0.8 * s, z); trunk.setMatrixAt(i, m);
-        m.makeScale(s, s, s).setPosition(x, y + (opts.arid ? 2.4 : 3.3) * s, z); crown.setMatrixAt(i, m);
+      const m = new T3.Matrix4(), q4 = new T3.Quaternion(), s3 = new T3.Vector3(), p3 = new T3.Vector3(), yAx = new T3.Vector3(0, 1, 0), tc = new T3.Color();
+      const placeOK = (x, z) => !(opts.sea && x < -46);
+      // grass tufts (wind-animated)
+      const nGrass = lowFx ? 0 : opts.arid ? 900 : opts.ter >= 1.3 ? 1400 : 3200;
+      if (nGrass) {
+        const gm = windify(new T3.MeshLambertMaterial({ vertexColors: true, side: T3.DoubleSide }), 0.14);
+        const grass = new T3.InstancedMesh(grassGeo(), gm, nGrass);
+        const gcol = new T3.Color(pal[2]).lerp(new T3.Color(0xffffff), 0.1);
+        for (let i = 0; i < nGrass; i++) {
+          let x = (rnd() - 0.5) * 220, z = (rnd() - 0.5) * 120; if (!placeOK(x, z)) x = -40 + rnd() * 120;
+          const sc = 0.8 + rnd() * 1.1;
+          q4.setFromAxisAngle(yAx, rnd() * 6.28); s3.set(sc, sc * (0.8 + rnd() * 0.6), sc); p3.set(x, height(x, z), z);
+          grass.setMatrixAt(i, m.compose(p3, q4, s3));
+          grass.setColorAt(i, tc.copy(gcol).multiplyScalar(0.75 + rnd() * 0.4));
+        }
+        world.add(grass);
       }
-      world.add(trunk, crown);
-      const nRock = opts.ter >= 1.3 ? 90 : 30;
-      const rocks = new T3.InstancedMesh(new T3.DodecahedronGeometry(1, 0), new T3.MeshLambertMaterial({ color: 0x77736a }), nRock);
-      for (let i = 0; i < nRock; i++) { const x = (rnd() - 0.5) * 260, z = (rnd() - 0.5) * 170, s = 0.4 + rnd() * (opts.ter >= 1.3 ? 2.2 : 0.9); m.makeScale(s, s * 0.7, s).setPosition(x, height(x, z), z); rocks.setMatrixAt(i, m); }
+      // trees: layered pines and leafy trees, instanced, swaying
+      const nPine = opts.arid ? 0 : opts.ter >= 1.3 ? 110 : opts.ter >= 1.15 ? 230 : 110;
+      const nLeaf = opts.arid ? 18 : opts.ter >= 1.3 ? 10 : opts.ter >= 1.15 ? 70 : 90;
+      const trunkGeo = new T3.CylinderGeometry(0.2, 0.32, 2.2, 6); trunkGeo.translate(0, 1.1, 0);
+      const pineGeo = mergeSimple([P(new T3.ConeGeometry(2.1, 2.8, 8), 'camo', 0, 2.6).g, P(new T3.ConeGeometry(1.7, 2.5, 8), 'camo', 0, 3.9).g, P(new T3.ConeGeometry(1.15, 2.1, 8), 'camo', 0, 5.1).g]);
+      const leafGeo = mergeSimple([P(new T3.IcosahedronGeometry(1.7, 0), 'camo', 0, 3.4).g, P(new T3.IcosahedronGeometry(1.25, 0), 'camo', 1.0, 3.0, 0.4).g, P(new T3.IcosahedronGeometry(1.2, 0), 'camo', -0.9, 3.2, -0.5).g]);
+      const vegMat = () => windify(HQ() ? new T3.MeshStandardMaterial({ roughness: 0.95, flatShading: true }) : new T3.MeshLambertMaterial({ flatShading: true }), 0.035);
+      const nTrees = nPine + nLeaf;
+      const trunks = new T3.InstancedMesh(trunkGeo, new T3.MeshLambertMaterial({ color: 0x4a3826 }), Math.max(1, nTrees));
+      const pines = new T3.InstancedMesh(pineGeo, vegMat(), Math.max(1, nPine));
+      const leafs = new T3.InstancedMesh(leafGeo, vegMat(), Math.max(1, nLeaf));
+      pines.castShadow = leafs.castShadow = trunks.castShadow = !lowFx;
+      const pineC = new T3.Color(opts.ter >= 1.3 ? 0x2c4a34 : 0x2a4a26), leafC = new T3.Color(opts.arid ? 0x7d8a4c : 0x4f7a32);
+      let ti = 0;
+      const placeTree = (inst, i, colr) => {
+        let x, z; do { x = (rnd() - 0.5) * 320; z = (rnd() - 0.5) * 200; } while (Math.abs(z) < 26 && Math.abs(x) < 60 && rnd() < 0.85);
+        if (!placeOK(x, z)) x = -40 + rnd() * 130;
+        const sc = 0.75 + rnd() * 0.75, y = height(x, z);
+        q4.setFromAxisAngle(yAx, rnd() * 6.28); s3.set(sc, sc * (0.9 + rnd() * 0.3), sc); p3.set(x, y - 0.1, z);
+        m.compose(p3, q4, s3); inst.setMatrixAt(i, m); trunks.setMatrixAt(ti++, m);
+        inst.setColorAt(i, tc.copy(colr).multiplyScalar(0.8 + rnd() * 0.4));
+      };
+      for (let i = 0; i < nPine; i++) placeTree(pines, i, pineC);
+      for (let i = 0; i < nLeaf; i++) placeTree(leafs, i, leafC);
+      pines.count = nPine; leafs.count = nLeaf; trunks.count = ti;
+      world.add(trunks, pines, leafs);
+      const nRock = opts.ter >= 1.3 ? 110 : 34;
+      const rocks = new T3.InstancedMesh(new T3.DodecahedronGeometry(1, 0), HQ() ? new T3.MeshStandardMaterial({ color: 0x7b776c, roughness: 0.9, flatShading: true }) : new T3.MeshLambertMaterial({ color: 0x77736a }), nRock);
+      rocks.castShadow = !lowFx; rocks.receiveShadow = true;
+      for (let i = 0; i < nRock; i++) { const x = (rnd() - 0.5) * 280, z = (rnd() - 0.5) * 180, sc = 0.4 + rnd() * (opts.ter >= 1.3 ? 2.4 : 0.9); q4.setFromAxisAngle(yAx, rnd() * 6.28); s3.set(sc, sc * 0.7, sc * (0.8 + rnd() * 0.4)); p3.set(x, height(x, z), z); rocks.setMatrixAt(i, m.compose(p3, q4, s3)); }
       world.add(rocks);
-      // defensive line: sandbags and wire
-      const bagMat = new T3.MeshLambertMaterial({ color: 0x9a8a62 });
+      // defensive line: sandbags
+      const bagMat = HQ() ? new T3.MeshStandardMaterial({ color: 0xa08f66, roughness: 1 }) : new T3.MeshLambertMaterial({ color: 0x9a8a62 });
       const bagGeo = new T3.BoxGeometry(5, 1.1, 1.3);
       for (let z = -26; z <= 26; z += 7.5) {
         const x = wx(HOLD_X) + 2 + (rnd() - 0.5) * 2, bag = new T3.Mesh(bagGeo, bagMat);
-        bag.position.set(x, height(x, z) + 0.5, z + (rnd() - 0.5) * 2); bag.rotation.y = H + (rnd() - 0.5) * 0.4; bag.castShadow = !lowFx; world.add(bag);
+        bag.position.set(x, height(x, z) + 0.5, z + (rnd() - 0.5) * 2); bag.rotation.y = H + (rnd() - 0.5) * 0.4; bag.castShadow = !lowFx; bag.receiveShadow = true; world.add(bag);
       }
       // border fortifications: rows of concrete dragon's teeth, T-walls from level 2
       const fw = (opts.fort && opts.fort.w) || 0;
       if (fw) {
-        const conc = new T3.MeshLambertMaterial({ color: 0xb9b5aa });
+        const conc = HQ() ? new T3.MeshStandardMaterial({ color: 0xb9b5aa, roughness: 0.95 }) : new T3.MeshLambertMaterial({ color: 0xb9b5aa });
         const toothGeo = new T3.ConeGeometry(0.9, 1.6, 4);
-        const nT = Math.ceil(58 / 2.2) * fw, teeth = new T3.InstancedMesh(toothGeo, conc, nT); let ti = 0;
-        teeth.castShadow = !lowFx;
-        for (let row = 0; row < fw; row++) for (let z = -29; z <= 29 && ti < nT; z += 2.2) {
+        const nT = Math.ceil(58 / 2.2) * fw, teeth = new T3.InstancedMesh(toothGeo, conc, nT); let k2 = 0;
+        teeth.castShadow = !lowFx; teeth.receiveShadow = true;
+        for (let row = 0; row < fw; row++) for (let z = -29; z <= 29 && k2 < nT; z += 2.2) {
           const x = wx(HOLD_X) - 5 - row * 2.6 + (row % 2) * 0.6;
-          m.makeRotationY(Math.PI / 4).setPosition(x, height(x, z) + 0.7, z + (row % 2) * 1.1); teeth.setMatrixAt(ti++, m);
+          m.makeRotationY(Math.PI / 4).setPosition(x, height(x, z) + 0.7, z + (row % 2) * 1.1); teeth.setMatrixAt(k2++, m);
         }
-        teeth.count = ti; world.add(teeth);
+        teeth.count = k2; world.add(teeth);
         if (fw >= 2) {
           const wallGeo = new T3.BoxGeometry(0.7, 3.2, 3.6);
           for (let z = -27; z <= 27; z += 4.2) {
@@ -418,7 +546,7 @@
       }
       // kits per side
       kits[0] = makeKit(opts.lookA); kits[1] = makeKit(opts.lookD);
-      cam.yaw = -0.62; cam.pitch = 0.5; cam.tx = -20; cam.tz = 0; cam.dist = 66; cam.auto = true;
+      cam.yaw = -0.62; cam.pitch = 0.46; cam.tx = -20; cam.tz = 0; cam.dist = 62; cam.auto = true; cam.shake = 0;
       resize();
       return true;
     }
@@ -434,6 +562,7 @@
         scene.remove(world); world = null;
       }
       disposeKit(kits[0]); disposeKit(kits[1]); kits[0] = kits[1] = null;
+      if (sky) { scene.remove(sky); sky.geometry.dispose(); sky.material.dispose(); sky = null; }
       water = null; ground = null;
     }
     const isKitGeo = g => kits.some(k => k && kitGeos(k).includes(g));
@@ -533,6 +662,15 @@
         const vx = (Math.random() - 0.5) * 16, vy = 6 + Math.random() * 8, vz = (Math.random() - 0.5) * 16; let VY = vy;
         addPart(d, 0.9, (p, t, dt) => { VY -= 22 * dt; p.o.position.x += vx * dt; p.o.position.y = Math.max(0.2, p.o.position.y + VY * dt); p.o.position.z += vz * dt; p.o.scale.setScalar(0.6); p.o.material.opacity = 1 - t / p.life; });
       }
+      const ring = new T3.Mesh(ringGeo, new T3.MeshBasicMaterial({ color: 0xffdcae, transparent: true, blending: T3.AdditiveBlending, depthWrite: false, side: T3.DoubleSide }));
+      ring.position.set(x, height(x, z) + 0.3, z);
+      addPart(ring, 0.55, (p, t) => { const k = t / p.life; p.o.scale.setScalar(1 + 13 * s * easeOut(k)); p.o.material.opacity = 0.7 * (1 - k); });
+      if (!lowFx) for (let i = 0; i < Math.round(4 * s); i++) {
+        const d = new T3.Mesh(debrisGeo, debrisMat); d.position.set(x, y + 0.8, z); d.castShadow = true;
+        const vx = (Math.random() - 0.5) * 14, vz = (Math.random() - 0.5) * 14, sp = (Math.random() - 0.5) * 12; let VY = 7 + Math.random() * 9;
+        addPart(d, 2.2, (p, t, dt) => { const gy = height(p.o.position.x, p.o.position.z) + 0.15; if (p.o.position.y > gy) { VY -= 24 * dt; p.o.position.x += vx * dt; p.o.position.z += vz * dt; p.o.position.y = Math.max(gy, p.o.position.y + VY * dt); p.o.rotation.x += sp * dt; p.o.rotation.z += sp * 0.7 * dt; } });
+      }
+      cam.shake = Math.min(1.6, (cam.shake || 0) + 0.45 * s);
       const sc = new T3.Mesh(new T3.CircleGeometry(1.6 * s, 10).rotateX(-H), new T3.MeshBasicMaterial({ color: 0x15130f, transparent: true, opacity: 0.55, depthWrite: false }));
       sc.position.set(x, height(x, z) + 0.06, z);
       addPart(sc, 18, (p, t) => { p.o.material.opacity = 0.55 * (1 - t / p.life); });
@@ -582,6 +720,13 @@
           if (u.aimX != null) tw = Math.atan2(u.aimX - u.x, u.aimY - u.y) - v.hd;
           v.tur.rotation.y = angLerp(v.tur.rotation.y, tw, Math.min(1, dt * 3));
           v.g.position.y += Math.sin(time3 * 14 + u.ph) * 0.03 * v.moving;
+          v.dustT = (v.dustT || 0) - dt;
+          if (v.moving > 0.5 && v.dustT <= 0) {
+            v.dustT = lowFx ? 0.35 : 0.13;
+            const pd = new T3.Vector3((Math.random() - 0.5) * 2.4, 0.5, -3.6); v.g.localToWorld(pd);
+            const du = sprite(smokeT, 0xbba98a, false); du.position.copy(pd);
+            addPart(du, 1.8, (p, t, dt2) => { const k = t / p.life; p.o.position.y += dt2 * 0.8; p.o.scale.setScalar(1.6 + 5 * k); p.o.material.opacity = 0.5 * (1 - k); });
+          }
           if (firing) { muzzleT(v); v.tur.position.z = -0.25; } else v.tur.position.z = lerp(v.tur.position.z, 0, dt * 6);
         } else if (u.ty === 'bunker') {
           if (firing) muzzle(v.g, (Math.random() - 0.5) * 2.4, 1.55, 2.4, 1.1);
@@ -664,11 +809,16 @@
       // particles
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i]; p.t += dt;
-        if (p.t >= p.life) { world.remove(p.o); if (p.o.material && p.o.material.map !== undefined && p.o.isSprite) p.o.material.dispose(); else if (p.o.geometry && p.o.geometry.type === 'CircleGeometry') { p.o.geometry.dispose(); p.o.material.dispose(); } parts.splice(i, 1); continue; }
+        if (p.t >= p.life) { world.remove(p.o); if (p.o.isSprite) p.o.material.dispose(); else if (p.o.geometry && p.o.geometry.type === 'CircleGeometry') { p.o.geometry.dispose(); p.o.material.dispose(); } else if (p.o.geometry === ringGeo) p.o.material.dispose(); parts.splice(i, 1); continue; }
         p.upd(p, p.t, dt);
       }
       if (flash) flash.intensity = Math.max(0, flash.intensity - dt * 8);
-      if (water) water.position.y = 0.15 + Math.sin(time3 * 0.8) * 0.08;
+      windU.value = time3;
+      if (water) {
+        const wp = water.geometry.attributes.position;
+        for (let i = 0; i < wp.count; i++) { const x = wp.getX(i), z = wp.getZ(i); wp.setY(i, Math.sin(x * 0.22 + time3 * 1.4) * 0.22 + Math.cos(z * 0.17 + time3 * 1.1) * 0.16); }
+        wp.needsUpdate = true; if (!lowFx && (Math.floor(time3 * 10) % 3 === 0)) water.geometry.computeVertexNormals();
+      }
       // camera: follow the front
       if (cam.auto) {
         let sx = 0, n = 0;
@@ -679,10 +829,14 @@
       const asp = renderer.domElement.clientWidth / Math.max(1, renderer.domElement.clientHeight);
       const dist = cam.dist * (asp < 1 ? 1.35 / Math.max(0.55, asp) * 0.75 : 1);
       const cx = cam.tx - Math.cos(cam.yaw) * Math.cos(cam.pitch) * dist, cz = cam.tz + Math.sin(cam.yaw) * Math.cos(cam.pitch) * dist;
-      camera.position.set(cx, Math.sin(cam.pitch) * dist + 2, cz);
+      cam.shake = Math.max(0, (cam.shake || 0) - dt * 2.5);
+      const sh = prefersReduced ? 0 : cam.shake * 0.35;
+      camera.position.set(cx + (Math.random() - 0.5) * sh, Math.sin(cam.pitch) * dist + 2 + (Math.random() - 0.5) * sh, cz + (Math.random() - 0.5) * sh);
       camera.lookAt(cam.tx + 6, 0, cam.tz);
-      sun.position.set(cam.tx - 40, 70, 30); sun.target.position.set(cam.tx, 0, 0); sun.target.updateMatrixWorld();
-      renderer.render(scene, camera);
+      const so = sunOff || new T3.Vector3(-40, 70, 30), sl = 120 / so.length();
+      sun.position.set(cam.tx + so.x * sl, so.y * sl, so.z * sl); sun.target.position.set(cam.tx, 0, 0); sun.target.updateMatrixWorld();
+      if (sky) sky.position.copy(camera.position);
+      if (composer) composer.render(); else renderer.render(scene, camera);
     }
     function muzzle(g, x, y, z, s) {
       const f = sprite(glowT, 0xffe39a, true); const p = new T3.Vector3(x, y, z); g.localToWorld(p);
@@ -706,6 +860,7 @@
       const w = host.clientWidth || 800, h = host.clientHeight || 500;
       renderer.setSize(w, h, false); renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%';
       camera.aspect = w / h; camera.updateProjectionMatrix();
+      if (composer) composer.setSize(w, h);
     }
     return {
       ok: () => ok && !!T3, setup, add, kill, frame, pick, resize, clear,

@@ -149,8 +149,14 @@ const page = libs => tpl
 
 const cdn = '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>\n'
   + '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>\n'
-  + '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>';
-const local = '<script src="vendor/d3.min.js"></script>\n<script src="vendor/topojson-client.min.js"></script>\n<script src="vendor/three.min.js"></script>';
+  + '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>\n'
+  + '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>\n'
+  + '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>\n'
+  + '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>\n'
+  + '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>\n'
+  + '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>\n'
+  + '<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>';
+const local = '<script src="vendor/d3.min.js"></script>\n<script src="vendor/topojson-client.min.js"></script>\n<script src="vendor/three.min.js"></script>\n<script src="vendor/three-post.js"></script>';
 
 mkdirSync(join(ROOT, 'dist'), { recursive: true });
 writeFileSync(join(ROOT, 'dist/artifact.html'), page(cdn));
