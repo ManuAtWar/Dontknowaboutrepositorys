@@ -250,6 +250,24 @@
       b.push(P(Cyl(0.35, 0.35, 0.05, 12), 'accent', 3.0, 0.12, -1.7), P(Cyl(0.35, 0.35, 0.05, 12), 'accent', -3.0, 0.12, -1.7));
       return merge(b);
     }
+    function bunkerGeo() {
+      return merge([
+        P(Box(5.2, 2.2, 4.2), 'light', 0, 1.1, 0), P(Box(5.8, 0.55, 4.8), 'light', 0, 2.45, 0),
+        P(Box(3.4, 0.38, 0.3), 'black', 0, 1.55, 2.12), P(Box(0.25, 0.9, 0.25), 'metal', 1.7, 3.0, -1.2),
+        P(Box(6.2, 0.7, 1.1), 'gear', 0, 0.35, 2.9), P(Box(1.1, 0.7, 4.6), 'gear', 3.3, 0.35, 0.4), P(Box(1.1, 0.7, 4.6), 'gear', -3.3, 0.35, 0.4),
+        P(Box(1.6, 0.04, 1.2), 'accent', -1.4, 2.74, -0.8),
+      ]);
+    }
+    function aaGeo() {
+      const base = merge([P(Cyl(1.7, 1.9, 0.6, 12), 'gear', 0, 0.3, 0), P(new T3.TorusGeometry(2.7, 0.5, 6, 16), 'gear', 0, 0.45, 0, H, 0, 0)]);
+      const tur = merge([
+        P(Box(1.7, 1.1, 1.9), 'camo', 0, 0.55, 0), P(Box(0.5, 0.5, 0.6), 'glass', 0, 0.8, 0.9),
+        P(Cyl(0.09, 0.09, 3.4, 6), 'metal', 0.5, 1.7, 1.25, H - 0.85, 0, 0), P(Cyl(0.09, 0.09, 3.4, 6), 'metal', -0.5, 1.7, 1.25, H - 0.85, 0, 0),
+        P(Box(0.2, 0.04, 0.6), 'accent', 0, 1.12, -0.6),
+      ]);
+      const radar = merge([P(Cyl(0.06, 0.06, 0.8, 6), 'metal', 0, 0.4, 0), P(Box(1.5, 0.7, 0.1), 'light', 0, 0.9, 0, -0.3, 0, 0)]);
+      return { base, tur, radar };
+    }
     function boatGeo() {
       return merge([P(Box(4.5, 1.2, 9), 'camo', 0, 0.3, 0), P(Box(4.5, 1.6, 0.25), 'camo', 0, 0.8, 4.4, -0.2, 0, 0), P(Box(1.4, 1.2, 1.5), 'camo', 0, 1.4, -3.6), P(Box(1.2, 0.4, 0.2), 'glass', 0, 1.7, -2.85)]);
     }
@@ -259,12 +277,13 @@
     function makeKit(look) {
       const mat = new T3.MeshLambertMaterial({ map: atlas(look, 'inf') });
       const vmat = new T3.MeshLambertMaterial({ map: atlas(look, 'veh') });
-      return { look, mat, vmat, sol: soldierGeo(), tank: tankGeo(look.tank, false), art: tankGeo(look.tank === 'west' ? 'west' : 'east', true), heli: heliGeo(look.heli), jet: jetGeo(look.jet), boat: boatGeo() };
+      return { look, mat, vmat, sol: soldierGeo(), tank: tankGeo(look.tank, false), art: tankGeo(look.tank === 'west' ? 'west' : 'east', true), heli: heliGeo(look.heli), jet: jetGeo(look.jet), boat: boatGeo(), bunker: bunkerGeo(), aa: aaGeo() };
     }
+    const kitGeos = k => [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat, k.bunker, k.aa.base, k.aa.tur, k.aa.radar];
     function disposeKit(k) {
       if (!k) return;
       [k.mat, k.vmat].forEach(m => { m.map.dispose(); m.dispose(); });
-      [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat].forEach(g => g.dispose());
+      kitGeos(k).forEach(g => g.dispose());
     }
 
     // ---------- scene ----------
@@ -376,6 +395,27 @@
         const x = wx(HOLD_X) + 2 + (rnd() - 0.5) * 2, bag = new T3.Mesh(bagGeo, bagMat);
         bag.position.set(x, height(x, z) + 0.5, z + (rnd() - 0.5) * 2); bag.rotation.y = H + (rnd() - 0.5) * 0.4; bag.castShadow = !lowFx; world.add(bag);
       }
+      // border fortifications: rows of concrete dragon's teeth, T-walls from level 2
+      const fw = (opts.fort && opts.fort.w) || 0;
+      if (fw) {
+        const conc = new T3.MeshLambertMaterial({ color: 0xb9b5aa });
+        const toothGeo = new T3.ConeGeometry(0.9, 1.6, 4);
+        const nT = Math.ceil(58 / 2.2) * fw, teeth = new T3.InstancedMesh(toothGeo, conc, nT); let ti = 0;
+        teeth.castShadow = !lowFx;
+        for (let row = 0; row < fw; row++) for (let z = -29; z <= 29 && ti < nT; z += 2.2) {
+          const x = wx(HOLD_X) - 5 - row * 2.6 + (row % 2) * 0.6;
+          m.makeRotationY(Math.PI / 4).setPosition(x, height(x, z) + 0.7, z + (row % 2) * 1.1); teeth.setMatrixAt(ti++, m);
+        }
+        teeth.count = ti; world.add(teeth);
+        if (fw >= 2) {
+          const wallGeo = new T3.BoxGeometry(0.7, 3.2, 3.6);
+          for (let z = -27; z <= 27; z += 4.2) {
+            if (rnd() < 0.18) continue; // breaches
+            const x = wx(HOLD_X) + 6.5, w2 = new T3.Mesh(wallGeo, conc);
+            w2.position.set(x, height(x, z) + 1.5, z); w2.castShadow = !lowFx; w2.receiveShadow = true; world.add(w2);
+          }
+        }
+      }
       // kits per side
       kits[0] = makeKit(opts.lookA); kits[1] = makeKit(opts.lookD);
       cam.yaw = -0.62; cam.pitch = 0.5; cam.tx = -20; cam.tz = 0; cam.dist = 66; cam.auto = true;
@@ -396,7 +436,7 @@
       disposeKit(kits[0]); disposeKit(kits[1]); kits[0] = kits[1] = null;
       water = null; ground = null;
     }
-    const isKitGeo = g => kits.some(k => k && [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat].includes(g));
+    const isKitGeo = g => kits.some(k => k && kitGeos(k).includes(g));
 
     // ---------- units ----------
     const mesh = (geo, mat, shadow = true) => { const o = new T3.Mesh(geo, mat); o.castShadow = shadow && !lowFx; return o; };
@@ -418,6 +458,12 @@
         const geo = k[u.ty];
         v.hull = mesh(geo.hull, k.vmat); v.tur = mesh(geo.tur, k.vmat); v.tur.position.y = 1.45;
         g.add(v.hull, v.tur); v.tur.rotation.y = 0;
+      } else if (u.ty === 'bunker') {
+        v.body = mesh(k.bunker, k.vmat); g.add(v.body); v.body.receiveShadow = true;
+      } else if (u.ty === 'aa') {
+        v.body = mesh(k.aa.base, k.vmat); v.tur = mesh(k.aa.tur, k.vmat); v.tur.position.y = 0.7;
+        v.radar = mesh(k.aa.radar, k.vmat, false); v.radar.position.set(0, 1.2, -0.7); v.tur.add(v.radar);
+        g.add(v.body, v.tur);
       } else if (u.ty === 'heli') {
         v.body = mesh(k.heli.body, k.vmat); v.rot = mesh(k.heli.rotor, k.vmat, false); v.rot.position.y = k.heli.mastY;
         g.add(v.body, v.rot);
@@ -446,6 +492,12 @@
       if (u.ty === 'inf') {
         v.sol.forEach(s => { if (s.userData.alive) fall(s); });
         dying.push({ g: v.g, t: 0, life: 4, kind: 'inf' });
+      } else if (u.ty === 'bunker' || u.ty === 'aa') {
+        v.g.traverse(o => { if (o.isMesh) o.material = burnt; });
+        if (v.tur) { v.tur.rotation.z = 0.5; v.tur.position.y += 0.4; }
+        v.g.scale.y = 0.75;
+        dying.push({ g: v.g, t: 0, life: 18, kind: 'wreck', smokeT: 0 });
+        burst(P0.x, P0.y + 1.5, P0.z, 1.6);
       } else if (u.ty === 'tank' || u.ty === 'art') {
         v.g.traverse(o => { if (o.isMesh) o.material = burnt; });
         v.tur.rotation.z = 0.15; v.tur.position.y += 0.3; v.tur.rotation.y += (Math.random() - 0.5) * 0.6;
@@ -531,6 +583,12 @@
           v.tur.rotation.y = angLerp(v.tur.rotation.y, tw, Math.min(1, dt * 3));
           v.g.position.y += Math.sin(time3 * 14 + u.ph) * 0.03 * v.moving;
           if (firing) { muzzleT(v); v.tur.position.z = -0.25; } else v.tur.position.z = lerp(v.tur.position.z, 0, dt * 6);
+        } else if (u.ty === 'bunker') {
+          if (firing) muzzle(v.g, (Math.random() - 0.5) * 2.4, 1.55, 2.4, 1.1);
+        } else if (u.ty === 'aa') {
+          v.radar.rotation.y += dt * 3;
+          if (u.aimX != null) v.tur.rotation.y = angLerp(v.tur.rotation.y, Math.atan2(u.aimX - u.x, u.aimY - u.y) - v.hd, Math.min(1, dt * 4));
+          if (firing) { muzzle(v.tur, 0.5, 2.9, 2.5, 1.3); muzzle(v.tur, -0.5, 2.9, 2.5, 1.3); }
         } else if (u.ty === 'heli') {
           v.rot.rotation.y += dt * 28; if (v.rot2) v.rot2.rotation.y -= dt * 28; if (v.tail) v.tail.rotation.x += dt * 40;
           v.g.position.y += Math.sin(time3 * 2 + u.ph) * 0.4;
@@ -546,7 +604,7 @@
       for (const s of B.shots) {
         if (s.t > 0.1 || s.r3) continue; s.r3 = true;
         const a = new T3.Vector3(wx(s.x0), 0, wz(s.y0)), b = new T3.Vector3(wx(s.x1), 0, wz(s.y1));
-        a.y = height(a.x, a.z) + (s.air ? 10 : 1.8); b.y = height(b.x, b.z) + 1.2;
+        a.y = height(a.x, a.z) + (s.air ? 10 : s.aa ? 3 : 1.8); b.y = height(b.x, b.z) + (s.tl === 2 ? 30 : s.tl === 1 ? 8 : 1.2);
         const tr = new T3.Mesh(tracerGeo, tracerMat[s.side]);
         const len = a.distanceTo(b); tr.position.copy(a); tr.lookAt(b);
         const seg = Math.min(4, len * 0.35);

@@ -97,9 +97,30 @@
       econ: 1, queue: [], prog: {}, tension: 0, log: [], over: false, won: false, ai: {}, prefs: { land: 60, air: 70, sea: 70 },
       milestones: {}, keepPlaying: false };
     C.forEach((c, i) => { S.pools[i] = { m: { ...c.mil }, t: c.t }; });
+    initForts();
     terrCache = null;
     shown = S.owner.slice();
     log('me', `Du übernimmst das Oberkommando von ${C[p].n}. Ziel: die Welt.`);
+  }
+  // ---- fortifications: w = border wall / bunker line, a = air defence, c = coastal batteries ----
+  const FORT = {
+    w: { n: 'Grenzwall & Bunkerlinie', short: 'Bunkerlinie', max: 3, base: 0.6, per: 0.0015, desc: '+25 % Bodenverteidigung je Stufe, Bunker im 3D-Kampf' },
+    a: { n: 'Flugabwehr (Flak & SAM)', short: 'Flugabwehr', max: 3, base: 0.8, per: 0.001, desc: 'feindliche Luftwaffe −18 % je Stufe, schießt Jets & Hubschrauber ab' },
+    c: { n: 'Küstenbatterien', short: 'Küstenbatterie', max: 2, base: 0.5, per: 0.001, desc: 'erschwert Seelandungen, versenkt Landungsboote' },
+  };
+  const ROMAN = ['', 'I', 'II', 'III'];
+  const fortOf = t => (S && S.fort && S.fort[t]) || { w: 0, a: 0, c: 0 };
+  const fortCost = (t, k) => (FORT[k].base + C[t].gdp * FORT[k].per) * (fortOf(t)[k] + 1);
+  const PRESET_FORTS = {
+    'Südkorea': { w: 2, a: 2 }, 'Nordkorea': { w: 2, a: 1 }, 'Israel': { w: 2, a: 3 }, 'Schweiz': { w: 2, a: 1 }, 'Finnland': { w: 1 },
+    'Ukraine': { w: 1, a: 1 }, 'Russland': { a: 2 }, 'USA': { a: 1, c: 1 }, 'Taiwan': { a: 2, c: 2 }, 'China': { a: 1, c: 1 }, 'Polen': { w: 1 },
+    'Estland': { w: 1 }, 'Lettland': { w: 1 }, 'Litauen': { w: 1 }, 'Indien': { w: 1, a: 1 }, 'Pakistan': { w: 1 }, 'Marokko': { w: 1 },
+    'Iran': { a: 2 }, 'Saudi-Arabien': { a: 2 }, 'Deutschland': { a: 1 }, 'Japan': { a: 2, c: 1 }, 'Norwegen': { c: 1 }, 'Schweden': { c: 1 },
+    'Singapur': { a: 1, c: 1 }, 'Vereinigte Arabische Emirate': { a: 2 }, 'Katar': { a: 1 }, 'Griechenland': { c: 1 }, 'Türkei': { a: 1 },
+  };
+  function initForts() {
+    S.fort = {}; S.fortQ = [];
+    C.forEach((c, i) => { const p = PRESET_FORTS[c.n]; if (p) S.fort[i] = { w: p.w || 0, a: p.a || 0, c: COAST[i] ? (p.c || 0) : 0 }; });
   }
   const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } };
   const loadSave = () => { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); return s && s.v === 2 && s.owner && s.owner.length === N ? s : null; } catch (e) { return null; } };
@@ -163,7 +184,8 @@
     let repulsed = false, landCap = 1;
 
     if (rtype !== 'land') {
-      const aN = seaP(commit, tA), dN = seaP(dm, tD) * 1.1;
+      const fc = fortOf(rep.tgt).c;
+      const aN = seaP(commit, tA), dN = seaP(dm, tD) * 1.1 * (1 + 0.6 * fc) + fc * 15;
       if (dN > 0) {
         const ra = aN * r(0.8, 1.2), rd = dN * r(0.8, 1.2);
         const sh = ra + rd > 0 ? ra / (ra + rd) : 0;
@@ -176,7 +198,7 @@
         rep.phases.push({ k: 'sea', a: aN, d: 0, sh: 1, win: true });
       }
       const cap = landingCap(commit) + (rtype === 'strait' ? 40 : 0);
-      landCap *= Math.min(1, cap / Math.max(1, commit.sol || 0));
+      landCap *= Math.min(1, cap / Math.max(1, commit.sol || 0)) * (1 - 0.15 * fc);
       rep.cap = cap;
     }
     return { landCap, repulsed };
@@ -193,17 +215,18 @@
     rep.landCap = landCap;
     if (repulsed) { rep.ratio = 0; rep.gain = 0; rep.repulsed = true; return rep; }
 
-    const aA = airP(commit, tA), aD = airP(dm, tD);
+    const F = fortOf(tgt);
+    const aA = airP(commit, tA) * (1 - 0.18 * F.a), aD = airP(dm, tD);
     const ra = aA * r(0.85, 1.15), rd = aD * r(0.85, 1.15);
     const sh = ra + rd > 0 ? ra / (ra + rd) : 0.5;
-    addLoss(rep.lossA, commit, AIR, 0.18 * (1 - sh) * r(0.7, 1.3));
+    addLoss(rep.lossA, commit, AIR, (0.18 * (1 - sh) + 0.06 * F.a) * r(0.7, 1.3));
     addLoss(rep.lossD, dm, AIR, 0.18 * sh * r(0.7, 1.3));
     rep.phases.push({ k: 'air', a: aA, d: aD, sh, win: sh > 0.5 });
     const mA = 0.6 + 0.8 * sh, mD = 0.6 + 0.8 * (1 - sh);
 
     const atk = landP(commit, tA) * landCap * mA * r(0.85, 1.15);
     const militia = c.pop * 0.4;
-    const defv = (landP(dm, tD) + (dm.res || 0) * U.res.w * q(tD) + militia) * c.ter * 1.15 * mD * r(0.85, 1.15);
+    const defv = (landP(dm, tD) + (dm.res || 0) * U.res.w * q(tD) + militia) * c.ter * 1.15 * (1 + 0.25 * F.w) * mD * r(0.85, 1.15);
     const tot = atk + defv || 1;
     const ratio = atk / Math.max(0.01, defv);
     addLoss(rep.lossA, commit, LAND, 0.3 * (defv / tot) * r(0.7, 1.3));
@@ -221,10 +244,11 @@
     const r = (a, b) => dry ? (a + b) / 2 : a + (b - a) * Math.random();
     const rep = { kind: 'air', att, def, tgt, commit: { ...commit }, lossA: zero(), lossD: zero(), phases: [] };
     const aA = airP(commit, tA);
-    const aD = airP(dm, tD) * 1.3 + landP(dm, tD) * 0.04; // fighters + ground-based air defence
+    const FA = fortOf(tgt).a;
+    const aD = airP(dm, tD) * 1.3 + landP(dm, tD) * 0.04 + aA * 0.35 * FA; // fighters + ground-based air defence + Flak/SAM sites
     const ra = aA * r(0.85, 1.15), rd = aD * r(0.85, 1.15);
     const sh = ra + rd > 0 ? ra / (ra + rd) : 0;
-    addLoss(rep.lossA, commit, AIR, 0.16 * (1 - sh) * r(0.7, 1.3));
+    addLoss(rep.lossA, commit, AIR, (0.16 * (1 - sh) + 0.07 * FA) * r(0.7, 1.3));
     addLoss(rep.lossD, dm, AIR, 0.14 * sh * r(0.7, 1.3));
     addLoss(rep.lossD, dm, ['tank', 'afv', 'art', 'mlrs'], 0.09 * sh * r(0.7, 1.3));
     addLoss(rep.lossD, dm, SEA, 0.05 * sh * r(0.5, 1.5));
@@ -272,6 +296,8 @@
     }
     setOwner(tgt, att);
     delete S.prog[tgt];
+    if (S.fort[tgt]) { const f = S.fort[tgt]; f.w = Math.max(0, f.w - 1); f.a = Math.max(0, f.a - 1); f.c = Math.max(0, f.c - 1); }
+    S.fortQ = S.fortQ.filter(q2 => q2.t !== tgt);
     if (last && prev !== S.P) {
       delete S.pools[prev]; delete S.ai[prev];
       Object.keys(S.prog).forEach(k => { if (S.prog[k].by === prev) delete S.prog[k]; });
@@ -324,7 +350,7 @@
           const ow = S.owner[t]; if (ow === o) continue;
           const rr = route(o, t); if (!rr || rr.type === 'none') continue;
           const d = S.pools[ow];
-          const defS = (strength(scaleM(d.m, deployShare(ow, t)), d.t) + C[t].pop * 0.4) * C[t].ter + 1;
+          const defS = (strength(scaleM(d.m, deployShare(ow, t)), d.t) + C[t].pop * 0.4) * C[t].ter * (1 + 0.3 * fortOf(t).w + 0.1 * fortOf(t).a) + 1;
           let score = (Math.sqrt(C[t].gdp) + 4 + C[t].pop * 0.05) / defS;
           if (rr.type === 'land') score *= 1.6;
           else { if (rr.d > 1500) continue; score *= 0.5 / (1 + rr.d / 600); }
@@ -408,6 +434,20 @@
       keys.forEach(k => { const tg = target[k] * boost; if (pool.m[k] < tg) pool.m[k] = roundUnit(k, pool.m[k] + (tg - pool.m[k]) * (isP ? 0.03 : 0.05)); });
     });
     Object.keys(S.prog).forEach(k => { const p = S.prog[k]; if (p.t < S.turn) { p.v -= 10; if (p.v <= 0) delete S.prog[k]; } });
+    // fortifications: finish player construction, AI powers fortify too
+    if (S.fortQ.length) {
+      const done = [];
+      S.fortQ.forEach(({ t, k }) => { if (S.owner[t] !== P) return; const f = S.fort[t] || (S.fort[t] = { w: 0, a: 0, c: 0 }); f[k] = Math.min(FORT[k].max, f[k] + 1); done.push(`${FORT[k].short} ${ROMAN[f[k]]} in ${C[t].n}`); });
+      if (done.length) events.push({ type: 'good', text: `Bau abgeschlossen: ${done.join(', ')}.` });
+      S.fortQ = [];
+    }
+    const strongAI = [...new Set(S.owner)].filter(o => o !== P && S.pools[o]).map(o => ({ o, s: strength(S.pools[o].m, S.pools[o].t) })).sort((a, b) => b.s - a.s).slice(0, 20);
+    strongAI.forEach(({ o }) => terrOf(o).forEach(t => {
+      if (Math.random() > 0.012 * CFG.aggr) return;
+      const ks = COAST[t] ? ['w', 'a', 'c'] : ['w', 'a'], k = ks[Math.floor(Math.random() * ks.length)];
+      const f = S.fort[t] || (S.fort[t] = { w: 0, a: 0, c: 0 });
+      if (f[k] < 2) { f[k]++; if (NB[t] && [...NB[t]].some(n => S.owner[n] === P)) events.push({ type: 'info', text: `${C[o].n} baut an deiner Grenze: ${FORT[k].short} ${ROMAN[f[k]]} in ${C[t].n}.` }); }
+    }));
 
     S.turn++;
     S.used = zero();
@@ -482,6 +522,11 @@
     return rings;
   }
   const LODS = [1.6, 0.6, 0.2, 0.05];
+  // land-border and coastline paths per country (for fortification drawing)
+  const linePath = rings => { const p = new Path2D(); for (const r of rings) { if (r.length < 4) continue; p.moveTo(r[0], r[1]); for (let i = 2; i < r.length; i += 2) p.lineTo(r[i], r[i + 1]); } return p; };
+  const bCache = [], cCache = [];
+  const borderPath = t => bCache[t] || (bCache[t] = linePath(record(topojson.mesh(TOPO, TOPO.objects.c, (a, b) => a !== b && a.id !== b.id && (a.id === t || b.id === t)))));
+  const coastPath = t => cCache[t] || (cCache[t] = linePath(record(topojson.mesh(TOPO, TOPO.objects.c, (a, b) => a === b && a.id === t))));
   function mkPath(rings, tol) {
     const p = new Path2D(); const t2 = tol * tol;
     for (const r of rings) {
@@ -636,6 +681,26 @@
     if (S) {
       c.strokeStyle = 'rgba(255,214,120,.55)'; c.lineWidth = 1.1 * px;
       for (const f of FEAT) if (shown[f.id] === S.P && vis(f)) c.stroke(featPath(f, li));
+    }
+    // fortifications: stone walls along land borders, coastal batteries, air-defence domes
+    if (S && S.fort) {
+      for (const k in S.fort) {
+        const t = +k, f = S.fort[t]; if (!f || !(f.w || f.a || f.c)) continue;
+        const b = MAIN[t].b; if (b[1][0] < vx0 - 50 || b[0][0] > vx1 + 50 || b[1][1] < vy0 - 50 || b[0][1] > vy1 + 50) continue;
+        if (f.w) {
+          const bp = borderPath(t);
+          c.strokeStyle = 'rgba(15,14,12,.75)'; c.lineWidth = (2.6 + f.w * 0.9) * px; c.stroke(bp);
+          c.setLineDash([2.4 * px, 1.4 * px]); c.strokeStyle = '#d2c8ad'; c.lineWidth = (1.3 + f.w * 0.5) * px; c.stroke(bp); c.setLineDash([]);
+        }
+        if (f.c) { c.setLineDash([1 * px, 2.2 * px]); c.strokeStyle = 'rgba(140,215,255,.9)'; c.lineWidth = (1.2 + f.c * 0.5) * px; c.stroke(coastPath(t)); c.setLineDash([]); }
+        if (f.a) {
+          const [x, y] = MAIN[t].c, r0 = 5 * px, yy = y + 11 * px;
+          c.fillStyle = 'rgba(8,16,24,.8)'; c.beginPath(); c.arc(x, yy, r0 + 2 * px, Math.PI, 0); c.closePath(); c.fill();
+          c.strokeStyle = '#9fe2ff'; c.lineWidth = 1.3 * px;
+          for (let j = 0; j < f.a; j++) { c.beginPath(); c.arc(x, yy, r0 - j * 1.6 * px, Math.PI, 0); c.stroke(); }
+          c.beginPath(); c.moveTo(x - r0 - 2 * px, yy); c.lineTo(x + r0 + 2 * px, yy); c.stroke();
+        }
+      }
     }
     // targets
     if (S && !busy) {
@@ -1068,6 +1133,8 @@
     chips.push(`<span class="chip">Rang #${rankOf[i]} weltweit</span>`);
     if (c.mil.nuk > 0) chips.push(`<span class="chip nuke">Atommacht</span>`);
     if (c.ter > 1.15) chips.push(`<span class="chip">Schweres Gelände</span>`);
+    const FF = fortOf(i);
+    ['w', 'a', 'c'].forEach(k => { if (FF[k]) chips.push(`<span class="chip fort">${FORT[k].short} ${ROMAN[FF[k]]}</span>`); });
     const terPct = Math.round((c.ter - 1) * 100);
     let h = `<button class="p-close" type="button" aria-label="Schließen" data-act="close">×</button>
       <div class="eyebrow">Länderdossier</div>
@@ -1106,6 +1173,18 @@
         <div><div class="k">Militärbudget</div><div class="v">${money(c.bud)}</div></div>
         <div><div class="k">Gelände-Bonus</div><div class="v">${terPct > 0 ? '+' + terPct + ' % Verteid.' : 'keiner'}</div></div>
       </div>`;
+    if (mine) {
+      h += `<h3 class="sec">Verteidigung <small>Bau dauert 1 Runde</small></h3><div class="forts">`;
+      ['w', 'a', 'c'].forEach(k => {
+        if (k === 'c' && !COAST[i]) return;
+        const lvl = FF[k], max = FORT[k].max, queued = S.fortQ.some(q2 => q2.t === i && q2.k === k);
+        const cost = fortCost(i, k);
+        h += `<div class="frow"><div class="fname">${FORT[k].n}<div class="note">${FORT[k].desc}</div></div>
+          <div class="flvl">${Array.from({ length: max }, (_, j) => `<i class="${j < lvl ? 'on' : ''}${queued && j === lvl ? ' q' : ''}"></i>`).join('')}</div>
+          <button class="btn sm" type="button" data-act="fort" data-k="${k}" ${lvl >= max || queued || S.money < cost || S.over ? 'disabled' : ''}>${lvl >= max ? 'Maximum' : queued ? 'Im Bau…' : `Ausbauen · ${priceStr(cost)}`}</button></div>`;
+      });
+      h += `</div>`;
+    }
     const occNote = occupied || terrOf(o).length > 1 ? `Gesamtkräfte von ${esc(ownerName(o))}` : (S.turn > 0 ? 'aktueller Stand' : 'Stand 2024/25');
     h += `<h3 class="sec">Streitkräfte <small>${occNote}</small></h3>${powerBox(pool.m, pool.t)}
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:10px 0 4px"><span>Technologiestand</span><span>${Math.round(pool.t * 100)}/100</span></div>
@@ -1124,6 +1203,13 @@
     else if (a === 'tac') { const r = route(S.P, sel); startTactical(sel, r.type, quickCommit('invade', r.type)); }
     else if (a === 'invade') openAttack(sel, 'invade');
     else if (a === 'air') openAttack(sel, 'air');
+    else if (a === 'fort') {
+      const k = b.dataset.k, t = sel, cost = fortCost(t, k);
+      if (S.money < cost || S.owner[t] !== S.P || S.fortQ.some(q2 => q2.t === t && q2.k === k) || fortOf(t)[k] >= FORT[k].max) return;
+      S.money -= cost; S.fortQ.push({ t, k });
+      ticker('me', `${FORT[k].short} ${ROMAN[fortOf(t)[k] + 1]} in ${C[t].n} wird gebaut – fertig nächste Runde.`);
+      save(); renderHud(); renderPanel(); requestDraw();
+    }
   });
 
   // launch an attack: resolve instantly, animate, then report
@@ -1367,7 +1453,7 @@
     renderPowers();
     const sv = loadSave();
     $('#resumeBox').innerHTML = sv ? `<button class="btn primary" type="button" id="resume">Spiel fortsetzen: ${esc(C[sv.P].n)} · ${dateStr(sv.turn)}</button><span class="note">oder unten ein neues Land wählen</span>` : '';
-    if (sv) $('#resume').addEventListener('click', () => { S = sv; terrCache = null; shown = S.owner.slice(); startEl.hidden = true; afterStart(); });
+    if (sv) $('#resume').addEventListener('click', () => { S = sv; if (!S.fort) initForts(); if (!S.fortQ) S.fortQ = []; terrCache = null; shown = S.owner.slice(); startEl.hidden = true; afterStart(); });
     renderList();
   }
   function renderList() {

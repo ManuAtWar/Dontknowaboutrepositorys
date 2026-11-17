@@ -126,6 +126,7 @@ button, input, select { font: inherit; color: inherit; }
 .sw.tgt { border: 1.5px dashed var(--hostile); }
 .sw.tgts { border: 1.5px dotted rgba(239,90,76,.6); }
 .sw.war { border: 2px solid var(--warn); }
+.sw.wall { border-top: 3px dashed #d2c8ad; height: 3px; border-radius: 0; }
 #zoomctl { position: absolute; right: var(--gut-r); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
 #zoomctl button { width: 38px; height: 38px; border-radius: 6px; border: 1px solid var(--line); background: rgba(16,30,43,.9); font-size: 18px; cursor: pointer; }
 
@@ -145,6 +146,15 @@ button, input, select { font: inherit; color: inherit; }
 .chip.me { border-color: var(--gold); color: var(--gold); }
 .chip.hostile { border-color: var(--hostile); color: var(--hostile); }
 .chip.nuke { border-color: var(--warn); color: var(--warn); }
+.chip.fort { border-color: #b9ae92; color: #d2c8ad; }
+.forts { display: flex; flex-direction: column; gap: 2px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(34,56,76,.6); }
+.frow .fname { min-width: 0; font-weight: 500; }
+.frow .flvl { display: flex; gap: 4px; justify-self: end; }
+.frow .flvl i { width: 16px; height: 8px; border-radius: 2px; background: var(--panel-2); border: 1px solid var(--line); }
+.frow .flvl i.on { background: #d2c8ad; border-color: #d2c8ad; }
+.frow .flvl i.q { background: repeating-linear-gradient(45deg, #d2c8ad 0 3px, transparent 3px 6px); border-color: #d2c8ad; }
+.frow .btn { grid-column: 1 / -1; justify-self: start; }
 .kv { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px 16px; margin-bottom: 16px; }
 .kv div { min-width: 0; }
 .kv .k { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .07em; }
@@ -377,6 +387,7 @@ table.mil tr.zero td { color: var(--dim); }
       <span><i class="sw tgt"></i>Angreifbar</span>
       <span><i class="sw tgts"></i>Per Seeweg</span>
       <span><i class="sw war"></i>Im Krieg</span>
+      <span><i class="sw wall"></i>Befestigt</span>
     </div>
     <div id="zoomctl">
       <button type="button" id="zIn" aria-label="Hineinzoomen">+</button>
@@ -538,9 +549,30 @@ table.mil tr.zero td { color: var(--dim); }
       econ: 1, queue: [], prog: {}, tension: 0, log: [], over: false, won: false, ai: {}, prefs: { land: 60, air: 70, sea: 70 },
       milestones: {}, keepPlaying: false };
     C.forEach((c, i) => { S.pools[i] = { m: { ...c.mil }, t: c.t }; });
+    initForts();
     terrCache = null;
     shown = S.owner.slice();
     log('me', `Du übernimmst das Oberkommando von ${C[p].n}. Ziel: die Welt.`);
+  }
+  // ---- fortifications: w = border wall / bunker line, a = air defence, c = coastal batteries ----
+  const FORT = {
+    w: { n: 'Grenzwall & Bunkerlinie', short: 'Bunkerlinie', max: 3, base: 0.6, per: 0.0015, desc: '+25 % Bodenverteidigung je Stufe, Bunker im 3D-Kampf' },
+    a: { n: 'Flugabwehr (Flak & SAM)', short: 'Flugabwehr', max: 3, base: 0.8, per: 0.001, desc: 'feindliche Luftwaffe −18 % je Stufe, schießt Jets & Hubschrauber ab' },
+    c: { n: 'Küstenbatterien', short: 'Küstenbatterie', max: 2, base: 0.5, per: 0.001, desc: 'erschwert Seelandungen, versenkt Landungsboote' },
+  };
+  const ROMAN = ['', 'I', 'II', 'III'];
+  const fortOf = t => (S && S.fort && S.fort[t]) || { w: 0, a: 0, c: 0 };
+  const fortCost = (t, k) => (FORT[k].base + C[t].gdp * FORT[k].per) * (fortOf(t)[k] + 1);
+  const PRESET_FORTS = {
+    'Südkorea': { w: 2, a: 2 }, 'Nordkorea': { w: 2, a: 1 }, 'Israel': { w: 2, a: 3 }, 'Schweiz': { w: 2, a: 1 }, 'Finnland': { w: 1 },
+    'Ukraine': { w: 1, a: 1 }, 'Russland': { a: 2 }, 'USA': { a: 1, c: 1 }, 'Taiwan': { a: 2, c: 2 }, 'China': { a: 1, c: 1 }, 'Polen': { w: 1 },
+    'Estland': { w: 1 }, 'Lettland': { w: 1 }, 'Litauen': { w: 1 }, 'Indien': { w: 1, a: 1 }, 'Pakistan': { w: 1 }, 'Marokko': { w: 1 },
+    'Iran': { a: 2 }, 'Saudi-Arabien': { a: 2 }, 'Deutschland': { a: 1 }, 'Japan': { a: 2, c: 1 }, 'Norwegen': { c: 1 }, 'Schweden': { c: 1 },
+    'Singapur': { a: 1, c: 1 }, 'Vereinigte Arabische Emirate': { a: 2 }, 'Katar': { a: 1 }, 'Griechenland': { c: 1 }, 'Türkei': { a: 1 },
+  };
+  function initForts() {
+    S.fort = {}; S.fortQ = [];
+    C.forEach((c, i) => { const p = PRESET_FORTS[c.n]; if (p) S.fort[i] = { w: p.w || 0, a: p.a || 0, c: COAST[i] ? (p.c || 0) : 0 }; });
   }
   const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } };
   const loadSave = () => { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); return s && s.v === 2 && s.owner && s.owner.length === N ? s : null; } catch (e) { return null; } };
@@ -604,7 +636,8 @@ table.mil tr.zero td { color: var(--dim); }
     let repulsed = false, landCap = 1;
 
     if (rtype !== 'land') {
-      const aN = seaP(commit, tA), dN = seaP(dm, tD) * 1.1;
+      const fc = fortOf(rep.tgt).c;
+      const aN = seaP(commit, tA), dN = seaP(dm, tD) * 1.1 * (1 + 0.6 * fc) + fc * 15;
       if (dN > 0) {
         const ra = aN * r(0.8, 1.2), rd = dN * r(0.8, 1.2);
         const sh = ra + rd > 0 ? ra / (ra + rd) : 0;
@@ -617,7 +650,7 @@ table.mil tr.zero td { color: var(--dim); }
         rep.phases.push({ k: 'sea', a: aN, d: 0, sh: 1, win: true });
       }
       const cap = landingCap(commit) + (rtype === 'strait' ? 40 : 0);
-      landCap *= Math.min(1, cap / Math.max(1, commit.sol || 0));
+      landCap *= Math.min(1, cap / Math.max(1, commit.sol || 0)) * (1 - 0.15 * fc);
       rep.cap = cap;
     }
     return { landCap, repulsed };
@@ -634,17 +667,18 @@ table.mil tr.zero td { color: var(--dim); }
     rep.landCap = landCap;
     if (repulsed) { rep.ratio = 0; rep.gain = 0; rep.repulsed = true; return rep; }
 
-    const aA = airP(commit, tA), aD = airP(dm, tD);
+    const F = fortOf(tgt);
+    const aA = airP(commit, tA) * (1 - 0.18 * F.a), aD = airP(dm, tD);
     const ra = aA * r(0.85, 1.15), rd = aD * r(0.85, 1.15);
     const sh = ra + rd > 0 ? ra / (ra + rd) : 0.5;
-    addLoss(rep.lossA, commit, AIR, 0.18 * (1 - sh) * r(0.7, 1.3));
+    addLoss(rep.lossA, commit, AIR, (0.18 * (1 - sh) + 0.06 * F.a) * r(0.7, 1.3));
     addLoss(rep.lossD, dm, AIR, 0.18 * sh * r(0.7, 1.3));
     rep.phases.push({ k: 'air', a: aA, d: aD, sh, win: sh > 0.5 });
     const mA = 0.6 + 0.8 * sh, mD = 0.6 + 0.8 * (1 - sh);
 
     const atk = landP(commit, tA) * landCap * mA * r(0.85, 1.15);
     const militia = c.pop * 0.4;
-    const defv = (landP(dm, tD) + (dm.res || 0) * U.res.w * q(tD) + militia) * c.ter * 1.15 * mD * r(0.85, 1.15);
+    const defv = (landP(dm, tD) + (dm.res || 0) * U.res.w * q(tD) + militia) * c.ter * 1.15 * (1 + 0.25 * F.w) * mD * r(0.85, 1.15);
     const tot = atk + defv || 1;
     const ratio = atk / Math.max(0.01, defv);
     addLoss(rep.lossA, commit, LAND, 0.3 * (defv / tot) * r(0.7, 1.3));
@@ -662,10 +696,11 @@ table.mil tr.zero td { color: var(--dim); }
     const r = (a, b) => dry ? (a + b) / 2 : a + (b - a) * Math.random();
     const rep = { kind: 'air', att, def, tgt, commit: { ...commit }, lossA: zero(), lossD: zero(), phases: [] };
     const aA = airP(commit, tA);
-    const aD = airP(dm, tD) * 1.3 + landP(dm, tD) * 0.04; // fighters + ground-based air defence
+    const FA = fortOf(tgt).a;
+    const aD = airP(dm, tD) * 1.3 + landP(dm, tD) * 0.04 + aA * 0.35 * FA; // fighters + ground-based air defence + Flak/SAM sites
     const ra = aA * r(0.85, 1.15), rd = aD * r(0.85, 1.15);
     const sh = ra + rd > 0 ? ra / (ra + rd) : 0;
-    addLoss(rep.lossA, commit, AIR, 0.16 * (1 - sh) * r(0.7, 1.3));
+    addLoss(rep.lossA, commit, AIR, (0.16 * (1 - sh) + 0.07 * FA) * r(0.7, 1.3));
     addLoss(rep.lossD, dm, AIR, 0.14 * sh * r(0.7, 1.3));
     addLoss(rep.lossD, dm, ['tank', 'afv', 'art', 'mlrs'], 0.09 * sh * r(0.7, 1.3));
     addLoss(rep.lossD, dm, SEA, 0.05 * sh * r(0.5, 1.5));
@@ -713,6 +748,8 @@ table.mil tr.zero td { color: var(--dim); }
     }
     setOwner(tgt, att);
     delete S.prog[tgt];
+    if (S.fort[tgt]) { const f = S.fort[tgt]; f.w = Math.max(0, f.w - 1); f.a = Math.max(0, f.a - 1); f.c = Math.max(0, f.c - 1); }
+    S.fortQ = S.fortQ.filter(q2 => q2.t !== tgt);
     if (last && prev !== S.P) {
       delete S.pools[prev]; delete S.ai[prev];
       Object.keys(S.prog).forEach(k => { if (S.prog[k].by === prev) delete S.prog[k]; });
@@ -765,7 +802,7 @@ table.mil tr.zero td { color: var(--dim); }
           const ow = S.owner[t]; if (ow === o) continue;
           const rr = route(o, t); if (!rr || rr.type === 'none') continue;
           const d = S.pools[ow];
-          const defS = (strength(scaleM(d.m, deployShare(ow, t)), d.t) + C[t].pop * 0.4) * C[t].ter + 1;
+          const defS = (strength(scaleM(d.m, deployShare(ow, t)), d.t) + C[t].pop * 0.4) * C[t].ter * (1 + 0.3 * fortOf(t).w + 0.1 * fortOf(t).a) + 1;
           let score = (Math.sqrt(C[t].gdp) + 4 + C[t].pop * 0.05) / defS;
           if (rr.type === 'land') score *= 1.6;
           else { if (rr.d > 1500) continue; score *= 0.5 / (1 + rr.d / 600); }
@@ -849,6 +886,20 @@ table.mil tr.zero td { color: var(--dim); }
       keys.forEach(k => { const tg = target[k] * boost; if (pool.m[k] < tg) pool.m[k] = roundUnit(k, pool.m[k] + (tg - pool.m[k]) * (isP ? 0.03 : 0.05)); });
     });
     Object.keys(S.prog).forEach(k => { const p = S.prog[k]; if (p.t < S.turn) { p.v -= 10; if (p.v <= 0) delete S.prog[k]; } });
+    // fortifications: finish player construction, AI powers fortify too
+    if (S.fortQ.length) {
+      const done = [];
+      S.fortQ.forEach(({ t, k }) => { if (S.owner[t] !== P) return; const f = S.fort[t] || (S.fort[t] = { w: 0, a: 0, c: 0 }); f[k] = Math.min(FORT[k].max, f[k] + 1); done.push(`${FORT[k].short} ${ROMAN[f[k]]} in ${C[t].n}`); });
+      if (done.length) events.push({ type: 'good', text: `Bau abgeschlossen: ${done.join(', ')}.` });
+      S.fortQ = [];
+    }
+    const strongAI = [...new Set(S.owner)].filter(o => o !== P && S.pools[o]).map(o => ({ o, s: strength(S.pools[o].m, S.pools[o].t) })).sort((a, b) => b.s - a.s).slice(0, 20);
+    strongAI.forEach(({ o }) => terrOf(o).forEach(t => {
+      if (Math.random() > 0.012 * CFG.aggr) return;
+      const ks = COAST[t] ? ['w', 'a', 'c'] : ['w', 'a'], k = ks[Math.floor(Math.random() * ks.length)];
+      const f = S.fort[t] || (S.fort[t] = { w: 0, a: 0, c: 0 });
+      if (f[k] < 2) { f[k]++; if (NB[t] && [...NB[t]].some(n => S.owner[n] === P)) events.push({ type: 'info', text: `${C[o].n} baut an deiner Grenze: ${FORT[k].short} ${ROMAN[f[k]]} in ${C[t].n}.` }); }
+    }));
 
     S.turn++;
     S.used = zero();
@@ -923,6 +974,11 @@ table.mil tr.zero td { color: var(--dim); }
     return rings;
   }
   const LODS = [1.6, 0.6, 0.2, 0.05];
+  // land-border and coastline paths per country (for fortification drawing)
+  const linePath = rings => { const p = new Path2D(); for (const r of rings) { if (r.length < 4) continue; p.moveTo(r[0], r[1]); for (let i = 2; i < r.length; i += 2) p.lineTo(r[i], r[i + 1]); } return p; };
+  const bCache = [], cCache = [];
+  const borderPath = t => bCache[t] || (bCache[t] = linePath(record(topojson.mesh(TOPO, TOPO.objects.c, (a, b) => a !== b && a.id !== b.id && (a.id === t || b.id === t)))));
+  const coastPath = t => cCache[t] || (cCache[t] = linePath(record(topojson.mesh(TOPO, TOPO.objects.c, (a, b) => a === b && a.id === t))));
   function mkPath(rings, tol) {
     const p = new Path2D(); const t2 = tol * tol;
     for (const r of rings) {
@@ -1077,6 +1133,26 @@ table.mil tr.zero td { color: var(--dim); }
     if (S) {
       c.strokeStyle = 'rgba(255,214,120,.55)'; c.lineWidth = 1.1 * px;
       for (const f of FEAT) if (shown[f.id] === S.P && vis(f)) c.stroke(featPath(f, li));
+    }
+    // fortifications: stone walls along land borders, coastal batteries, air-defence domes
+    if (S && S.fort) {
+      for (const k in S.fort) {
+        const t = +k, f = S.fort[t]; if (!f || !(f.w || f.a || f.c)) continue;
+        const b = MAIN[t].b; if (b[1][0] < vx0 - 50 || b[0][0] > vx1 + 50 || b[1][1] < vy0 - 50 || b[0][1] > vy1 + 50) continue;
+        if (f.w) {
+          const bp = borderPath(t);
+          c.strokeStyle = 'rgba(15,14,12,.75)'; c.lineWidth = (2.6 + f.w * 0.9) * px; c.stroke(bp);
+          c.setLineDash([2.4 * px, 1.4 * px]); c.strokeStyle = '#d2c8ad'; c.lineWidth = (1.3 + f.w * 0.5) * px; c.stroke(bp); c.setLineDash([]);
+        }
+        if (f.c) { c.setLineDash([1 * px, 2.2 * px]); c.strokeStyle = 'rgba(140,215,255,.9)'; c.lineWidth = (1.2 + f.c * 0.5) * px; c.stroke(coastPath(t)); c.setLineDash([]); }
+        if (f.a) {
+          const [x, y] = MAIN[t].c, r0 = 5 * px, yy = y + 11 * px;
+          c.fillStyle = 'rgba(8,16,24,.8)'; c.beginPath(); c.arc(x, yy, r0 + 2 * px, Math.PI, 0); c.closePath(); c.fill();
+          c.strokeStyle = '#9fe2ff'; c.lineWidth = 1.3 * px;
+          for (let j = 0; j < f.a; j++) { c.beginPath(); c.arc(x, yy, r0 - j * 1.6 * px, Math.PI, 0); c.stroke(); }
+          c.beginPath(); c.moveTo(x - r0 - 2 * px, yy); c.lineTo(x + r0 + 2 * px, yy); c.stroke();
+        }
+      }
     }
     // targets
     if (S && !busy) {
@@ -1509,6 +1585,8 @@ table.mil tr.zero td { color: var(--dim); }
     chips.push(`<span class="chip">Rang #${rankOf[i]} weltweit</span>`);
     if (c.mil.nuk > 0) chips.push(`<span class="chip nuke">Atommacht</span>`);
     if (c.ter > 1.15) chips.push(`<span class="chip">Schweres Gelände</span>`);
+    const FF = fortOf(i);
+    ['w', 'a', 'c'].forEach(k => { if (FF[k]) chips.push(`<span class="chip fort">${FORT[k].short} ${ROMAN[FF[k]]}</span>`); });
     const terPct = Math.round((c.ter - 1) * 100);
     let h = `<button class="p-close" type="button" aria-label="Schließen" data-act="close">×</button>
       <div class="eyebrow">Länderdossier</div>
@@ -1547,6 +1625,18 @@ table.mil tr.zero td { color: var(--dim); }
         <div><div class="k">Militärbudget</div><div class="v">${money(c.bud)}</div></div>
         <div><div class="k">Gelände-Bonus</div><div class="v">${terPct > 0 ? '+' + terPct + ' % Verteid.' : 'keiner'}</div></div>
       </div>`;
+    if (mine) {
+      h += `<h3 class="sec">Verteidigung <small>Bau dauert 1 Runde</small></h3><div class="forts">`;
+      ['w', 'a', 'c'].forEach(k => {
+        if (k === 'c' && !COAST[i]) return;
+        const lvl = FF[k], max = FORT[k].max, queued = S.fortQ.some(q2 => q2.t === i && q2.k === k);
+        const cost = fortCost(i, k);
+        h += `<div class="frow"><div class="fname">${FORT[k].n}<div class="note">${FORT[k].desc}</div></div>
+          <div class="flvl">${Array.from({ length: max }, (_, j) => `<i class="${j < lvl ? 'on' : ''}${queued && j === lvl ? ' q' : ''}"></i>`).join('')}</div>
+          <button class="btn sm" type="button" data-act="fort" data-k="${k}" ${lvl >= max || queued || S.money < cost || S.over ? 'disabled' : ''}>${lvl >= max ? 'Maximum' : queued ? 'Im Bau…' : `Ausbauen · ${priceStr(cost)}`}</button></div>`;
+      });
+      h += `</div>`;
+    }
     const occNote = occupied || terrOf(o).length > 1 ? `Gesamtkräfte von ${esc(ownerName(o))}` : (S.turn > 0 ? 'aktueller Stand' : 'Stand 2024/25');
     h += `<h3 class="sec">Streitkräfte <small>${occNote}</small></h3>${powerBox(pool.m, pool.t)}
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:10px 0 4px"><span>Technologiestand</span><span>${Math.round(pool.t * 100)}/100</span></div>
@@ -1565,6 +1655,13 @@ table.mil tr.zero td { color: var(--dim); }
     else if (a === 'tac') { const r = route(S.P, sel); startTactical(sel, r.type, quickCommit('invade', r.type)); }
     else if (a === 'invade') openAttack(sel, 'invade');
     else if (a === 'air') openAttack(sel, 'air');
+    else if (a === 'fort') {
+      const k = b.dataset.k, t = sel, cost = fortCost(t, k);
+      if (S.money < cost || S.owner[t] !== S.P || S.fortQ.some(q2 => q2.t === t && q2.k === k) || fortOf(t)[k] >= FORT[k].max) return;
+      S.money -= cost; S.fortQ.push({ t, k });
+      ticker('me', `${FORT[k].short} ${ROMAN[fortOf(t)[k] + 1]} in ${C[t].n} wird gebaut – fertig nächste Runde.`);
+      save(); renderHud(); renderPanel(); requestDraw();
+    }
   });
 
   // launch an attack: resolve instantly, animate, then report
@@ -1808,7 +1905,7 @@ table.mil tr.zero td { color: var(--dim); }
     renderPowers();
     const sv = loadSave();
     $('#resumeBox').innerHTML = sv ? `<button class="btn primary" type="button" id="resume">Spiel fortsetzen: ${esc(C[sv.P].n)} · ${dateStr(sv.turn)}</button><span class="note">oder unten ein neues Land wählen</span>` : '';
-    if (sv) $('#resume').addEventListener('click', () => { S = sv; terrCache = null; shown = S.owner.slice(); startEl.hidden = true; afterStart(); });
+    if (sv) $('#resume').addEventListener('click', () => { S = sv; if (!S.fort) initForts(); if (!S.fortQ) S.fortQ = []; terrCache = null; shown = S.owner.slice(); startEl.hidden = true; afterStart(); });
     renderList();
   }
   function renderList() {
@@ -2137,6 +2234,24 @@ table.mil tr.zero td { color: var(--dim); }
       b.push(P(Cyl(0.35, 0.35, 0.05, 12), 'accent', 3.0, 0.12, -1.7), P(Cyl(0.35, 0.35, 0.05, 12), 'accent', -3.0, 0.12, -1.7));
       return merge(b);
     }
+    function bunkerGeo() {
+      return merge([
+        P(Box(5.2, 2.2, 4.2), 'light', 0, 1.1, 0), P(Box(5.8, 0.55, 4.8), 'light', 0, 2.45, 0),
+        P(Box(3.4, 0.38, 0.3), 'black', 0, 1.55, 2.12), P(Box(0.25, 0.9, 0.25), 'metal', 1.7, 3.0, -1.2),
+        P(Box(6.2, 0.7, 1.1), 'gear', 0, 0.35, 2.9), P(Box(1.1, 0.7, 4.6), 'gear', 3.3, 0.35, 0.4), P(Box(1.1, 0.7, 4.6), 'gear', -3.3, 0.35, 0.4),
+        P(Box(1.6, 0.04, 1.2), 'accent', -1.4, 2.74, -0.8),
+      ]);
+    }
+    function aaGeo() {
+      const base = merge([P(Cyl(1.7, 1.9, 0.6, 12), 'gear', 0, 0.3, 0), P(new T3.TorusGeometry(2.7, 0.5, 6, 16), 'gear', 0, 0.45, 0, H, 0, 0)]);
+      const tur = merge([
+        P(Box(1.7, 1.1, 1.9), 'camo', 0, 0.55, 0), P(Box(0.5, 0.5, 0.6), 'glass', 0, 0.8, 0.9),
+        P(Cyl(0.09, 0.09, 3.4, 6), 'metal', 0.5, 1.7, 1.25, H - 0.85, 0, 0), P(Cyl(0.09, 0.09, 3.4, 6), 'metal', -0.5, 1.7, 1.25, H - 0.85, 0, 0),
+        P(Box(0.2, 0.04, 0.6), 'accent', 0, 1.12, -0.6),
+      ]);
+      const radar = merge([P(Cyl(0.06, 0.06, 0.8, 6), 'metal', 0, 0.4, 0), P(Box(1.5, 0.7, 0.1), 'light', 0, 0.9, 0, -0.3, 0, 0)]);
+      return { base, tur, radar };
+    }
     function boatGeo() {
       return merge([P(Box(4.5, 1.2, 9), 'camo', 0, 0.3, 0), P(Box(4.5, 1.6, 0.25), 'camo', 0, 0.8, 4.4, -0.2, 0, 0), P(Box(1.4, 1.2, 1.5), 'camo', 0, 1.4, -3.6), P(Box(1.2, 0.4, 0.2), 'glass', 0, 1.7, -2.85)]);
     }
@@ -2146,12 +2261,13 @@ table.mil tr.zero td { color: var(--dim); }
     function makeKit(look) {
       const mat = new T3.MeshLambertMaterial({ map: atlas(look, 'inf') });
       const vmat = new T3.MeshLambertMaterial({ map: atlas(look, 'veh') });
-      return { look, mat, vmat, sol: soldierGeo(), tank: tankGeo(look.tank, false), art: tankGeo(look.tank === 'west' ? 'west' : 'east', true), heli: heliGeo(look.heli), jet: jetGeo(look.jet), boat: boatGeo() };
+      return { look, mat, vmat, sol: soldierGeo(), tank: tankGeo(look.tank, false), art: tankGeo(look.tank === 'west' ? 'west' : 'east', true), heli: heliGeo(look.heli), jet: jetGeo(look.jet), boat: boatGeo(), bunker: bunkerGeo(), aa: aaGeo() };
     }
+    const kitGeos = k => [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat, k.bunker, k.aa.base, k.aa.tur, k.aa.radar];
     function disposeKit(k) {
       if (!k) return;
       [k.mat, k.vmat].forEach(m => { m.map.dispose(); m.dispose(); });
-      [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat].forEach(g => g.dispose());
+      kitGeos(k).forEach(g => g.dispose());
     }
 
     // ---------- scene ----------
@@ -2263,6 +2379,27 @@ table.mil tr.zero td { color: var(--dim); }
         const x = wx(HOLD_X) + 2 + (rnd() - 0.5) * 2, bag = new T3.Mesh(bagGeo, bagMat);
         bag.position.set(x, height(x, z) + 0.5, z + (rnd() - 0.5) * 2); bag.rotation.y = H + (rnd() - 0.5) * 0.4; bag.castShadow = !lowFx; world.add(bag);
       }
+      // border fortifications: rows of concrete dragon's teeth, T-walls from level 2
+      const fw = (opts.fort && opts.fort.w) || 0;
+      if (fw) {
+        const conc = new T3.MeshLambertMaterial({ color: 0xb9b5aa });
+        const toothGeo = new T3.ConeGeometry(0.9, 1.6, 4);
+        const nT = Math.ceil(58 / 2.2) * fw, teeth = new T3.InstancedMesh(toothGeo, conc, nT); let ti = 0;
+        teeth.castShadow = !lowFx;
+        for (let row = 0; row < fw; row++) for (let z = -29; z <= 29 && ti < nT; z += 2.2) {
+          const x = wx(HOLD_X) - 5 - row * 2.6 + (row % 2) * 0.6;
+          m.makeRotationY(Math.PI / 4).setPosition(x, height(x, z) + 0.7, z + (row % 2) * 1.1); teeth.setMatrixAt(ti++, m);
+        }
+        teeth.count = ti; world.add(teeth);
+        if (fw >= 2) {
+          const wallGeo = new T3.BoxGeometry(0.7, 3.2, 3.6);
+          for (let z = -27; z <= 27; z += 4.2) {
+            if (rnd() < 0.18) continue; // breaches
+            const x = wx(HOLD_X) + 6.5, w2 = new T3.Mesh(wallGeo, conc);
+            w2.position.set(x, height(x, z) + 1.5, z); w2.castShadow = !lowFx; w2.receiveShadow = true; world.add(w2);
+          }
+        }
+      }
       // kits per side
       kits[0] = makeKit(opts.lookA); kits[1] = makeKit(opts.lookD);
       cam.yaw = -0.62; cam.pitch = 0.5; cam.tx = -20; cam.tz = 0; cam.dist = 66; cam.auto = true;
@@ -2283,7 +2420,7 @@ table.mil tr.zero td { color: var(--dim); }
       disposeKit(kits[0]); disposeKit(kits[1]); kits[0] = kits[1] = null;
       water = null; ground = null;
     }
-    const isKitGeo = g => kits.some(k => k && [k.sol.body, k.sol.leg, k.tank.hull, k.tank.tur, k.art.hull, k.art.tur, k.heli.body, k.heli.rotor, k.heli.tail, k.jet, k.boat].includes(g));
+    const isKitGeo = g => kits.some(k => k && kitGeos(k).includes(g));
 
     // ---------- units ----------
     const mesh = (geo, mat, shadow = true) => { const o = new T3.Mesh(geo, mat); o.castShadow = shadow && !lowFx; return o; };
@@ -2305,6 +2442,12 @@ table.mil tr.zero td { color: var(--dim); }
         const geo = k[u.ty];
         v.hull = mesh(geo.hull, k.vmat); v.tur = mesh(geo.tur, k.vmat); v.tur.position.y = 1.45;
         g.add(v.hull, v.tur); v.tur.rotation.y = 0;
+      } else if (u.ty === 'bunker') {
+        v.body = mesh(k.bunker, k.vmat); g.add(v.body); v.body.receiveShadow = true;
+      } else if (u.ty === 'aa') {
+        v.body = mesh(k.aa.base, k.vmat); v.tur = mesh(k.aa.tur, k.vmat); v.tur.position.y = 0.7;
+        v.radar = mesh(k.aa.radar, k.vmat, false); v.radar.position.set(0, 1.2, -0.7); v.tur.add(v.radar);
+        g.add(v.body, v.tur);
       } else if (u.ty === 'heli') {
         v.body = mesh(k.heli.body, k.vmat); v.rot = mesh(k.heli.rotor, k.vmat, false); v.rot.position.y = k.heli.mastY;
         g.add(v.body, v.rot);
@@ -2333,6 +2476,12 @@ table.mil tr.zero td { color: var(--dim); }
       if (u.ty === 'inf') {
         v.sol.forEach(s => { if (s.userData.alive) fall(s); });
         dying.push({ g: v.g, t: 0, life: 4, kind: 'inf' });
+      } else if (u.ty === 'bunker' || u.ty === 'aa') {
+        v.g.traverse(o => { if (o.isMesh) o.material = burnt; });
+        if (v.tur) { v.tur.rotation.z = 0.5; v.tur.position.y += 0.4; }
+        v.g.scale.y = 0.75;
+        dying.push({ g: v.g, t: 0, life: 18, kind: 'wreck', smokeT: 0 });
+        burst(P0.x, P0.y + 1.5, P0.z, 1.6);
       } else if (u.ty === 'tank' || u.ty === 'art') {
         v.g.traverse(o => { if (o.isMesh) o.material = burnt; });
         v.tur.rotation.z = 0.15; v.tur.position.y += 0.3; v.tur.rotation.y += (Math.random() - 0.5) * 0.6;
@@ -2418,6 +2567,12 @@ table.mil tr.zero td { color: var(--dim); }
           v.tur.rotation.y = angLerp(v.tur.rotation.y, tw, Math.min(1, dt * 3));
           v.g.position.y += Math.sin(time3 * 14 + u.ph) * 0.03 * v.moving;
           if (firing) { muzzleT(v); v.tur.position.z = -0.25; } else v.tur.position.z = lerp(v.tur.position.z, 0, dt * 6);
+        } else if (u.ty === 'bunker') {
+          if (firing) muzzle(v.g, (Math.random() - 0.5) * 2.4, 1.55, 2.4, 1.1);
+        } else if (u.ty === 'aa') {
+          v.radar.rotation.y += dt * 3;
+          if (u.aimX != null) v.tur.rotation.y = angLerp(v.tur.rotation.y, Math.atan2(u.aimX - u.x, u.aimY - u.y) - v.hd, Math.min(1, dt * 4));
+          if (firing) { muzzle(v.tur, 0.5, 2.9, 2.5, 1.3); muzzle(v.tur, -0.5, 2.9, 2.5, 1.3); }
         } else if (u.ty === 'heli') {
           v.rot.rotation.y += dt * 28; if (v.rot2) v.rot2.rotation.y -= dt * 28; if (v.tail) v.tail.rotation.x += dt * 40;
           v.g.position.y += Math.sin(time3 * 2 + u.ph) * 0.4;
@@ -2433,7 +2588,7 @@ table.mil tr.zero td { color: var(--dim); }
       for (const s of B.shots) {
         if (s.t > 0.1 || s.r3) continue; s.r3 = true;
         const a = new T3.Vector3(wx(s.x0), 0, wz(s.y0)), b = new T3.Vector3(wx(s.x1), 0, wz(s.y1));
-        a.y = height(a.x, a.z) + (s.air ? 10 : 1.8); b.y = height(b.x, b.z) + 1.2;
+        a.y = height(a.x, a.z) + (s.air ? 10 : s.aa ? 3 : 1.8); b.y = height(b.x, b.z) + (s.tl === 2 ? 30 : s.tl === 1 ? 8 : 1.2);
         const tr = new T3.Mesh(tracerGeo, tracerMat[s.side]);
         const len = a.distanceTo(b); tr.position.copy(a); tr.lookAt(b);
         const seg = Math.min(4, len * 0.35);
@@ -2545,11 +2700,13 @@ table.mil tr.zero td { color: var(--dim); }
   //  TACTICAL BATTLE – send squads, fight to the last unit
   // =====================================================================
   const TU = {
-    inf:  { n: 'Infanterie',   hint: 'stark gg. Artillerie, mit Fliegerfaust', keys: ['sol'],         hp: 60,  dmg: 7,  rof: 0.9, range: 80,  speed: 26, layer: 0, vs: { inf: 1, tank: 0.3, art: 1.3, heli: 0.55, jet: 0.3 } },
-    tank: { n: 'Panzer',       hint: 'stark gg. Infanterie & Artillerie',      keys: ['tank', 'afv'], hp: 240, dmg: 30, rof: 1.7, range: 125, speed: 33, layer: 0, vs: { inf: 1.3, tank: 1, art: 1.5, heli: 0.15, jet: 0.05 } },
-    art:  { n: 'Artillerie',   hint: 'große Reichweite, Flächenschaden',       keys: ['art', 'mlrs'], hp: 70,  dmg: 34, rof: 2.8, range: 340, minR: 70, speed: 15, layer: 0, splash: 32, vs: { inf: 1.2, tank: 0.8, art: 1, heli: 0, jet: 0 } },
-    heli: { n: 'Hubschrauber', hint: 'Panzerjäger, verwundbar durch Jets',      keys: ['heli'],        hp: 130, dmg: 24, rof: 1.1, range: 150, speed: 52, layer: 1, vs: { inf: 1, tank: 1.8, art: 1.5, heli: 0.8, jet: 0.25 } },
-    jet:  { n: 'Kampfjets',    hint: 'Luftüberlegenheit, schnelle Angriffe',    keys: ['ftr', 'bmb'],  hp: 120, dmg: 30, rof: 1.3, range: 185, speed: 95, layer: 2, vs: { inf: 0.35, tank: 0.55, art: 0.7, heli: 1.5, jet: 1.2 } },
+    inf:  { n: 'Infanterie',   hint: 'stark gg. Artillerie, mit Fliegerfaust', keys: ['sol'],         hp: 60,  dmg: 7,  rof: 0.9, range: 80,  speed: 26, layer: 0, vs: { inf: 1, tank: 0.3, art: 1.3, heli: 0.55, jet: 0.3, bunker: 0.2, aa: 0.7 } },
+    tank: { n: 'Panzer',       hint: 'stark gg. Infanterie & Artillerie',      keys: ['tank', 'afv'], hp: 240, dmg: 30, rof: 1.7, range: 125, speed: 33, layer: 0, vs: { inf: 1.3, tank: 1, art: 1.5, heli: 0.15, jet: 0.05, bunker: 1.0, aa: 1.3 } },
+    art:  { n: 'Artillerie',   hint: 'große Reichweite, Flächenschaden',       keys: ['art', 'mlrs'], hp: 70,  dmg: 34, rof: 2.8, range: 340, minR: 70, speed: 15, layer: 0, splash: 32, vs: { inf: 1.2, tank: 0.8, art: 1, heli: 0, jet: 0, bunker: 1.3, aa: 1.3 } },
+    heli: { n: 'Hubschrauber', hint: 'Panzerjäger, verwundbar durch Jets',      keys: ['heli'],        hp: 130, dmg: 24, rof: 1.1, range: 150, speed: 52, layer: 1, vs: { inf: 1, tank: 1.8, art: 1.5, heli: 0.8, jet: 0.25, bunker: 0.7, aa: 1.0 } },
+    jet:  { n: 'Kampfjets',    hint: 'Luftüberlegenheit, schnelle Angriffe',    keys: ['ftr', 'bmb'],  hp: 120, dmg: 30, rof: 1.3, range: 185, speed: 95, layer: 2, vs: { inf: 0.35, tank: 0.55, art: 0.7, heli: 1.5, jet: 1.2, bunker: 0.8, aa: 1.0 } },
+    bunker: { n: 'Bunker',        hint: 'Befestigung', keys: [], fort: true, hp: 650, dmg: 20, rof: 0.7, range: 155, speed: 0, layer: 0, vs: { inf: 1.6, tank: 0.6, art: 0.8, heli: 0.35, jet: 0 } },
+    aa:     { n: 'Flak-Stellung', hint: 'Befestigung', keys: [], fort: true, hp: 230, dmg: 26, rof: 0.45, range: 290, speed: 0, layer: 0, vs: { heli: 2.0, jet: 1.8 } },
   };
   const TT = Object.keys(TU);
   const FW = 1000, FH = 560, HOLD_X = 610, TIME_LIMIT = 150;
@@ -2566,7 +2723,7 @@ table.mil tr.zero td { color: var(--dim); }
       jet: ((m.ftr || 0) * U.ftr.w + (m.bmb || 0) * U.bmb.w) * qq * 0.3,
     };
   }
-  const z5 = () => ({ inf: 0, tank: 0, art: 0, heli: 0, jet: 0 });
+  const z5 = () => ({ inf: 0, tank: 0, art: 0, heli: 0, jet: 0, bunker: 0, aa: 0 });
 
   function startTactical(t, rtype, commit) {
     if (BUYABLE.every(k => !commit[k])) { ticker('bad', 'Keine einsatzbereiten Einheiten – nächste Runde abwarten oder nachkaufen.'); return; }
@@ -2586,6 +2743,8 @@ table.mil tr.zero td { color: var(--dim); }
     const unit = Math.max(tot(rawA), tot(rawD)) / 46 || 1;
     const mk = raw => { const o = z5(); TT.forEach(k => { const v = raw[k] / unit; o[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); }); return o; };
     const resA = mk(rawA), resD = mk(rawD);
+    const FT = fortOf(t);
+    resD.bunker = FT.w * 2; resD.aa = FT.a * 2;
     if (!TT.some(k => resA[k])) resA.inf = 1;
     if (!TT.some(k => resD[k])) resD.inf = 1;
     const ter = c.ter;
@@ -2605,11 +2764,12 @@ table.mil tr.zero td { color: var(--dim); }
     const lookA = R3.lookFor(S.P, CFG.color), lookD = R3.lookFor(def, '#d8402f');
     btEl.hidden = false;
     $('#btResult').hidden = true;
-    const ok3d = R3.setup({ ter, sea: rtype !== 'land', arid: R3.lookFor(t, '#fff').arid, lookA, lookD, seed: t + 1 });
+    TB.aaLvl = FT.a;
+    const ok3d = R3.setup({ fort: FT, ter, sea: rtype !== 'land', arid: R3.lookFor(t, '#fff').arid, lookA, lookD, seed: t + 1 });
     if (!ok3d) { btEl.hidden = true; ticker('info', '3D wird von diesem Gerät nicht unterstützt – die Schlacht wird automatisch ausgetragen.'); }
     $('#btArmyA').textContent = lookA.army; $('#btArmyD').textContent = lookD.army;
     // defender is dug in: 40 % of every arm already in position
-    TT.forEach(k => { const n = Math.round(resD[k] * 0.4); for (let i = 0; i < n; i++) spawn(1, k, true); });
+    TT.forEach(k => { const n = TU[k].fort ? resD[k] : Math.round(resD[k] * 0.4); for (let i = 0; i < n; i++) spawn(1, k, true); });
     $('#btTitle').textContent = `Schlacht um ${c.n}`;
     $('#btSub').textContent = `${ROUTE_TXT[rtype]}${ter > 1.15 ? ' · schweres Gelände: Verteidiger +' + Math.round((TB.hpMulD - 1) * 100) + ' % Panzerung' : ''}`;
     $('#btNameA').textContent = TB.sides[0].name; $('#btNameD').textContent = TB.sides[1].name;
@@ -2627,8 +2787,9 @@ table.mil tr.zero td { color: var(--dim); }
     s.res[ty]--;
     const hpMul = side === 1 && d.layer === 0 ? TB.hpMulD : 1;
     let x, y = d.layer === 2 ? 40 + Math.random() * 480 : 150 + Math.random() * 380;
+    if (d.fort) { const n = TB.sides[1].init[ty], i = n - s.res[ty] - 1; y = 170 + (i + 0.5) / n * 340 + (Math.random() - 0.5) * 30; }
     if (side === 0) x = TB.sea && d.layer === 0 ? 85 + Math.random() * 20 : 20 + Math.random() * 20;
-    else x = entrenched ? (d.layer === 0 ? 700 + Math.random() * 250 : 850 + Math.random() * 120) : 975 + Math.random() * 15;
+    else x = ty === 'bunker' ? 640 + Math.random() * 30 : ty === 'aa' ? 830 + Math.random() * 90 : entrenched ? (d.layer === 0 ? 700 + Math.random() * 250 : 850 + Math.random() * 120) : 975 + Math.random() * 15;
     const unit = { side, ty, x, y, hp: d.hp * hpMul, max: d.hp * hpMul, cd: Math.random() * d.rof, dir: side ? -1 : 1, ent: entrenched, ph: Math.random() * 6, aimX: null, aimY: null };
     TB.units.push(unit);
     R3.add(unit);
@@ -2690,13 +2851,13 @@ table.mil tr.zero td { color: var(--dim); }
       }
       u.y = clamp(u.y, d.layer === 2 ? 30 : 140, 540);
       // keep formation: ground units of one side don't stack on top of each other
-      if (d.layer === 0) for (const o of B.units) {
+      if (d.layer === 0 && d.speed > 0) for (const o of B.units) {
         if (o === u || o.side !== u.side || TU[o.ty].layer !== 0) continue;
         const ddx = u.x - o.x, ddy = u.y - o.y, dd = ddx * ddx + ddy * ddy;
         if (dd < 400 && dd > 0.01) { const f = (20 - Math.sqrt(dd)) * dt * 2.2; u.y += ddy / Math.sqrt(dd) * f; u.x += ddx / Math.sqrt(dd) * f * 0.5; }
       }
       // air defence: aircraft bleed over enemy-held ground
-      if (d.layer === 2 && (u.side === 0 ? u.x > HOLD_X : u.x < 390)) u.hp -= 2.6 * dt;
+      if (d.layer === 2 && (u.side === 0 ? u.x > HOLD_X : u.x < 390)) u.hp -= (2.6 + (u.side === 0 ? (B.aaLvl || 0) * 1.6 : 0)) * dt;
     }
     // shells
     for (let i = B.shells.length - 1; i >= 0; i--) {
@@ -2742,7 +2903,7 @@ table.mil tr.zero td { color: var(--dim); }
     const m = d.vs[e.ty];
     const dmg = d.dmg * m * (0.8 + Math.random() * 0.4);
     if (d.splash) TB.shells.push({ x0: u.x, y0: u.y, x1: e.x + (Math.random() - 0.5) * 24, y1: e.y + (Math.random() - 0.5) * 24, t: 0, dur: 0.75, side: u.side, dmg, r: d.splash });
-    else { e.hp -= dmg; TB.shots.push({ x0: u.x, y0: u.y, x1: e.x, y1: e.y, t: 0, side: u.side, air: d.layer > 0 }); if (Math.random() < 0.18) TB.booms.push({ x: e.x, y: e.y, t: 0, dur: 0.3, s: 0.25 }); }
+    else { e.hp -= dmg; TB.shots.push({ x0: u.x, y0: u.y, x1: e.x, y1: e.y, t: 0, side: u.side, air: d.layer > 0, aa: u.ty === 'aa', tl: TU[e.ty].layer }); if (Math.random() < 0.18) TB.booms.push({ x: e.x, y: e.y, t: 0, dur: 0.3, s: 0.25 }); }
     u.cd = d.rof * (0.85 + Math.random() * 0.3);
     u.fireT = TB.time;
   }

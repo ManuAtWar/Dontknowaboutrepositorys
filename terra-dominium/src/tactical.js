@@ -2,11 +2,13 @@
   //  TACTICAL BATTLE – send squads, fight to the last unit
   // =====================================================================
   const TU = {
-    inf:  { n: 'Infanterie',   hint: 'stark gg. Artillerie, mit Fliegerfaust', keys: ['sol'],         hp: 60,  dmg: 7,  rof: 0.9, range: 80,  speed: 26, layer: 0, vs: { inf: 1, tank: 0.3, art: 1.3, heli: 0.55, jet: 0.3 } },
-    tank: { n: 'Panzer',       hint: 'stark gg. Infanterie & Artillerie',      keys: ['tank', 'afv'], hp: 240, dmg: 30, rof: 1.7, range: 125, speed: 33, layer: 0, vs: { inf: 1.3, tank: 1, art: 1.5, heli: 0.15, jet: 0.05 } },
-    art:  { n: 'Artillerie',   hint: 'große Reichweite, Flächenschaden',       keys: ['art', 'mlrs'], hp: 70,  dmg: 34, rof: 2.8, range: 340, minR: 70, speed: 15, layer: 0, splash: 32, vs: { inf: 1.2, tank: 0.8, art: 1, heli: 0, jet: 0 } },
-    heli: { n: 'Hubschrauber', hint: 'Panzerjäger, verwundbar durch Jets',      keys: ['heli'],        hp: 130, dmg: 24, rof: 1.1, range: 150, speed: 52, layer: 1, vs: { inf: 1, tank: 1.8, art: 1.5, heli: 0.8, jet: 0.25 } },
-    jet:  { n: 'Kampfjets',    hint: 'Luftüberlegenheit, schnelle Angriffe',    keys: ['ftr', 'bmb'],  hp: 120, dmg: 30, rof: 1.3, range: 185, speed: 95, layer: 2, vs: { inf: 0.35, tank: 0.55, art: 0.7, heli: 1.5, jet: 1.2 } },
+    inf:  { n: 'Infanterie',   hint: 'stark gg. Artillerie, mit Fliegerfaust', keys: ['sol'],         hp: 60,  dmg: 7,  rof: 0.9, range: 80,  speed: 26, layer: 0, vs: { inf: 1, tank: 0.3, art: 1.3, heli: 0.55, jet: 0.3, bunker: 0.2, aa: 0.7 } },
+    tank: { n: 'Panzer',       hint: 'stark gg. Infanterie & Artillerie',      keys: ['tank', 'afv'], hp: 240, dmg: 30, rof: 1.7, range: 125, speed: 33, layer: 0, vs: { inf: 1.3, tank: 1, art: 1.5, heli: 0.15, jet: 0.05, bunker: 1.0, aa: 1.3 } },
+    art:  { n: 'Artillerie',   hint: 'große Reichweite, Flächenschaden',       keys: ['art', 'mlrs'], hp: 70,  dmg: 34, rof: 2.8, range: 340, minR: 70, speed: 15, layer: 0, splash: 32, vs: { inf: 1.2, tank: 0.8, art: 1, heli: 0, jet: 0, bunker: 1.3, aa: 1.3 } },
+    heli: { n: 'Hubschrauber', hint: 'Panzerjäger, verwundbar durch Jets',      keys: ['heli'],        hp: 130, dmg: 24, rof: 1.1, range: 150, speed: 52, layer: 1, vs: { inf: 1, tank: 1.8, art: 1.5, heli: 0.8, jet: 0.25, bunker: 0.7, aa: 1.0 } },
+    jet:  { n: 'Kampfjets',    hint: 'Luftüberlegenheit, schnelle Angriffe',    keys: ['ftr', 'bmb'],  hp: 120, dmg: 30, rof: 1.3, range: 185, speed: 95, layer: 2, vs: { inf: 0.35, tank: 0.55, art: 0.7, heli: 1.5, jet: 1.2, bunker: 0.8, aa: 1.0 } },
+    bunker: { n: 'Bunker',        hint: 'Befestigung', keys: [], fort: true, hp: 650, dmg: 20, rof: 0.7, range: 155, speed: 0, layer: 0, vs: { inf: 1.6, tank: 0.6, art: 0.8, heli: 0.35, jet: 0 } },
+    aa:     { n: 'Flak-Stellung', hint: 'Befestigung', keys: [], fort: true, hp: 230, dmg: 26, rof: 0.45, range: 290, speed: 0, layer: 0, vs: { heli: 2.0, jet: 1.8 } },
   };
   const TT = Object.keys(TU);
   const FW = 1000, FH = 560, HOLD_X = 610, TIME_LIMIT = 150;
@@ -23,7 +25,7 @@
       jet: ((m.ftr || 0) * U.ftr.w + (m.bmb || 0) * U.bmb.w) * qq * 0.3,
     };
   }
-  const z5 = () => ({ inf: 0, tank: 0, art: 0, heli: 0, jet: 0 });
+  const z5 = () => ({ inf: 0, tank: 0, art: 0, heli: 0, jet: 0, bunker: 0, aa: 0 });
 
   function startTactical(t, rtype, commit) {
     if (BUYABLE.every(k => !commit[k])) { ticker('bad', 'Keine einsatzbereiten Einheiten – nächste Runde abwarten oder nachkaufen.'); return; }
@@ -43,6 +45,8 @@
     const unit = Math.max(tot(rawA), tot(rawD)) / 46 || 1;
     const mk = raw => { const o = z5(); TT.forEach(k => { const v = raw[k] / unit; o[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); }); return o; };
     const resA = mk(rawA), resD = mk(rawD);
+    const FT = fortOf(t);
+    resD.bunker = FT.w * 2; resD.aa = FT.a * 2;
     if (!TT.some(k => resA[k])) resA.inf = 1;
     if (!TT.some(k => resD[k])) resD.inf = 1;
     const ter = c.ter;
@@ -62,11 +66,12 @@
     const lookA = R3.lookFor(S.P, CFG.color), lookD = R3.lookFor(def, '#d8402f');
     btEl.hidden = false;
     $('#btResult').hidden = true;
-    const ok3d = R3.setup({ ter, sea: rtype !== 'land', arid: R3.lookFor(t, '#fff').arid, lookA, lookD, seed: t + 1 });
+    TB.aaLvl = FT.a;
+    const ok3d = R3.setup({ fort: FT, ter, sea: rtype !== 'land', arid: R3.lookFor(t, '#fff').arid, lookA, lookD, seed: t + 1 });
     if (!ok3d) { btEl.hidden = true; ticker('info', '3D wird von diesem Gerät nicht unterstützt – die Schlacht wird automatisch ausgetragen.'); }
     $('#btArmyA').textContent = lookA.army; $('#btArmyD').textContent = lookD.army;
     // defender is dug in: 40 % of every arm already in position
-    TT.forEach(k => { const n = Math.round(resD[k] * 0.4); for (let i = 0; i < n; i++) spawn(1, k, true); });
+    TT.forEach(k => { const n = TU[k].fort ? resD[k] : Math.round(resD[k] * 0.4); for (let i = 0; i < n; i++) spawn(1, k, true); });
     $('#btTitle').textContent = `Schlacht um ${c.n}`;
     $('#btSub').textContent = `${ROUTE_TXT[rtype]}${ter > 1.15 ? ' · schweres Gelände: Verteidiger +' + Math.round((TB.hpMulD - 1) * 100) + ' % Panzerung' : ''}`;
     $('#btNameA').textContent = TB.sides[0].name; $('#btNameD').textContent = TB.sides[1].name;
@@ -84,8 +89,9 @@
     s.res[ty]--;
     const hpMul = side === 1 && d.layer === 0 ? TB.hpMulD : 1;
     let x, y = d.layer === 2 ? 40 + Math.random() * 480 : 150 + Math.random() * 380;
+    if (d.fort) { const n = TB.sides[1].init[ty], i = n - s.res[ty] - 1; y = 170 + (i + 0.5) / n * 340 + (Math.random() - 0.5) * 30; }
     if (side === 0) x = TB.sea && d.layer === 0 ? 85 + Math.random() * 20 : 20 + Math.random() * 20;
-    else x = entrenched ? (d.layer === 0 ? 700 + Math.random() * 250 : 850 + Math.random() * 120) : 975 + Math.random() * 15;
+    else x = ty === 'bunker' ? 640 + Math.random() * 30 : ty === 'aa' ? 830 + Math.random() * 90 : entrenched ? (d.layer === 0 ? 700 + Math.random() * 250 : 850 + Math.random() * 120) : 975 + Math.random() * 15;
     const unit = { side, ty, x, y, hp: d.hp * hpMul, max: d.hp * hpMul, cd: Math.random() * d.rof, dir: side ? -1 : 1, ent: entrenched, ph: Math.random() * 6, aimX: null, aimY: null };
     TB.units.push(unit);
     R3.add(unit);
@@ -147,13 +153,13 @@
       }
       u.y = clamp(u.y, d.layer === 2 ? 30 : 140, 540);
       // keep formation: ground units of one side don't stack on top of each other
-      if (d.layer === 0) for (const o of B.units) {
+      if (d.layer === 0 && d.speed > 0) for (const o of B.units) {
         if (o === u || o.side !== u.side || TU[o.ty].layer !== 0) continue;
         const ddx = u.x - o.x, ddy = u.y - o.y, dd = ddx * ddx + ddy * ddy;
         if (dd < 400 && dd > 0.01) { const f = (20 - Math.sqrt(dd)) * dt * 2.2; u.y += ddy / Math.sqrt(dd) * f; u.x += ddx / Math.sqrt(dd) * f * 0.5; }
       }
       // air defence: aircraft bleed over enemy-held ground
-      if (d.layer === 2 && (u.side === 0 ? u.x > HOLD_X : u.x < 390)) u.hp -= 2.6 * dt;
+      if (d.layer === 2 && (u.side === 0 ? u.x > HOLD_X : u.x < 390)) u.hp -= (2.6 + (u.side === 0 ? (B.aaLvl || 0) * 1.6 : 0)) * dt;
     }
     // shells
     for (let i = B.shells.length - 1; i >= 0; i--) {
@@ -199,7 +205,7 @@
     const m = d.vs[e.ty];
     const dmg = d.dmg * m * (0.8 + Math.random() * 0.4);
     if (d.splash) TB.shells.push({ x0: u.x, y0: u.y, x1: e.x + (Math.random() - 0.5) * 24, y1: e.y + (Math.random() - 0.5) * 24, t: 0, dur: 0.75, side: u.side, dmg, r: d.splash });
-    else { e.hp -= dmg; TB.shots.push({ x0: u.x, y0: u.y, x1: e.x, y1: e.y, t: 0, side: u.side, air: d.layer > 0 }); if (Math.random() < 0.18) TB.booms.push({ x: e.x, y: e.y, t: 0, dur: 0.3, s: 0.25 }); }
+    else { e.hp -= dmg; TB.shots.push({ x0: u.x, y0: u.y, x1: e.x, y1: e.y, t: 0, side: u.side, air: d.layer > 0, aa: u.ty === 'aa', tl: TU[e.ty].layer }); if (Math.random() < 0.18) TB.booms.push({ x: e.x, y: e.y, t: 0, dur: 0.3, s: 0.25 }); }
     u.cd = d.rof * (0.85 + Math.random() * 0.3);
     u.fireT = TB.time;
   }
