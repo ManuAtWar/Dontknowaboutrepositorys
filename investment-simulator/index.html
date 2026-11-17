@@ -257,6 +257,27 @@
   .lex p { margin: 6px 0 0; font-size: 13px; }
   #news li.coach { color: var(--sel); }
   .bench { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  /* Szenarien */
+  body.scn .track, body:not(.scn) #scnGoals, body.scn .lp-panel, body.scn #ranksPanel { display: none !important; }
+  body.scn .learn, body.scn .lower { grid-template-columns: minmax(0, 1fr); }
+  #scnGoals { display: grid; gap: 4px; font-size: 13px; }
+  #scnGoals .sg { color: var(--muted); } #scnGoals .sg.ok { color: var(--up); }
+  #scnGoals .meter { margin: 6px 0 0; }
+  .scnlist { display: grid; gap: 10px; margin-top: 12px; }
+  .scncard { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg); }
+  .scncard .scnt { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin: 2px 0 4px; }
+  .scncard .scnt b { font: 700 17px var(--f-display); }
+  .scncard p { font-size: 13px; margin: 0 0 10px; }
+  .scncard button { width: 100%; }
+  .stars { color: var(--brass); letter-spacing: .1em; white-space: nowrap; }
+  .stars.big { font-size: 40px; text-align: center; margin: 4px 0; }
+  .goals { display: grid; gap: 4px; margin: 10px 0; font-size: 14px; }
+  .goals .ok { color: var(--up); } .goals .no { color: var(--muted); }
+  .sumgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 10px 0; }
+  .sumgrid > div { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+  .sumgrid span { display: block; font-size: 11px; color: var(--muted); }
+  .sumgrid b { font: 600 14px var(--f-mono); }
+  #scnBtn { font-weight: 600; }
   .foot { text-align: center; color: var(--faint); font-size: 12px; margin-top: 18px; }
 
   /* Overlay */
@@ -287,6 +308,7 @@
       <div class="seg" id="speeds">
         <button data-s="1" class="on">1×</button><button data-s="4">4×</button><button data-s="15">15×</button><button data-s="50">50×</button>
       </div>
+      <button id="scnBtn" class="primary">Szenarien</button>
       <button id="lexBtn" class="ghost">Lexikon</button>
       <button id="newGame" class="ghost">Neues Spiel</button>
     </div>
@@ -302,17 +324,18 @@
       <div class="bench" id="benchLine"></div>
     </div>
     <div class="rank">
-      <div class="lbl">Rang</div>
+      <div class="lbl" id="rankLbl">Rang</div>
       <div class="name" id="rankName">Sparer</div>
       <div class="sub" id="nextGoal"></div>
     </div>
     <div class="ladder">
       <div class="track" id="track"><div class="fill" id="trackFill"></div></div>
+      <div id="scnGoals"></div>
     </div>
   </section>
 
   <section class="learn">
-    <section class="panel"><div class="hd"><span class="lbl">Praxis-Missionen</span><span class="lbl" id="lpCount"></span></div><div class="bd" id="lpBox"></div></section>
+    <section class="panel lp-panel"><div class="hd"><span class="lbl">Praxis-Missionen</span><span class="lbl" id="lpCount"></span></div><div class="bd" id="lpBox"></div></section>
     <section class="panel coach"><div class="hd"><span class="lbl">Dein Coach</span><button class="link" id="lexBtn2">Lexikon öffnen</button></div><div class="bd" id="coachBox"></div></section>
   </section>
 
@@ -368,7 +391,7 @@
   </main>
 
   <section class="lower">
-    <section class="panel"><div class="hd"><span class="lbl">Meilensteine</span></div><div class="bd ranks" id="ranks"></div></section>
+    <section class="panel" id="ranksPanel"><div class="hd"><span class="lbl">Meilensteine</span></div><div class="bd ranks" id="ranks"></div></section>
     <section class="panel"><div class="hd"><span class="lbl">Erfolge</span><span class="lbl" id="achCount"></span></div><div class="bd achs" id="achs"></div></section>
   </section>
   </div>
@@ -428,7 +451,7 @@ const DEFS = [
   { id: 'HANS', name: 'Hanse Bank', cls: 'stock', sector: 'finance', p: 24, beta: 1.2, idio: .28, alpha: .01, div: .05, rateSens: 2 },
   { id: 'ALPK', name: 'Alpen Konsum', cls: 'stock', sector: 'consumer', p: 95, beta: .5, idio: .15, alpha: .03, div: .035 },
   { id: 'WOHN', name: 'Stadtwohnen', cls: 'stock', sector: 'realestate', p: 40, beta: .9, idio: .2, alpha: .01, div: .045, rateSens: -6 },
-  { id: 'WELT', name: 'Welt-ETF', cls: 'etf', comps: ['NOVA', 'QBIT', 'ORBT', 'VOLT', 'SOLR', 'PETR', 'MEDI', 'HANS', 'ALPK', 'WOHN'], p: 100, ter: .002, div: .018 },
+  { id: 'WELT', name: 'Welt-ETF', cls: 'etf', sector: 'world', p: 100, beta: 1, idio: .03, alpha: .04, ter: .002, div: .018 },
   { id: 'TECH', name: 'Tech-ETF', cls: 'etf', comps: ['NOVA', 'QBIT', 'ORBT'], p: 100, ter: .004, div: 0 },
   { id: 'DIVI', name: 'Dividenden-ETF', cls: 'etf', comps: ['PETR', 'MEDI', 'HANS', 'ALPK', 'WOHN'], p: 50, ter: .003, div: .042 },
   { id: 'EMKT', name: 'Schwellenländer-ETF', cls: 'etf', sector: 'em', p: 30, beta: 1.1, idio: .14, alpha: .03, div: .02 },
@@ -447,8 +470,8 @@ const DEFS = [
 ];
 
 const REG = {
-  normal: { name: 'Normaler Markt', mu: .07, sig: .15, next: [['bull', .004], ['bear', .0025], ['crash', .0006]] },
-  bull:   { name: 'Bullenmarkt', mu: .28, sig: .13, next: [['normal', .004], ['bubble', .0015], ['crash', .0006]] },
+  normal: { name: 'Normaler Markt', mu: .045, sig: .15, next: [['bull', .004], ['bear', .0025], ['crash', .0006]] },
+  bull:   { name: 'Bullenmarkt', mu: .22, sig: .13, next: [['normal', .004], ['bubble', .0015], ['crash', .0006]] },
   bear:   { name: 'Bärenmarkt', mu: -.22, sig: .24, next: [['normal', .005], ['crash', .0015]] },
   crash:  { name: 'Crash!', mu: -1.8, sig: .55, next: [] },
   bubble: { name: 'Spekulationsblase', mu: .7, sig: .25, next: [['crash', .012], ['bull', .004]] },
@@ -534,6 +557,10 @@ const GLOSSARY = {
   startup: ["Startup-Beteiligung", "Ein Anteil an einer jungen Firma, die nicht an der Börse ist. Kaum verkäuflich, oft Totalverlust, selten ein Vielfaches."],
   insider: ["Insiderhandel", "Handeln mit Informationen, die die Öffentlichkeit nicht kennt. Im echten Leben verboten und strafbar."],
   abgeltungsteuer: ["Abgeltungsteuer", "In Deutschland 25 % Steuer auf Kursgewinne, Dividenden und Zinsen, plus Solidaritätszuschlag und gegebenenfalls Kirchensteuer. 1.000 € pro Person und Jahr bleiben steuerfrei (Sparerpauschbetrag)."],
+  notgroschen: ["Notgroschen", "Bargeld für unerwartete Ausgaben, meist drei bis sechs Monatsausgaben auf einem Tagesgeldkonto. Er verhindert, dass du im Notfall Wertpapiere im Minus verkaufen oder teure Kredite nehmen musst."],
+  dispo: ["Dispokredit", "Die Überziehung des Girokontos. Bequem, aber teuer: oft über 10 % Zinsen pro Jahr. Im Spiel 12 %."],
+  sequenzrisiko: ["Sequenzrisiko", "Das Risiko, dass schlechte Börsenjahre genau dann kommen, wenn du Geld entnimmst, etwa am Anfang des Ruhestands. Dann verkaufst du im Tief, und das Geld fehlt für die Erholung."],
+  drawdown: ["Größter Rückgang (Drawdown)", "Der größte Verlust vom bisherigen Höchststand deines Vermögens bis zum Tiefpunkt. Er zeigt, wie viel Nervenstärke ein Depot erfordert."],
   tagesgeld: ["Tagesgeld", "Ein täglich verfügbares Konto mit variablem Zins. Im Spiel: Leitzins minus 0,5 Prozentpunkte, monatlich gutgeschrieben."],
 };
 
@@ -554,6 +581,10 @@ const COACH = {
   bargeld: ["Viel Bargeld liegt herum", "Über 60 % deines Vermögens ist seit Wochen nicht investiert. Bargeld ist sicher, bringt aber nur Tagesgeldzinsen. Investiertes Geld wächst langfristig meist deutlich stärker.", "investitionsquote"],
   startup: ["Startups: viele Nieten, seltene Volltreffer", "Die meisten jungen Firmen scheitern. Profis investieren deshalb kleine Beträge in viele Startups und hoffen, dass ein Treffer alles ausgleicht.", "startup"],
   ipo: ["Börsengang: Chance mit Unsicherheit", "Neue Aktien haben keine Kursgeschichte. Der erste Handelstag kann stark steigen oder fallen.", "ipo"],
+  notgroschen: ["Der Notgroschen hat sich gelohnt", "Die unerwartete Ausgabe wurde aus deinem Bargeld bezahlt. Du musstest nichts verkaufen und keinen teuren Dispo nutzen. Genau dafür ist ein Notgroschen da.", "notgroschen"],
+  notverkauf: ["Notverkauf: teuer erkauft", "Weil Bargeld fehlte, mussten Wertpapiere verkauft werden, womöglich gerade im Minus. Ein Notgroschen von drei bis sechs Monatsausgaben verhindert das.", "notgroschen"],
+  dispo: ["Dispo: 12 % Zinsen", "Der Dispo ist einer der teuersten Kredite. Er wird automatisch mit deinem nächsten Gehalt getilgt, bis dahin laufen Zinsen.", "dispo"],
+  entnahme: ["Entnahme im Tief", "Dein Bargeld reicht nicht für die monatliche Entnahme, also werden Wertpapiere verkauft, womöglich nach einem Kursrutsch. Ein Bargeld-Puffer für ein bis drei Jahre schützt davor.", "sequenzrisiko"],
   geruecht: ["Vorsicht mit Gerüchten", "Im echten Leben ist Handeln mit echten Insider-Informationen verboten. Und Gerüchte stimmen oft nicht. Setz nie zu viel auf einen Tipp.", "insider"],
 };
 
@@ -635,24 +666,33 @@ function migrate() {
   S.learn = S.learn || { i: 0, quiz: false, cnt: 0, base: S.income || 0, flag: false, done: [], first: 0, miss: 0 };
   S.fees = S.fees || 0; S.trades = S.trades || 0; S.tradeDays = S.tradeDays || []; S.coach = S.coach || {}; S.cashDays = S.cashDays || 0;
   if (S.introSeen === undefined) S.introSeen = S.day > 1;
+  if (S.start == null) S.start = START;
+  const W = A.WELT; if (W && W.comps) { delete W.comps; Object.assign(W, { sector: 'world', beta: 1, idio: .03, alpha: .04 }); }
+  S.dispo = S.dispo || 0; S.dispoUsed = S.dispoUsed || 0; S.forced = S.forced || 0; S.maxDD = S.maxDD || 0; if (S.twr == null) { S.twr = 1; S.twrPeak = 1; S.twrLast = netWorth(); S.flow = 0; }
   if (S.coachTip === undefined) S.coachTip = null;
   if (S.bench == null) { S.bench = netWorth() / A.WELT.price; S.benchHist = S.nwHist.map(() => null); S.benchHist[S.benchHist.length - 1] = netWorth(); }
 }
-function newState() {
+function newState(c) {
   newsVer++; lowerKey = ''; tabKey = ''; listKey = '';
+  const start = c ? c.start : START;
   S = {
-    v: 2, day: 1, cash: START, debt: 0, rate: 2.5, regime: 'normal', regDays: 0, regLen: 0,
-    hold: {}, opts: [], ventures: [], ipos: [], ipoCount: 0, news: [], nwHist: [], maxNW: START, rank: 0,
-    reached: {}, ach: {}, income: 0, nextEvent: 30, tips: [], uid: 1, crashStartNW: 0, lastNW: START, over: false,
+    v: 2, day: 1, cash: start, debt: 0, rate: 2.5, regime: 'normal', regDays: 0, regLen: 0,
+    hold: {}, opts: [], ventures: [], ipos: [], ipoCount: 0, news: [], nwHist: [], maxNW: start, rank: 0,
+    reached: {}, ach: {}, income: 0, nextEvent: 30, tips: [], uid: 1, crashStartNW: 0, lastNW: start, over: false,
     assets: DEFS.map(d => ({ ...d, price: d.p, prev: d.p, hist: [d.p], ret: 0, listed: true })),
   };
   indexAssets();
   for (let i = 0; i < YEAR; i++) stepMarket(true);
-  S.day = 1; S.regime = 'normal'; S.regDays = 0; S.rate = 2.5;
-  S.nwHist = [START];
-  S.bench = START / A.WELT.price; S.benchHist = [START];
+  S.day = 1; S.regime = 'normal'; S.regDays = 0; S.rate = c ? c.rate : 2.5;
+  S.start = start; S.nwHist = [start];
+  S.bench = start / A.WELT.price; S.benchHist = [start];
   migrate();
-  addNews('Willkommen! Du startest mit ' + eur(START) + ' Spielgeld. Erstes Ziel: ' + eur(GOALS[0]) + '.', 'gold');
+  if (c) {
+    Object.assign(S, { scn: c.id, endDay: 1 + c.days, rank: c.rank || 0, scripted: !!c.script, fixRates: !!c.rates, salary: c.salary || 0, withdraw: c.withdraw || 0,
+      nextLife: c.life ? 60 + Math.floor(rnd() * 60) : 0, introSeen: true, volScale: .5, nextEvent: 1e9, secDrift: {}, cryptoDrift: 0 });
+    applyScript(1);
+    addNews('Szenario „' + c.title + '“ gestartet. Startkapital ' + eur(start) + '.', 'gold');
+  } else addNews('Willkommen! Du startest mit ' + eur(START) + ' Spielgeld. Erstes Ziel: ' + eur(GOALS[0]) + '.', 'gold');
 }
 
 // ---------- Markt ----------
@@ -679,12 +719,17 @@ function centralBank(silent) {
 
 function stepMarket(silent) {
   S.regDays++;
-  if (S.regime === 'crash') { if (S.regDays > S.regLen) setRegime(rnd() < .6 ? 'bear' : 'normal', silent); }
+  if (S.scripted) { /* Ablauf vom Szenario vorgegeben */ }
+  else if (S.regime === 'crash') { if (S.regDays > S.regLen) setRegime(rnd() < .6 ? 'bear' : 'normal', silent); }
   else for (const [n, p] of REG[S.regime].next) if (rnd() < p) { setRegime(n, silent); break; }
   const R = REG[S.regime], sq = Math.sqrt(DT);
-  const m = R.mu * DT + R.sig * sq * gauss();
+  const m = R.mu * DT + R.sig * (S.volScale || 1) * sq * gauss();
   const cm = 1.5 * m + .55 * sq * gauss() + .12 * DT;
-  const dRate = S.day % 42 === 0 ? centralBank(silent) : 0;
+  let dRate = 0;
+  if (S.rateOverride != null) {
+    dRate = S.rateOverride - S.rate; S.rate = S.rateOverride; S.rateOverride = null;
+    if (!silent && dRate) { addNews('Zentralbank ' + (dRate > 0 ? 'erhöht' : 'senkt') + ' den Leitzins auf ' + nf(S.rate) + ' %', dRate > 0 ? 'down' : 'up'); coach('zins'); }
+  } else if (S.day % 42 === 0 && !S.fixRates) dRate = centralBank(silent);
 
   const sh = {};
   if (!silent && rnd() < .05) {
@@ -705,21 +750,21 @@ function stepMarket(silent) {
   for (const a of S.assets) {
     if (a.comps || a.base || !a.listed) continue;
     let r;
-    if (a.cls === 'crypto') r = a.alpha * DT + a.cb * cm + a.idio * sq * gauss() + (sh.crypto || 0);
+    if (a.cls === 'crypto') r = a.alpha * DT + a.cb * cm + a.idio * sq * gauss() + (sh.crypto || 0) + (S.cryptoDrift || 0) * a.cb * DT;
     else if (a.cls === 'bond') {
       r = -a.dur * dRate / 100 + a.beta * m + a.idio * sq * gauss() + (100 - a.price) / 100 * .4 * DT;
       if (a.def && rnd() < a.def * DT * (S.regime === 'crash' || S.regime === 'bear' ? 3 : 1)) {
         r += Math.log(.5);
         if (!silent) { addNews('Zahlungsausfall! Emittent der ' + a.name + ' insolvent', 'down'); coach('ausfall'); }
       }
-    } else r = (a.alpha || 0) * DT + a.beta * m + a.idio * sq * gauss() + (a.rateSens || 0) * dRate / 100;
+    } else r = (a.alpha || 0) * DT + a.beta * m + a.idio * sq * gauss() + (a.rateSens || 0) * dRate / 100 + ((S.secDrift && S.secDrift[a.sector]) || 0) * DT;
     r += (sh[a.sector] || 0) + (assetShock[a.id] || 0);
     const np = Math.max(a.price * Math.exp(r), 1e-6);
-    a.ret = np / a.price - 1; setPrice(a, np);
+    a.lr = Math.log(np / a.price); a.ret = np / a.price - 1; setPrice(a, np);
   }
   for (const a of S.assets) if (a.comps) {
-    let s = 0; for (const id of a.comps) s += A[id].ret;
-    a.ret = s / a.comps.length - a.ter * DT; setPrice(a, a.price * (1 + a.ret));
+    let s = 0; for (const id of a.comps) s += A[id].lr || 0;
+    a.ret = Math.exp(s / a.comps.length) - 1 - a.ter * DT; setPrice(a, a.price * (1 + a.ret));
   }
   for (const a of S.assets) if (a.base) {
     a.ret = Math.max(a.lev * A[a.base].ret - a.ter * DT, -.95); setPrice(a, Math.max(a.price * (1 + a.ret), .01));
@@ -753,7 +798,7 @@ const optValue = o => optFair(o) * o.qty;
 function holdValue() { let v = 0; for (const id in S.hold) v += S.hold[id].qty * A[id].price; return v; }
 function optsValue() { let v = 0; for (const o of S.opts) v += optValue(o); return v; }
 function ventValue() { let v = 0; for (const x of S.ventures) v += x.amt; for (const x of S.ipos) v += x.qty * x.issue; return v; }
-function netWorth() { return S.cash + holdValue() + optsValue() + ventValue() - S.debt; }
+function netWorth() { return S.cash + holdValue() + optsValue() + ventValue() - S.debt - (S.dispo || 0); }
 function collateral() { return holdValue() + optsValue(); }
 const loanCfg = () => LOAN[S.rank] || null;
 const loanRate = () => loanCfg() ? S.rate + loanCfg().sp : S.rate + 3;
@@ -763,8 +808,10 @@ const tgRate = () => Math.max(0, S.rate - .5);
 function tick() {
   if (S.over || modalOpen) return;
   S.day++;
+  applyScript(S.day);
   stepMarket(false);
   const d = S.day;
+  scnFlows(d);
   // Kreditzinsen, Tagesgeld
   if (S.debt > 0) S.debt *= 1 + loanRate() / 100 * DT;
   if (d % 21 === 0 && S.cash > 0) { const z = S.cash * tgRate() / 100 / 12; if (z > 0) { S.cash += z; S.income += z; } }
@@ -815,10 +862,15 @@ function tick() {
   S.cashDays = S.day > 60 && inv < .4 ? S.cashDays + 1 : 0; if (S.cashDays >= 40) coach('bargeld');
   learnDay(); checkLearn();
   S.maxNW = Math.max(S.maxNW, nw);
+  // Rückgang zeitgewichtet messen: Ein- und Auszahlungen zählen nicht als Gewinn oder Verlust
+  const base = S.twrLast, adj = nw - (S.flow || 0);
+  if (base > 0 && adj > 0) { S.twr *= adj / base; S.twrPeak = Math.max(S.twrPeak, S.twr); S.maxDD = Math.max(S.maxDD || 0, 1 - S.twr / S.twrPeak); }
+  S.flow = 0; S.twrLast = nw;
   checkAchievements(nw);
   if (S.regime === 'crash' && S.crashStartNW > 0 && nw >= S.crashStartNW * 1.2) achieve('crash');
   S.lastNW = S.nwHist.length > 1 ? S.nwHist[S.nwHist.length - 2] : nw;
-  if (nw <= 0) { S.over = true; pause(); save(); showModal({ kick: 'Spielende', title: 'Pleite.', body: '<p>Deine Schulden sind höher als dein Vermögen. Du hast es bis zum Rang <b>' + RANKS[S.rank].name + '</b> geschafft, Höchststand ' + eur(S.maxNW) + '.</p>', btns: [['Neues Spiel', 'primary', () => { newState(); hideModal(); }]] }); }
+  if (S.scn) { if (nw <= 0) finishScenario(true); else if (d >= S.endDay) finishScenario(false); }
+  else if (nw <= 0) { S.over = true; pause(); save(); showModal({ kick: 'Spielende', title: 'Pleite.', body: '<p>Deine Schulden sind höher als dein Vermögen. Du hast es bis zum Rang <b>' + RANKS[S.rank].name + '</b> geschafft, Höchststand ' + eur(S.maxNW) + '.</p>', btns: [['Neues Spiel', 'primary', () => { newState(); hideModal(); }]] }); }
   else if (S.rank < GOALS.length && nw >= GOALS[S.rank]) rankUp();
   else if (d >= S.nextEvent) { S.nextEvent = d + 25 + Math.floor(rnd() * 35); fireEvent(); }
   if (Date.now() - lastSave > 4000) save();
@@ -1033,7 +1085,7 @@ function checkLearn() {
 }
 function completeLesson() {
   const L = curLesson(); if (!L) return;
-  S.cash += L.reward; S.bench += L.reward / A.WELT.price;
+  S.cash += L.reward; S.flow = (S.flow || 0) + L.reward; S.bench += L.reward / A.WELT.price;
   S.learn.done.push(L.id);
   addNews('Lektion geschafft: „' + L.title + '“ · Belohnung ' + eur(L.reward), 'gold');
   toast('🎓 Lektion geschafft: +' + eurS(L.reward), true);
@@ -1139,7 +1191,8 @@ function completeAcad(mi, li, first) {
   const key = akey(mi, li); if (AP.done[key]) return;
   const xp = first ? 15 : 10;
   AP.done[key] = 1; AP.xp += xp; if (first) AP.first = (AP.first || 0) + 1; bumpStreak(); saveAP();
-  if (S && A.WELT) { S.cash += ACAD_BONUS; S.bench += ACAD_BONUS / A.WELT.price; addNews('Akademie-Bonus: +' + eur(ACAD_BONUS) + ' für „' + ACAD[mi].lessons[li][0] + '“', 'gold'); if (doneAll() >= 10) achieve('acad10'); if (doneAll() >= ACAD_TOTAL) achieve('acadAll'); save(); dirty = true; }
+  if (S && S.scn) { AP.pending = (AP.pending || 0) + ACAD_BONUS; saveAP(); }
+  else if (S && A.WELT) { S.flow = (S.flow || 0) + ACAD_BONUS; S.cash += ACAD_BONUS; S.bench += ACAD_BONUS / A.WELT.price; addNews('Akademie-Bonus: +' + eur(ACAD_BONUS) + ' für „' + ACAD[mi].lessons[li][0] + '“', 'gold'); if (doneAll() >= 10) achieve('acad10'); if (doneAll() >= ACAD_TOTAL) achieve('acadAll'); save(); dirty = true; }
   toast('🎓 +' + xp + ' XP · +' + eurS(ACAD_BONUS) + ' im Börsenspiel', true);
 }
 function pickAnswer(mi, li, j) {
@@ -1200,7 +1253,7 @@ function renderAcademy() {
   let h = '<section class="panel ahero"><div class="lbl">Finanz-Akademie</div><h1>Geld anlegen lernen, mit möglichst wenig Risiko</h1>' +
     '<p>' + ACAD_TOTAL + ' Lektionen in ' + ACAD.length + ' Kursen, vom ersten Notgroschen bis zum fertigen Depot. Jede Lektion dauert etwa zwei Minuten und endet mit einer Quizfrage. Für jede geschaffte Lektion gibt es ' + eur(ACAD_BONUS) + ' Spielgeld im Börsenspiel.</p>' +
     '<div class="astats"><div><b>' + done + ' / ' + ACAD_TOTAL + '</b><span>Lektionen</span></div><div><b>' + AP.xp + '</b><span>Erfahrungspunkte</span></div><div><b>' + (AP.streak || 0) + (AP.streak === 1 ? ' Tag' : ' Tage') + '</b><span>Lern-Serie</span></div><div><b>' + (AP.first || 0) + '</b><span>im ersten Versuch richtig</span></div></div>' +
-    '<div class="meter gold"><div style="width:' + (done / ACAD_TOTAL * 100).toFixed(1) + '%"></div></div></section>';
+    '<div class="meter gold"><div style="width:' + (done / ACAD_TOTAL * 100).toFixed(1) + '%"></div></div><div class="lrow"><button class="primary" data-scnopen="1">Wissen testen: 6 Szenarien spielen</button><button class="ghost" data-view="spiel">Zum Börsenspiel</button></div></section>';
   h += '<section class="panel acur"><div class="hd"><span class="lbl">' + (allDone ? 'Alles geschafft' : 'Weiterlernen') + '</span><button class="link" data-lex="1">Lexikon</button></div><div class="bd">' +
     (allDone && !AV.picks[akey(cur[0], cur[1])] ? '<h3 class="big">Du hast alle ' + ACAD_TOTAL + ' Lektionen geschafft 🎓</h3><p>Wende dein Wissen im Börsenspiel an und vergleiche dich mit der Welt-ETF-Strategie. Du kannst jede Lektion unten jederzeit wiederholen.</p><div class="lrow"><button class="primary" data-view="spiel">Zum Börsenspiel</button></div>' : lessonHTML(cur[0], cur[1], 'top')) + '</div></section>';
   h += '<section class="panel"><div class="hd"><span class="lbl">Sparplan-Rechner: sicher gegen renditestark</span></div><div class="bd calc">' + calcHTML() + '</div></section>';
@@ -1236,6 +1289,7 @@ function onAcademyClick(e) {
   else if (d.les) { const [mi, li] = d.les.split(',').map(Number); AV.openM = mi; AV.openL = AV.openL === li ? null : li; renderAcademy(); }
   else if (d.view) setView(d.view);
   else if (d.lex) showLexicon();
+  else if (d.scnopen) { setView('spiel'); openScenarios(); }
 }
 
 // ---------- Ansichten ----------
@@ -1250,6 +1304,163 @@ function setView(v) {
   if (location.hash !== '#' + v) { try { history.replaceState(null, '', '#' + v); } catch (e) {} }
   if (v === 'akademie') { if (timer) { pause(); save(); } renderAcademy(); }
   else { dirty = true; requestAnimationFrame(updateTabArrows); if (!S.introSeen) { S.introSeen = true; intro(); } }
+}
+
+// ---------- Szenarien ----------
+const SCN_KEY = 'kapital-scn-run-v1', BEST_KEY = 'kapital-scn-best-v1';
+const SCN = [
+  { id: 'job', title: 'Der erste Job', kick: 'Lebensmodus · 5 Jahre', start: 1000, days: 1250, salary: 300, life: true, rank: 0, rate: 2.5,
+    desc: 'Du bist 22, hast deinen ersten Job und 1.000 € auf dem Konto. Jeden Monat kannst du 300 € sparen. Aber das Leben passiert: Autoreparatur, Zahnarzt, kaputte Waschmaschine. Fehlt dann das Bargeld, musst du Wertpapiere verkaufen oder in den teuren Dispo.',
+    lesson: 'Erst der Notgroschen, dann investieren. Wer genug Bargeld für unerwartete Ausgaben hat, muss nie im falschen Moment verkaufen und zahlt keine Dispozinsen.',
+    script: [[1, 'normal'], [180, 'bull'], [420, 'crash'], [440, 'bear'], [600, 'normal'], [820, 'bull'], [1050, 'normal']],
+    goals: [['Mindestens 16.000 € Vermögen am Ende', st => st.nw >= 16000], ['Kein Dispo und kein Notverkauf', st => st.dispoUsed === 0 && st.forced === 0], ['Mindestens 19.000 € Vermögen am Ende', st => st.nw >= 19000]] },
+  { id: 'krise', title: 'Die große Finanzkrise', kick: 'Krisen-Szenario · 2 Jahre', start: 50000, days: 500, rank: 1, rate: 3.5,
+    desc: 'Die Börse boomt, alle reden vom schnellen Geld. Du hast 50.000 € geerbt. Was du nicht weißt: In einigen Monaten kommt ein schwerer Crash, ähnlich wie 2008. Wie gut übersteht dein Depot die Krise? Optionen sind freigeschaltet.',
+    lesson: 'Ein sicherer Topf neben den Aktien dämpft jeden Crash. Wer investiert bleibt und nicht in Panik verkauft, ist bei der Erholung dabei.',
+    script: [[1, 'bull'], [80, 'bubble'], [150, 'crash'], [172, 'bear'], [330, 'normal'], [400, 'bull']], rates: [[200, 2.5], [240, 1.5], [290, 1]],
+    goals: [['Mindestens 45.000 € am Ende', st => st.nw >= 45000], ['Größter Rückgang unter 25 %', st => st.maxDD < .25], ['Besser als die Welt-ETF-Strategie', st => st.nw >= st.bench]] },
+  { id: 'dotcom', title: 'Die Dotcom-Blase', kick: 'Blasen-Szenario · 2 Jahre', start: 30000, days: 500, rank: 0, rate: 3,
+    desc: 'Tech-Aktien kennen nur eine Richtung: nach oben. Quantix, TechNova und Orbit Raketen steigen und steigen. Steigst du ein? Und wann wieder aus?',
+    lesson: 'Steigt eine Branche in kurzer Zeit extrem, steigt auch das Absturzrisiko. Breite Streuung schützt davor, alles auf eine Blase zu setzen.',
+    script: [[1, 'bull'], [100, 'bubble'], [190, 'crash'], [210, 'bear'], [420, 'normal']], drift: [[1, { tech: .9, space: .9 }], [190, { tech: -1.4, space: -1.6 }], [380, {}]],
+    goals: [['Mindestens 27.000 € am Ende', st => st.nw >= 27000], ['Größter Rückgang unter 30 %', st => st.maxDD < .3], ['Mindestens 33.000 € am Ende', st => st.nw >= 33000]] },
+  { id: 'zins', title: 'Die Zinswende', kick: 'Zins-Szenario · 1,5 Jahre', start: 100000, days: 375, rank: 0, rate: .5,
+    desc: 'Jahrelang gab es kaum Zinsen. Jetzt steigt die Inflation, und die Zentralbank erhöht den Leitzins so schnell wie nie: von 0,5 auf 4,5 %. Was passiert mit Anleihen, Immobilien-Aktien und deinem Tagesgeld?',
+    lesson: 'Steigende Zinsen drücken die Kurse lang laufender Anleihen. Kurze Laufzeiten und Tagesgeld profitieren dagegen schnell von höheren Zinsen.',
+    script: [[1, 'normal'], [90, 'bear'], [260, 'normal']], rates: [[30, 1], [60, 1.75], [90, 2.5], [120, 3.25], [150, 4], [190, 4.5]],
+    goals: [['Mindestens 96.000 € am Ende', st => st.nw >= 96000], ['Größter Rückgang unter 10 %', st => st.maxDD < .1], ['Mindestens 102.000 € am Ende', st => st.nw >= 102000]] },
+  { id: 'krypto', title: 'Der Krypto-Rausch', kick: 'Spekulations-Szenario · 1 Jahr', start: 10000, days: 250, rank: 0, rate: 2.5,
+    desc: 'Bitex auf Rekordhoch, WuffCoin geht durch die Decke, und deine Freunde prahlen mit ihren Gewinnen. Du hast 10.000 €. Machst du mit?',
+    lesson: 'Spekulationsblasen platzen oft schneller, als sie entstanden sind. Begrenze Spekulation auf einen kleinen Teil deines Vermögens.',
+    script: [[1, 'normal']], crypto: [[1, 2.5], [110, -4.5], [190, 0]],
+    goals: [['Am Ende kein Verlust (mind. 10.000 €)', st => st.nw >= 10000], ['Größter Rückgang unter 25 %', st => st.maxDD < .25], ['Mindestens 12.500 € am Ende', st => st.nw >= 12500]] },
+  { id: 'rente', title: 'Der Ruhestand', kick: 'Entnahme-Szenario · 10 Jahre', start: 400000, days: 2500, withdraw: 1600, rank: 0, rate: 2.5,
+    desc: 'Du gehst in Rente und hast 400.000 € angespart. Jeden Monat brauchst du 1.600 € daraus zum Leben. Kurz nach Rentenbeginn kommt ein Crash. Reicht dein Geld, und bleibt genug übrig?',
+    lesson: 'Ein Crash kurz nach Rentenbeginn ist besonders gefährlich, weil du gleichzeitig entnimmst (Sequenzrisiko). Ein Bargeld-Puffer für ein bis drei Jahre schützt davor, im Tief verkaufen zu müssen.',
+    script: [[1, 'normal'], [40, 'crash'], [60, 'bear'], [260, 'normal'], [700, 'bull'], [900, 'normal'], [1300, 'bear'], [1450, 'normal'], [1900, 'bull'], [2050, 'normal']],
+    goals: [['Das Geld reicht alle 10 Jahre', st => !st.failed], ['Mindestens 300.000 € am Ende', st => st.nw >= 300000], ['Mindestens 400.000 € am Ende', st => st.nw >= 400000]] },
+];
+const LIFE_BAD = [['Das Auto muss in die Werkstatt', 1300], ['Die Waschmaschine ist kaputt', 650], ['Zahnarzt: Eine Krone ist fällig', 900], ['Umzug in eine neue Wohnung', 1500], ['Das Handy ist heruntergefallen', 450], ['Nebenkosten-Nachzahlung', 550], ['Der Laptop gibt den Geist auf', 800]];
+const LIFE_GOOD = [['Bonus vom Chef', 800], ['Steuererstattung', 450], ['Gehaltserhöhung', 0]];
+
+const scn = () => S && S.scn ? SCN.find(x => x.id === S.scn) : null;
+function loadBest() { try { return JSON.parse(localStorage.getItem(BEST_KEY)) || {}; } catch (e) { return {}; } }
+function saveBest(b) { try { localStorage.setItem(BEST_KEY, JSON.stringify(b)); } catch (e) {} }
+const starStr = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+function applyScript(d) {
+  const c = scn(); if (!c) return;
+  for (const [day, reg] of c.script || []) if (day === d) setRegime(reg, d === 1);
+  for (const [day, r] of c.rates || []) if (day === d) S.rateOverride = r;
+  for (const [day, o] of c.drift || []) if (day === d) S.secDrift = o;
+  for (const [day, v] of c.crypto || []) if (day === d) S.cryptoDrift = v;
+}
+function sellForCash(need) {
+  const hv = holdValue(); if (hv <= 0) return need;
+  const f = Math.min(1, need / (hv * (1 - FEE)));
+  let got = 0;
+  for (const id in S.hold) { const h = S.hold[id], q = h.qty * f, v = q * A[id].price; got += v * (1 - FEE); S.fees += v * FEE; h.cost *= 1 - f; h.qty -= q; if (h.qty < 1e-9) delete S.hold[id]; }
+  S.cash += got; S.trades++; learnSold();
+  return Math.max(0, need - got);
+}
+function payCost(amount, mode) {
+  if (S.cash >= amount) { S.cash -= amount; return; }
+  let need = amount - Math.max(0, S.cash); S.cash = 0;
+  if (mode === 'sell') { const rest = sellForCash(need); S.cash -= need - rest; if (S.cash < 0) S.cash = 0; need = rest; S.forced++; }
+  if (need > .01) { S.dispo += need; S.dispoUsed++; coach('dispo'); }
+}
+function scnFlows(d) {
+  const c = scn(); if (!c) return;
+  const w = A.WELT.price;
+  if (S.dispo > 0) { S.dispo *= 1 + .12 * DT; if (S.cash > 0) { const p = Math.min(S.cash, S.dispo); S.cash -= p; S.dispo -= p; if (S.dispo < .01) S.dispo = 0; } }
+  if (S.salary && d % 21 === 0) { S.flow += S.salary; S.cash += S.salary; S.deposits = (S.deposits || 0) + S.salary; S.bench += S.salary / w; }
+  if (S.withdraw && d % 21 === 0) {
+    S.flow -= S.withdraw; S.bench = Math.max(0, S.bench - S.withdraw / w); S.withdrawn = (S.withdrawn || 0) + S.withdraw;
+    if (S.cash < S.withdraw && holdValue() > 0) { coach('entnahme'); addNews('Entnahme: Bargeld reicht nicht, Wertpapiere werden verkauft', 'down'); }
+    payCost(S.withdraw, 'sell');
+  }
+  if (c.life && d >= S.nextLife) { S.nextLife = d + 90 + Math.floor(rnd() * 70); lifeEvent(); }
+}
+function lifeEvent() {
+  const w = A.WELT.price;
+  if (rnd() < .28) {
+    const [t, v] = pick(LIFE_GOOD);
+    if (!v) { S.salary += 50; addNews('Gehaltserhöhung! Deine Sparrate steigt auf ' + eur(S.salary) + ' im Monat.', 'gold'); toast('🎉 Gehaltserhöhung: +50 € Sparrate', true); }
+    else { S.cash += v; S.flow += v; S.bench += v / w; addNews(t + ': +' + eur(v), 'up'); toast('🎉 ' + t + ': +' + eurS(v), true); }
+    return;
+  }
+  const [t, v] = pick(LIFE_BAD);
+  S.flow -= v; S.bench = Math.max(0, S.bench - v / w);
+  if (S.cash >= v) { S.cash -= v; addNews(t + ': −' + eur(v) + ', bezahlt aus deinem Bargeld', 'down'); toast('Unerwartete Ausgabe: ' + t); coach('notgroschen'); return; }
+  const miss = v - Math.max(0, S.cash);
+  showModal({ kick: 'Unerwartete Ausgabe', title: t, body: '<p>Kosten: <b>' + eur(v) + '</b>. Auf deinem Konto sind nur ' + eur(Math.max(0, S.cash)) + ', es fehlen <b>' + eur(miss) + '</b>.</p><p>Du kannst Wertpapiere verkaufen, auch wenn sie gerade im Minus sind, oder den Dispo deiner Bank nutzen. Der kostet 12 % Zinsen im Jahr. Mit einem Notgroschen wäre das kein Problem.</p>',
+    btns: [['Wertpapiere verkaufen (' + eurS(miss) + ')', 'primary', () => { payCost(v, 'sell'); addNews(t + ': ' + eur(v) + ', Notverkauf von Wertpapieren', 'down'); coach('notverkauf'); hideModal(); }, holdValue() <= 0],
+      ['Dispo nutzen (12 % Zinsen)', '', () => { payCost(v, 'dispo'); addNews(t + ': ' + eur(v) + ', über den Dispo bezahlt', 'down'); hideModal(); }]] });
+}
+function scnStats() { return { nw: netWorth(), bench: benchValue(), maxDD: S.maxDD || 0, forced: S.forced || 0, dispoUsed: S.dispoUsed || 0, failed: !!S.failed }; }
+function finishScenario(failed) {
+  const c = scn(); if (!c || S.over) return;
+  S.over = true; S.failed = failed; pause();
+  const st = scnStats(), res = c.goals.map(g => g[1](st)), stars = failed && c.id !== 'rente' ? 0 : res.filter(Boolean).length;
+  const best = loadBest(), prev = best[c.id];
+  const record = !prev || stars > prev.stars || (stars === prev.stars && st.nw > prev.nw);
+  if (record) { best[c.id] = { stars, nw: st.nw }; saveBest(best); }
+  save();
+  const flows = (S.deposits ? '<div><span>Eingezahlt (Gehalt)</span><b>' + eur(S.deposits) + '</b></div>' : '') + (S.withdrawn ? '<div><span>Entnommen</span><b>' + eur(S.withdrawn) + '</b></div>' : '');
+  const body = '<div class="stars big">' + starStr(stars) + '</div>' + (record && prev ? '<p class="hint" style="text-align:center">Neuer Bestwert!</p>' : '') +
+    '<div class="goals">' + c.goals.map((g, i) => '<div class="' + (res[i] && !(failed && c.id !== 'rente') ? 'ok' : 'no') + '">' + (res[i] && !(failed && c.id !== 'rente') ? '✓ ' : '✗ ') + g[0] + '</div>').join('') + '</div>' +
+    '<div class="sumgrid"><div><span>Endvermögen</span><b>' + eur(st.nw) + '</b></div><div><span>Startkapital</span><b>' + eur(S.start) + '</b></div>' + flows +
+    '<div><span>Größter Rückgang</span><b>' + nf(st.maxDD * 100, 1) + ' %</b></div><div><span>Welt-ETF-Strategie</span><b>' + eur(st.bench) + '</b></div>' +
+    '<div><span>Gebühren</span><b>' + eur(S.fees) + '</b></div><div><span>Trades</span><b>' + S.trades + '</b></div>' +
+    (c.life || c.withdraw ? '<div><span>Notverkäufe</span><b>' + st.forced + '</b></div><div><span>Dispo genutzt</span><b>' + st.dispoUsed + '×</b></div>' : '') + '</div>' +
+    '<div class="merke"><b>Das nimmst du mit</b>' + c.lesson + '</div>';
+  showModal({ kick: (failed ? 'Szenario gescheitert · ' : 'Szenario beendet · ') + c.title, title: failed ? 'Das Geld hat nicht gereicht.' : stars === 3 ? 'Perfekt gemeistert!' : stars ? 'Geschafft!' : 'Das war noch nichts.', body,
+    btns: [['Nochmal spielen', 'primary', () => { hideModal(); startScenario(c.id); }], ['Andere Szenarien', '', openScenarios], ['Schließen', 'ghost', hideModal]] });
+}
+function openScenarios() {
+  const best = loadBest();
+  const body = '<p>Jedes Szenario hat einen festen Ablauf, ein eigenes Startkapital und drei Ziele. Für jedes erreichte Ziel gibt es einen Stern. Dein freies Spiel bleibt dabei gespeichert.</p><div class="scnlist">' +
+    SCN.map(c => { const b = best[c.id]; return '<div class="scncard"><div class="lkick">' + c.kick + '</div><div class="scnt"><b>' + c.title + '</b><span class="stars">' + starStr(b ? b.stars : 0) + '</span></div><p>' + c.desc + '</p><button class="primary" data-scn="' + c.id + '">' + (S.scn === c.id && !S.over ? 'Neu starten' : 'Starten') + ' · ' + eurS(c.start) + ' Startkapital</button></div>'; }).join('') + '</div>';
+  showModal({ kick: 'Szenarien', title: 'Wähle eine Herausforderung', body,
+    btns: S.scn ? [['Zurück zum freien Spiel', '', () => { hideModal(); backToFree(); }], ['Schließen', 'ghost', hideModal]] : [['Schließen', 'ghost', hideModal]] });
+}
+function resetUI() {
+  listKey = ''; tabKey = ''; lowerKey = ''; optBuilt = ''; $('loanBox').dataset.k = ''; newsVer++; learnVer++; coachVer++;
+  if (!A[U.sel]) U.sel = 'NOVA'; U.tab = A[U.sel].cls; U.mode = 'price';
+  document.body.classList.toggle('scn', !!S.scn);
+  dirty = true;
+}
+function startScenario(id) {
+  const c = SCN.find(x => x.id === id); if (!c) return;
+  pause(); save();
+  newState(c); resetUI();
+  try { localStorage.setItem('kapital-mode', 'scn'); } catch (e) {}
+  save();
+  const extra = c.salary ? 'Sparrate ' + eur(c.salary) + ' pro Monat' : c.withdraw ? 'Entnahme ' + eur(c.withdraw) + ' pro Monat' : '';
+  showModal({ kick: 'Szenario · ' + c.kick, title: c.title, body: '<p>' + c.desc + '</p><div class="merke"><b>Deine Ziele</b>' + c.goals.map(g => '☆ ' + g[0]).join('<br>') + '</div><p class="hint">Startkapital ' + eur(c.start) + (extra ? ' · ' + extra : '') + '. Tipp: Höheres Tempo (15× oder 50×) spart Zeit.</p>',
+    btns: [['Los geht’s', 'primary', () => { hideModal(); play(); }], ['Erst umschauen', 'ghost', hideModal]] });
+}
+function backToFree() {
+  pause(); save();
+  S = load(SAVE_KEY);
+  if (!S) newState(); else { indexAssets(); migrate(); }
+  applyPending(); resetUI();
+  try { localStorage.setItem('kapital-mode', 'free'); } catch (e) {}
+  toast('Zurück im freien Spiel');
+}
+function applyPending() {
+  if (!S || S.scn || !AP.pending) return;
+  S.cash += AP.pending; S.flow = (S.flow || 0) + AP.pending; S.bench += AP.pending / A.WELT.price; addNews('Akademie-Bonus: +' + eur(AP.pending), 'gold');
+  AP.pending = 0; saveAP(); save();
+}
+function renderScnHud() {
+  const c = scn(), st = scnStats();
+  $('rankLbl').textContent = 'Szenario';
+  $('rankName').textContent = c.title;
+  const day = Math.min(S.day, S.endDay);
+  $('nextGoal').textContent = 'Tag ' + day + ' von ' + S.endDay + (S.salary ? ' · Sparrate ' + eurS(S.salary) + '/Monat' : '') + (S.withdraw ? ' · Entnahme ' + eurS(S.withdraw) + '/Monat' : '') + (S.dispo > 0 ? ' · Dispo ' + eurS(S.dispo) : '');
+  setHTML('scnGoals', '<div class="lbl">Ziele · Stand jetzt</div>' + c.goals.map(g => { const ok = g[1](st); return '<div class="sg' + (ok ? ' ok' : '') + '">' + (ok ? '✓' : '○') + ' ' + g[0] + '</div>'; }).join('') +
+    '<div class="meter gold thin"><div style="width:' + (day / S.endDay * 100).toFixed(1) + '%"></div></div>');
 }
 
 // ---------- Nachrichten / Toast ----------
@@ -1312,8 +1523,8 @@ function selectAsset(id) { U.sel = id; const a = A[id]; if (U.tab !== 'depot') U
 // Kursverläufe mit 6 gültigen Stellen speichern: halbiert die Größe, für Charts reicht es völlig
 const round6 = x => +x.toPrecision(6);
 function saveReplacer(k, v) { if (k === '_vk' || k === '_v') return undefined; if (k === 'hist' || k === 'nwHist') return v.map(round6); return v; }
-function save() { lastSave = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S, saveReplacer)); } catch (e) {} }
-function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && s.v === 2 && s.assets) return s; } catch (e) {} return null; }
+function save() { lastSave = Date.now(); try { localStorage.setItem(S && S.scn ? SCN_KEY : SAVE_KEY, JSON.stringify(S, saveReplacer)); } catch (e) {} }
+function load(key) { try { const s = JSON.parse(localStorage.getItem(key || SAVE_KEY)); if (s && s.v === 2 && s.assets) return s; } catch (e) {} return null; }
 
 // ---------- Darstellung ----------
 const CSSV = getComputedStyle(document.documentElement);
@@ -1441,7 +1652,7 @@ function renderSide(nw) {
   const hv = holdValue(), ov = optsValue(), vv = ventValue();
   $('tgRate').textContent = 'Tagesgeld ' + nf(tgRate()) + ' %';
   renderCheck(nw);
-  $('ledger').innerHTML = [['Bargeld', S.cash], ['Wertpapiere', hv], ['Optionen', ov], ['Beteiligungen', vv], ['Kredit', -S.debt]].filter(([k, v]) => v !== 0 || k === 'Bargeld' || k === 'Wertpapiere')
+  $('ledger').innerHTML = [['Bargeld', S.cash], ['Wertpapiere', hv], ['Optionen', ov], ['Beteiligungen', vv], ['Kredit', -S.debt], ['Dispo (12 %)', -(S.dispo || 0)]].filter(([k, v]) => v !== 0 || k === 'Bargeld' || k === 'Wertpapiere')
     .map(([k, v]) => '<div><span class="muted">' + k + '</span><span class="v ' + (v < 0 ? 'down' : '') + '">' + eur(v) + '</span></div>').join('') +
     '<div class="tot"><span>Netto</span><span class="v">' + eur(nw) + '</span></div>';
   const cfg = loanCfg(), box = $('loanBox');
@@ -1466,9 +1677,11 @@ function renderHeader(nw) {
   $('rate').textContent = 'Leitzins ' + nf(S.rate) + ' %';
   $('nw').textContent = eur(nw);
   const ch = S.lastNW ? (nw / S.lastNW - 1) * 100 : 0;
-  $('nwChg').innerHTML = '<span class="' + cls(ch) + '">' + pct(ch) + ' heute</span> <span class="muted">· Start ' + eurS(START) + ' · ×' + nf(nw / START, nw / START >= 100 ? 0 : 2) + '</span>';
+  $('nwChg').innerHTML = '<span class="' + cls(ch) + '">' + pct(ch) + ' heute</span> <span class="muted">· Start ' + eurS(S.start) + ' · ×' + nf(nw / S.start, nw / S.start >= 100 ? 0 : 2) + '</span>';
   const bv = benchValue(), bd = bv > 0 ? (nw / bv - 1) * 100 : 0;
   $('benchLine').innerHTML = 'Nur Welt-ETF gekauft und gehalten: ' + eurS(bv) + ' · du liegst <span class="' + cls(bd) + '">' + (bd >= 0 ? 'vorne' : 'hinten') + ' (' + pct(bd, 1) + ')</span>';
+  if (S.scn) { renderScnHud(); return; }
+  $('rankLbl').textContent = 'Rang';
   $('rankName').textContent = RANKS[S.rank].name;
   $('nextGoal').textContent = S.rank < GOALS.length ? 'Nächstes Ziel: ' + eurS(GOALS[S.rank]) + ' · noch ' + eurS(Math.max(0, GOALS[S.rank] - nw)) : 'Alle Ziele erreicht!';
   const pos = v => clamp((Math.log10(Math.max(v, 1)) - 4) / 5, 0, 1) * 100;
@@ -1550,7 +1763,7 @@ function loop(t) {
 // ---------- Ereignis-Bindungen ----------
 $('play').onclick = () => { if (timer) { pause(); save(); } else play(); };
 $('speeds').onclick = e => { const b = e.target.closest('button'); if (!b) return; speed = +b.dataset.s; for (const x of $('speeds').children) x.classList.toggle('on', x === b); if (timer) play(); };
-$('newGame').onclick = () => showModal({ kick: 'Neues Spiel', title: 'Wirklich von vorn anfangen?', body: '<p>Dein aktueller Spielstand (' + eurS(netWorth()) + ', Rang ' + RANKS[S.rank].name + ') wird gelöscht.</p>', btns: [['Ja, neues Spiel', 'sell', () => { newState(); optBuilt = ''; $('loanBox').dataset.k = ''; U.sel = 'NOVA'; U.tab = 'stock'; save(); hideModal(); intro(); }], ['Abbrechen', '', hideModal]] });
+$('newGame').onclick = () => S.scn ? showModal({ kick: 'Szenario', title: 'Szenario neu starten?', body: '<p>Der aktuelle Durchlauf von „' + scn().title + '“ wird verworfen. Dein freies Spiel bleibt erhalten.</p>', btns: [['Ja, neu starten', 'sell', () => { hideModal(); startScenario(S.scn); }], ['Abbrechen', '', hideModal]] }) : showModal({ kick: 'Neues Spiel', title: 'Wirklich von vorn anfangen?', body: '<p>Dein aktueller Spielstand (' + eurS(netWorth()) + ', Rang ' + RANKS[S.rank].name + ') wird gelöscht.</p>', btns: [['Ja, neues Spiel', 'sell', () => { newState(); optBuilt = ''; $('loanBox').dataset.k = ''; U.sel = 'NOVA'; U.tab = 'stock'; save(); hideModal(); intro(); }], ['Abbrechen', '', hideModal]] });
 $('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; U.tab = b.dataset.tab; if (U.tab !== 'depot' && A[U.sel].cls !== U.tab) U.sel = S.assets.find(a => a.cls === U.tab && a.listed).id; dirty = true; };
 $('list').onclick = e => { const so = e.target.closest('[data-sellopt]'); if (so) return sellOption(+so.dataset.sellopt); const b = e.target.closest('[data-id]'); if (b) selectAsset(b.dataset.id); };
 $('modeSeg').onclick = e => { const b = e.target.closest('button'); if (b) { U.mode = b.dataset.m; dirty = true; } };
@@ -1586,7 +1799,9 @@ $('academyView').onclick = onAcademyClick;
 $('academyView').oninput = e => { if (e.target.closest('.calcin')) calcUpdate(); };
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h === 'spiel' || h === 'akademie') setView(h); });
 document.addEventListener('click', e => { const t = e.target.closest('[data-term]'); if (t && !t.closest('.modal')) { e.preventDefault(); e.stopPropagation(); showTerm(t.dataset.term); } else if (t) { showTerm(t.dataset.term); } }, true);
-$('lexBtn').onclick = showLexicon; $('lexBtn2').onclick = showLexicon;
+$('lexBtn').onclick = showLexicon;
+$('scnBtn').onclick = openScenarios;
+$('mBody').addEventListener('click', e => { const b = e.target.closest('[data-scn]'); if (b) { hideModal(); startScenario(b.dataset.scn); } }); $('lexBtn2').onclick = showLexicon;
 $('lpBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'open') openLesson(); };
 $('coachBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'dismiss') { S.coachTip = null; dirty = true; } };
 $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) dismissModal(); });
@@ -1597,14 +1812,17 @@ function intro() {
   showModal({ kick: 'Kapital · Investieren lernen', title: 'Lerne investieren, ganz ohne echtes Geld', body:
     '<p>Du startest mit <b>10.000 € Spielgeld</b>. Die Zeit läuft, sobald du auf Start drückst: ein Börsentag pro Sekunde, schneller mit 4× bis 50×.</p>' +
     '<p>Die <b>Praxis-Missionen</b> führen dich in 13 Schritten von der ersten Aktie bis zu Optionen und Krediten. Dein <b>Coach</b> meldet sich, wenn etwas Lehrreiches passiert. Das Wissen dazu findest du in der <b>Akademie</b> (oben umschalten), jede Lektion dort bringt zusätzlich Spielgeld.</p>' +
+    '<p>Oben unter <b>Szenarien</b> warten sechs Herausforderungen: Finanzkrise, Dotcom-Blase, Zinswende, Krypto-Rausch, dein erster Job und der Ruhestand.</p>' +
     '<p>Im <b>Depot-Check</b> siehst du, wie gut du streust und ob du besser bist als jemand, der nur den Welt-ETF kauft und liegen lässt. Ziel ganz oben: die Milliarde.</p>',
     btns: [['Erste Lektion starten', 'primary', () => { hideModal(); openLesson(); }], ['Erst mal umschauen', 'ghost', hideModal]] });
 }
 
 function start(data) {
-  S = (data && data.S) || load();
-  let fresh = false;
-  if (!S) { newState(); fresh = true; } else { indexAssets(); migrate(); }
+  let mode = 'free'; try { mode = localStorage.getItem('kapital-mode') || 'free'; } catch (e) {}
+  S = (data && data.S) || (mode === 'scn' && load(SCN_KEY)) || load(SAVE_KEY);
+  if (!S) newState(); else { indexAssets(); migrate(); }
+  applyPending();
+  document.body.classList.toggle('scn', !!S.scn);
   if (data && data.U) Object.assign(U, data.U);
   if (!A[U.sel]) U.sel = 'NOVA';
   dirty = true; requestAnimationFrame(loop);
