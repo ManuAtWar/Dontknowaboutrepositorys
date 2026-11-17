@@ -9,6 +9,14 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
   Zerstörer, Fregatten, Korvetten, U-Boote, Atomsprengköpfe, Militärbudget, Technologiestand und die wichtigsten Waffensysteme
   (z. B. Leopard 2A7V, F-35A, Type 055, K9 Thunder).
 
+## Neu in Version 6: schönere 3D-Grafik
+
+* Himmel mit Sonne und Dunst, zufällige Tageszeit pro Schlacht (Morgen, Mittag, Abendrot), lange Schatten.
+* Realistischere Materialien mit Himmelsreflexion, leuchtende Explosionen (Bloom) und filmische Farbabstimmung.
+* Texturierter Boden mit Feldweg, wogendes Gras, mehrstufige Nadelbäume und Laubbäume im Wind, animierte Wellen bei Seelandungen.
+* Staubfahnen hinter Panzern, Druckwellen-Ringe, fliegende Trümmer, Kamerawackeln bei großen Explosionen.
+* Auf schwächeren Handys wird automatisch eine leichtere Grafikstufe ohne Schatten und Bloom verwendet.
+
 ## Neu in Version 5: Befestigungen
 
 * **Verteidigung pro Land (im Länderpanel):** Grenzwall & Bunkerlinie (Stufe I–III, +25 % Bodenverteidigung je Stufe),
