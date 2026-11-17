@@ -2311,10 +2311,10 @@ table.mil tr.zero td { color: var(--dim); }
       const pos = [], col = [];
       for (let k = 0; k < 3; k++) {
         const a = k * Math.PI / 3 + 0.3, cx = Math.cos(a), sz = Math.sin(a);
-        for (let b = 0; b < 2; b++) {
-          const ox = (b - 0.5) * 0.25, h = 0.7 + b * 0.35;
-          pos.push(-0.12 * cx + ox, 0, -0.12 * sz, 0.12 * cx + ox, 0, 0.12 * sz, ox + 0.08, h, 0.05);
-          col.push(0.45, 0.5, 0.35, 0.45, 0.5, 0.35, 1, 1, 0.85);
+        for (let b = 0; b < 3; b++) {
+          const ox = (b - 1) * 0.22, h = 0.32 + b * 0.09;
+          pos.push(-0.2 * cx + ox, 0, -0.2 * sz, 0.2 * cx + ox, 0, 0.2 * sz, ox + 0.06, h, 0.04);
+          col.push(0.62, 0.68, 0.48, 0.62, 0.68, 0.48, 1, 1, 0.82);
         }
       }
       const g = new T3.BufferGeometry();
@@ -2344,7 +2344,7 @@ table.mil tr.zero td { color: var(--dim); }
     const TOD = {
       morning: { sun: [-80, 38, -60], sunC: 0xffd8ae, sunI: 1.2, hs: 0xbfd6f2, hg: 0x564a3a, hi: 0.55, top: 0x4c84c8, hor: 0xf1d8be },
       noon:    { sun: [-35, 95, 35], sunC: 0xfff6e6, sunI: 1.3, hs: 0xcfe3ff, hg: 0x4f4636, hi: 0.6, top: 0x3a7ccf, hor: 0xc6dded },
-      dusk:    { sun: [150, 24, -80], sunC: 0xffa564, sunI: 1.15, hs: 0x92a2d2, hg: 0x4a3a32, hi: 0.48, top: 0x2a3d72, hor: 0xffaa78 },
+      dusk:    { sun: [150, 30, -80], sunC: 0xffb07a, sunI: 0.95, hs: 0x9aaad8, hg: 0x4f3f35, hi: 0.62, top: 0x2a3d72, hor: 0xffaa78 },
     };
     const GradeShader = {
       uniforms: { tDiffuse: { value: null }, exposure: { value: 1.0 } },
@@ -2455,15 +2455,15 @@ table.mil tr.zero td { color: var(--dim); }
       const m = new T3.Matrix4(), q4 = new T3.Quaternion(), s3 = new T3.Vector3(), p3 = new T3.Vector3(), yAx = new T3.Vector3(0, 1, 0), tc = new T3.Color();
       const placeOK = (x, z) => !(opts.sea && x < -46);
       // grass tufts (wind-animated)
-      const nGrass = lowFx ? 0 : opts.arid ? 900 : opts.ter >= 1.3 ? 1400 : 3200;
+      const nGrass = lowFx ? 0 : opts.arid ? 1500 : opts.ter >= 1.3 ? 2500 : 5500;
       if (nGrass) {
-        const gm = windify(new T3.MeshLambertMaterial({ vertexColors: true, side: T3.DoubleSide }), 0.14);
+        const gm = windify(new T3.MeshLambertMaterial({ vertexColors: true, side: T3.DoubleSide }), 0.22);
         const grass = new T3.InstancedMesh(grassGeo(), gm, nGrass);
-        const gcol = new T3.Color(pal[2]).lerp(new T3.Color(0xffffff), 0.1);
+        const gcol = new T3.Color(pal[2]).lerp(new T3.Color(opts.arid ? 0xd8c890 : 0x9ccf5a), 0.35);
         for (let i = 0; i < nGrass; i++) {
           let x = (rnd() - 0.5) * 220, z = (rnd() - 0.5) * 120; if (!placeOK(x, z)) x = -40 + rnd() * 120;
-          const sc = 0.8 + rnd() * 1.1;
-          q4.setFromAxisAngle(yAx, rnd() * 6.28); s3.set(sc, sc * (0.8 + rnd() * 0.6), sc); p3.set(x, height(x, z), z);
+          const sc = 0.8 + rnd() * 0.9;
+          q4.setFromAxisAngle(yAx, rnd() * 6.28); s3.set(sc * 1.3, sc * (0.7 + rnd() * 0.5), sc * 1.3); p3.set(x, height(x, z) - 0.03, z);
           grass.setMatrixAt(i, m.compose(p3, q4, s3));
           grass.setColorAt(i, tc.copy(gcol).multiplyScalar(0.75 + rnd() * 0.4));
         }
