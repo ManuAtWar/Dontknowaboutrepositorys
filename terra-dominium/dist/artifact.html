@@ -2732,9 +2732,10 @@ table.mil tr.zero td { color: var(--dim); }
       applyBattle(rep); afterPlayerBattle(rep, t, 'invade', tempo()); return;
     }
     const rawA = sideRaw(commit, tA, false, c, nv.landCap), rawD = sideRaw(dm, tD, true, c, 1);
-    const tot = r => TT.reduce((s, k) => s + r[k], 0);
+    const UT = ['inf', 'tank', 'art', 'heli', 'jet']; // mobile troops (forts are added separately)
+    const tot = r => UT.reduce((s, k) => s + r[k], 0);
     const unit = Math.max(tot(rawA), tot(rawD)) / 46 || 1;
-    const mk = raw => { const o = z5(); TT.forEach(k => { const v = raw[k] / unit; o[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); }); return o; };
+    const mk = raw => { const o = z5(); UT.forEach(k => { const v = raw[k] / unit; o[k] = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); }); return o; };
     const resA = mk(rawA), resD = mk(rawD);
     const FT = fortOf(t);
     resD.bunker = FT.w * 2; resD.aa = FT.a * 2;

@@ -9,6 +9,17 @@ Rundenbasiertes Weltstrategie-Spiel im Browser – läuft auf **PC und Handy** (
   Zerstörer, Fregatten, Korvetten, U-Boote, Atomsprengköpfe, Militärbudget, Technologiestand und die wichtigsten Waffensysteme
   (z. B. Leopard 2A7V, F-35A, Type 055, K9 Thunder).
 
+## Neu in Version 5: Befestigungen
+
+* **Verteidigung pro Land (im Länderpanel):** Grenzwall & Bunkerlinie (Stufe I–III, +25 % Bodenverteidigung je Stufe),
+  Flugabwehr Flak/SAM (I–III, feindliche Luftwaffe −18 % je Stufe, mehr Flugzeugverluste) und Küstenbatterien (I–II, erschweren Seelandungen).
+  Kosten richten sich nach dem BIP; der Bau dauert eine Runde. Eroberung beschädigt Befestigungen um eine Stufe.
+* **Auf der Karte:** Steinmauern entlang befestigter Landgrenzen, hellblaue Linien an Küsten mit Batterien, Radarkuppeln für Flugabwehr.
+* **In der 3D-Schlacht:** Bunker und Flak-Stellungen des Verteidigers, die Jets und Hubschrauber beschießen, dazu Höckerlinien und Betonwände.
+  Sie müssen zerstört werden, um zu gewinnen.
+* **Reale Ausgangslage:** u. a. Koreanische DMZ, Iron Dome (Israel), Schweizer Bunker, Baltische Verteidigungslinie, Küstenbatterien Taiwans.
+* **KI:** meidet stark befestigte Ziele und baut selbst Befestigungen; Meldung, wenn ein Nachbar an deiner Grenze baut.
+
 ## Neu in Version 4
 
 * **Karte wieder wie in Version 2:** „Angreifen!“ ist die Hauptaktion, und das Tempo ist ruhig und flüssig (Standard: Normal).
