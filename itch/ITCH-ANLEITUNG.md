@@ -4,7 +4,9 @@
 
 | Datei | Wofür |
 |---|---|
-| `kapital-itch.zip` | Das Spiel zum Hochladen (index.html + Lektionen) |
+| `kapital-demo.zip` | **Kostenlose Demo** zum Spielen im Browser: Kurse 1–3, Szenario „Finanzkrise“, ein Spieljahr im freien Spiel |
+| `kapital-voll.zip` | **Vollversion** für Käufer: alles freigeschaltet |
+| `build_zip.py` | Baut beide ZIPs nach Änderungen neu: `python3 itch/build_zip.py` |
 | `cover.png` | Titelbild (630 × 500, genau das Format, das itch.io empfiehlt) |
 | `screenshot-1` bis `-6` | Screenshots für die Spielseite |
 
@@ -24,7 +26,11 @@
 | Release status | Released |
 | Pricing | **Name your own price**, empfohlener Preis 4,99 €, Mindestpreis 0 € (oder direkt **Paid** mit 4,99 €) |
 
-4. **Uploads**: `kapital-itch.zip` hochladen und den Haken **This file will be played in the browser** setzen.
+4. **Uploads**: zwei Dateien hochladen:
+   - `kapital-demo.zip` → Haken bei **This file will be played in the browser**. Diese Version kann jeder kostenlos direkt auf der Seite spielen.
+   - `kapital-voll.zip` → **kein** Browser-Haken. Als Namen z. B. `Vollversion (im Browser öffnen: entpacken, index.html doppelklicken)` eintragen. Diese Datei bekommen nur Käufer zum Herunterladen.
+
+   Pricing dafür auf **Paid** (4,99) stellen. Falls die Browser-Demo im privaten Fenster dann nicht für alle spielbar ist, mach zwei Seiten: `kapital-demo` (No payments, nur die Demo-ZIP) und `kapital` (Paid, nur die Voll-ZIP).
 5. **Embed options**:
    - Viewport dimensions: **1280 × 800**
    - Haken bei **Mobile friendly** (Orientation: Default)
@@ -75,4 +81,6 @@
 
 - Spielstände werden im Browser gespeichert (localStorage). Auf itch.io bleiben sie erhalten, solange Spieler denselben Browser nutzen.
 - Die Schriften werden von Google Fonts geladen. Ohne Internet greifen normale Systemschriften, das Spiel funktioniert trotzdem.
-- Neue Version hochladen: `kapital-itch.zip` neu erzeugen und auf itch.io die alte Datei ersetzen. Spielstände bleiben erhalten.
+- Neue Version hochladen: `python3 itch/build_zip.py` ausführen und auf itch.io die alten Dateien ersetzen. Spielstände bleiben erhalten.
+- Der Knopf „Vollversion holen“ in der Demo führt zu `https://manuatwar.itch.io/kapital`. Ändert sich die Adresse, oben in `build_zip.py` bei `BUY_URL` anpassen und neu bauen.
+- Käufer der Vollversion spielen offline im Browser. Ihr Spielstand aus der Demo wird dabei nicht übernommen, weil der Browser die Speicher von itch.io und lokalen Dateien trennt.

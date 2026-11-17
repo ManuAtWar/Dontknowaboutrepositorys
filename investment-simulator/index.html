@@ -278,6 +278,10 @@
   .sumgrid span { display: block; font-size: 11px; color: var(--muted); }
   .sumgrid b { font: 600 14px var(--f-mono); }
   #scnBtn { font-weight: 600; }
+  .buybtn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px; border-radius: 8px; background: var(--brass); color: var(--brass-ink); font-weight: 600; text-decoration: none; border: 1px solid var(--brass); }
+  .modal .buybtn { display: flex; margin-top: 12px; padding: 12px 16px; }
+  .course.locked { opacity: .6; }
+  .demo-note { margin-top: 10px !important; color: var(--brass) !important; font-size: 14px; }
   .foot { text-align: center; color: var(--faint); font-size: 12px; margin-top: 18px; }
 
   /* Overlay */
@@ -296,7 +300,8 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand">KAPITAL<small>FINANZ-AKADEMIE · SPIELGELD</small></div>
+    <div class="brand">KAPITAL<small id="brandSmall">FINANZ-AKADEMIE · SPIELGELD</small></div>
+    <a class="buybtn" id="buyLink" href="#" target="_blank" rel="noopener" hidden>Vollversion holen</a>
     <div class="seg views" id="views"><button data-v="akademie">Akademie</button><button data-v="spiel">Börsenspiel</button></div>
     <div class="clock gameonly">
       <span class="chip mono" id="date">Jahr 1 · Tag 1</span>
@@ -807,6 +812,7 @@ const tgRate = () => Math.max(0, S.rate - .5);
 // ---------- Tageslauf ----------
 function tick() {
   if (S.over || modalOpen) return;
+  if (DEMO && !S.scn && S.day >= DEMO_DAYS) { pause(); save(); showBuy('Das erste Spieljahr ist geschafft!', 'In der Demo kannst du das freie Börsenspiel ein Jahr lang spielen. Dein Spielstand bleibt gespeichert. In der Vollversion geht es unbegrenzt weiter, bis zur Milliarde.'); return; }
   S.day++;
   applyScript(S.day);
   stepMarket(false);
@@ -1165,6 +1171,16 @@ const ACAD = window.ACADEMY || [];
 const AKEY = 'kapital-academy-v1';
 const ACAD_TOTAL = ACAD.reduce((s, m) => s + m.lessons.length, 0);
 const ACAD_BONUS = 100;
+// Demo-Version: wird beim Bauen der Demo über window.KAPITAL_DEMO eingeschaltet
+const DEMO = !!window.KAPITAL_DEMO, BUY_URL = window.KAPITAL_BUY_URL || 'https://manuatwar.itch.io/kapital';
+const DEMO_COURSES = 3, DEMO_DAYS = 250, DEMO_SCN = ['krise'];
+const courseLocked = mi => DEMO && mi >= DEMO_COURSES;
+const scnLocked = id => DEMO && !DEMO_SCN.includes(id);
+function showBuy(title, text) {
+  showModal({ kick: 'Demo', title: title || 'Das gibt es in der Vollversion', body: '<p>' + (text || 'Dieser Inhalt ist in der kostenlosen Demo gesperrt.') + '</p>' +
+    '<div class="merke"><b>Vollversion</b>Alle 123 Lektionen in 12 Kursen · alle 6 Szenarien · unbegrenztes Börsenspiel bis zur Milliarde · keine Werbung, kein Abo</div>' +
+    '<a class="buybtn" href="' + BUY_URL + '" target="_blank" rel="noopener">Vollversion holen</a>', btns: [['Weiter in der Demo', 'ghost', hideModal]] });
+}
 function loadAP() { try { const x = JSON.parse(localStorage.getItem(AKEY)); if (x && x.done) return x; } catch (e) {} return { done: {}, xp: 0, streak: 0, last: '', first: 0 }; }
 function saveAP() { try { localStorage.setItem(AKEY, JSON.stringify(AP)); } catch (e) {} }
 let AP = loadAP();
@@ -1174,7 +1190,7 @@ const doneAll = () => Object.keys(AP.done).length;
 function nextOf(mi, li) { return li + 1 < ACAD[mi].lessons.length ? [mi, li + 1] : mi + 1 < ACAD.length ? [mi + 1, 0] : null; }
 function firstOpen(from) {
   let p = from || [0, 0];
-  for (let n = 0; n < ACAD_TOTAL && p; n++) { if (!AP.done[akey(p[0], p[1])]) return p; p = nextOf(p[0], p[1]) || [0, 0]; }
+  for (let n = 0; n < ACAD_TOTAL && p; n++) { if (!AP.done[akey(p[0], p[1])] && !courseLocked(p[0])) return p; p = nextOf(p[0], p[1]) || [0, 0]; }
   return null;
 }
 const PERMS = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
@@ -1204,6 +1220,7 @@ function pickAnswer(mi, li, j) {
 }
 function goNext(mi, li, where) {
   const n = firstOpen(nextOf(mi, li) || [0, 0]) || nextOf(mi, li);
+  if (where !== 'top' && n && courseLocked(n[0])) { showBuy('Weiter in der Vollversion', 'Du hast die freien Demo-Kurse durchgearbeitet.'); return; }
   if (where === 'top') AV.cur = n;
   else if (n) { AV.openM = n[0]; AV.openL = n[1]; }
   renderAcademy();
@@ -1249,18 +1266,19 @@ function calcUpdate() {
 
 function renderAcademy() {
   if (!AV.cur) AV.cur = firstOpen() || [0, 0];
-  const done = doneAll(), cur = AV.cur, allDone = done >= ACAD_TOTAL;
+  const done = doneAll(), cur = AV.cur, allDone = done >= ACAD_TOTAL, curLocked = courseLocked(cur[0]);
   let h = '<section class="panel ahero"><div class="lbl">Finanz-Akademie</div><h1>Geld anlegen lernen, mit möglichst wenig Risiko</h1>' +
     '<p>' + ACAD_TOTAL + ' Lektionen in ' + ACAD.length + ' Kursen, vom ersten Notgroschen bis zum fertigen Depot. Jede Lektion dauert etwa zwei Minuten und endet mit einer Quizfrage. Für jede geschaffte Lektion gibt es ' + eur(ACAD_BONUS) + ' Spielgeld im Börsenspiel.</p>' +
     '<div class="astats"><div><b>' + done + ' / ' + ACAD_TOTAL + '</b><span>Lektionen</span></div><div><b>' + AP.xp + '</b><span>Erfahrungspunkte</span></div><div><b>' + (AP.streak || 0) + (AP.streak === 1 ? ' Tag' : ' Tage') + '</b><span>Lern-Serie</span></div><div><b>' + (AP.first || 0) + '</b><span>im ersten Versuch richtig</span></div></div>' +
-    '<div class="meter gold"><div style="width:' + (done / ACAD_TOTAL * 100).toFixed(1) + '%"></div></div><div class="lrow"><button class="primary" data-scnopen="1">Wissen testen: 6 Szenarien spielen</button><button class="ghost" data-view="spiel">Zum Börsenspiel</button></div></section>';
+    '<div class="meter gold"><div style="width:' + (done / ACAD_TOTAL * 100).toFixed(1) + '%"></div></div>' + (DEMO ? '<p class="demo-note">Demo: Die Kurse 1 bis 3 sind frei. Die Vollversion enthält alle ' + ACAD_TOTAL + ' Lektionen in ' + ACAD.length + ' Kursen.</p>' : '') + '<div class="lrow"><button class="primary" data-scnopen="1">Wissen testen: 6 Szenarien spielen</button><button class="ghost" data-view="spiel">Zum Börsenspiel</button></div></section>';
   h += '<section class="panel acur"><div class="hd"><span class="lbl">' + (allDone ? 'Alles geschafft' : 'Weiterlernen') + '</span><button class="link" data-lex="1">Lexikon</button></div><div class="bd">' +
-    (allDone && !AV.picks[akey(cur[0], cur[1])] ? '<h3 class="big">Du hast alle ' + ACAD_TOTAL + ' Lektionen geschafft 🎓</h3><p>Wende dein Wissen im Börsenspiel an und vergleiche dich mit der Welt-ETF-Strategie. Du kannst jede Lektion unten jederzeit wiederholen.</p><div class="lrow"><button class="primary" data-view="spiel">Zum Börsenspiel</button></div>' : lessonHTML(cur[0], cur[1], 'top')) + '</div></section>';
+    (curLocked ? '<h3 class="big">Die Demo-Kurse sind geschafft 🎓</h3><p>Stark! In der Vollversion warten noch ' + (ACAD.length - DEMO_COURSES) + ' Kurse, unter anderem der Kernkurs „Risikoarm investieren“, Steuern, Altersvorsorge und Betrugsmaschen.</p><div class="lrow"><a class="buybtn" href="' + BUY_URL + '" target="_blank" rel="noopener">Vollversion holen</a></div>' :
+    allDone && !AV.picks[akey(cur[0], cur[1])] ? '<h3 class="big">Du hast alle ' + ACAD_TOTAL + ' Lektionen geschafft 🎓</h3><p>Wende dein Wissen im Börsenspiel an und vergleiche dich mit der Welt-ETF-Strategie. Du kannst jede Lektion unten jederzeit wiederholen.</p><div class="lrow"><button class="primary" data-view="spiel">Zum Börsenspiel</button></div>' : lessonHTML(cur[0], cur[1], 'top')) + '</div></section>';
   h += '<section class="panel"><div class="hd"><span class="lbl">Sparplan-Rechner: sicher gegen renditestark</span></div><div class="bd calc">' + calcHTML() + '</div></section>';
   h += '<div class="ahead"><h2>Alle Kurse</h2><span class="hint">Empfohlen: der Reihe nach. Kurs 7 ist der Kern für risikoarmes Investieren.</span></div><div class="courses">';
   ACAD.forEach((M, mi) => {
-    const d = doneIn(mi), n = M.lessons.length, open = AV.openM === mi;
-    h += '<section class="panel course' + (open ? ' open' : '') + (M.level === 'Kernkurs' ? ' core' : '') + '"><button class="chead" data-mod="' + mi + '" aria-expanded="' + open + '"><span class="cnum">' + String(mi + 1).padStart(2, '0') + '</span><span><b>' + esc(M.title) + ' <span class="tag ' + (M.level === 'Kernkurs' ? 'good' : M.level === 'Fortgeschritten' ? 'bad' : 'mid') + '">' + M.level + '</span></b><small>' + esc(M.desc) + '</small></span><span class="cprog">' + d + '/' + n + (d === n ? ' ✓' : '') + '</span></button>' +
+    const d = doneIn(mi), n = M.lessons.length, lock = courseLocked(mi), open = !lock && AV.openM === mi;
+    h += '<section class="panel course' + (open ? ' open' : '') + (lock ? ' locked' : '') + (M.level === 'Kernkurs' ? ' core' : '') + '"><button class="chead" ' + (lock ? 'data-buy="1"' : 'data-mod="' + mi + '" aria-expanded="' + open + '"') + '><span class="cnum">' + String(mi + 1).padStart(2, '0') + '</span><span><b>' + esc(M.title) + ' <span class="tag ' + (M.level === 'Kernkurs' ? 'good' : M.level === 'Fortgeschritten' ? 'bad' : 'mid') + '">' + M.level + '</span></b><small>' + esc(M.desc) + '</small></span><span class="cprog">' + (lock ? '🔒 Vollversion' : d + '/' + n + (d === n ? ' ✓' : '')) + '</span></button>' +
       '<div class="meter gold thin"><div style="width:' + (d / n * 100).toFixed(1) + '%"></div></div>';
     if (open) {
       h += '<div class="llist">';
@@ -1289,6 +1307,7 @@ function onAcademyClick(e) {
   else if (d.les) { const [mi, li] = d.les.split(',').map(Number); AV.openM = mi; AV.openL = AV.openL === li ? null : li; renderAcademy(); }
   else if (d.view) setView(d.view);
   else if (d.lex) showLexicon();
+  else if (d.buy) showBuy('Kurs in der Vollversion', 'Die Kurse 4 bis ' + ACAD.length + ' sind in der Demo gesperrt.');
   else if (d.scnopen) { setView('spiel'); openScenarios(); }
 }
 
@@ -1420,7 +1439,7 @@ function finishScenario(failed) {
 function openScenarios() {
   const best = loadBest();
   const body = '<p>Jedes Szenario hat einen festen Ablauf, ein eigenes Startkapital und drei Ziele. Für jedes erreichte Ziel gibt es einen Stern. Dein freies Spiel bleibt dabei gespeichert.</p><div class="scnlist">' +
-    SCN.map(c => { const b = best[c.id]; return '<div class="scncard"><div class="lkick">' + c.kick + '</div><div class="scnt"><b>' + c.title + '</b><span class="stars">' + starStr(b ? b.stars : 0) + '</span></div><p>' + c.desc + '</p><button class="primary" data-scn="' + c.id + '">' + (S.scn === c.id && !S.over ? 'Neu starten' : 'Starten') + ' · ' + eurS(c.start) + ' Startkapital</button></div>'; }).join('') + '</div>';
+    SCN.map(c => { const b = best[c.id]; return '<div class="scncard"><div class="lkick">' + c.kick + '</div><div class="scnt"><b>' + c.title + '</b><span class="stars">' + starStr(b ? b.stars : 0) + '</span></div><p>' + c.desc + '</p>' + (scnLocked(c.id) ? '<button class="ghost" data-buy="1">🔒 Nur in der Vollversion</button>' : '<button class="primary" data-scn="' + c.id + '">' + (S.scn === c.id && !S.over ? 'Neu starten' : 'Starten') + ' · ' + eurS(c.start) + ' Startkapital</button>') + '</div>'; }).join('') + '</div>';
   showModal({ kick: 'Szenarien', title: 'Wähle eine Herausforderung', body,
     btns: S.scn ? [['Zurück zum freien Spiel', '', () => { hideModal(); backToFree(); }], ['Schließen', 'ghost', hideModal]] : [['Schließen', 'ghost', hideModal]] });
 }
@@ -1432,6 +1451,7 @@ function resetUI() {
 }
 function startScenario(id) {
   const c = SCN.find(x => x.id === id); if (!c) return;
+  if (scnLocked(id)) { showBuy('Szenario in der Vollversion', 'In der Demo kannst du „Die große Finanzkrise“ spielen. Alle sechs Szenarien gibt es in der Vollversion.'); return; }
   pause(); save();
   newState(c); resetUI();
   try { localStorage.setItem('kapital-mode', 'scn'); } catch (e) {}
@@ -1801,7 +1821,7 @@ window.addEventListener('hashchange', () => { const h = location.hash.slice(1); 
 document.addEventListener('click', e => { const t = e.target.closest('[data-term]'); if (t && !t.closest('.modal')) { e.preventDefault(); e.stopPropagation(); showTerm(t.dataset.term); } else if (t) { showTerm(t.dataset.term); } }, true);
 $('lexBtn').onclick = showLexicon;
 $('scnBtn').onclick = openScenarios;
-$('mBody').addEventListener('click', e => { const b = e.target.closest('[data-scn]'); if (b) { hideModal(); startScenario(b.dataset.scn); } }); $('lexBtn2').onclick = showLexicon;
+$('mBody').addEventListener('click', e => { const b = e.target.closest('[data-scn]'); if (b) { hideModal(); startScenario(b.dataset.scn); return; } if (e.target.closest('[data-buy]')) showBuy('Szenario in der Vollversion', 'In der Demo kannst du „Die große Finanzkrise“ spielen. Alle sechs Szenarien gibt es in der Vollversion.'); }); $('lexBtn2').onclick = showLexicon;
 $('lpBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'open') openLesson(); };
 $('coachBox').onclick = e => { const b = e.target.closest('[data-learn]'); if (b && b.dataset.learn === 'dismiss') { S.coachTip = null; dirty = true; } };
 $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) dismissModal(); });
@@ -1818,6 +1838,7 @@ function intro() {
 }
 
 function start(data) {
+  if (DEMO) { $('brandSmall').textContent = 'DEMO · FINANZ-AKADEMIE'; $('buyLink').href = BUY_URL; $('buyLink').hidden = false; }
   let mode = 'free'; try { mode = localStorage.getItem('kapital-mode') || 'free'; } catch (e) {}
   S = (data && data.S) || (mode === 'scn' && load(SCN_KEY)) || load(SAVE_KEY);
   if (!S) newState(); else { indexAssets(); migrate(); }
