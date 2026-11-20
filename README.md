@@ -71,5 +71,12 @@ Munitionskiste · Todesstoß (One-Hit-Kills) · Doppelte Punkte · Feuersturm (t
 
 - Eine einzige Datei: `index.html` (HTML, CSS und JavaScript-Modul).
 - 3D mit [Three.js](https://threejs.org) 0.170, alle Texturen und Sounds werden prozedural erzeugt – keine externen Assets.
+- Realistische Materialien: Farbe, Relief (Normal-Map) und Rauheit/Metall werden beim Start per Code erzeugt (Ziegel, Beton mit nassen Pfützen, Kopfsteinpflaster, Holz, rostiges Metall, Haut, zerrissener Stoff).
+- Grafikstufen im Menü (**Niedrig / Mittel / Hoch / Ultra**):
+  - Mittel: Bloom (Leuchten), Farbkorrektur, Vignette, Filmkorn, chromatische Aberration
+  - Hoch: zusätzlich weiche Schatten (Taschenlampe, Mond) und Umgebungsverschattung (GTAO)
+  - Ultra: höhere Auflösung, schärfere Schatten, Schatten auch von Deckenlampen
+- Atmosphäre: Hängelampen mit Lichtkegeln, schwebender Staub, Bodennebel, Sternenhimmel mit Mond, Spiegelungen auf Metall und Pfützen.
+- Zombies mit Knie- und Ellbogengelenken, beweglichem Kiefer und leuchtenden Augen.
 - Pfadfindung der Untoten über ein Flussfeld auf dem Kartenraster.
 - Einstellungen und Rekord werden im `localStorage` des Browsers gespeichert.
