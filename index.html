@@ -179,6 +179,7 @@
     </div>
     <div class="center"><button class="btn" id="startBtn">SPIELEN</button></div>
     <div id="best"></div>
+    <div id="modelInfo" style="text-align:center;color:var(--toxic);font-size:13px;margin-top:6px"></div>
     <h3>STEUERUNG</h3>
     <div class="keys">
       <div><kbd>W A S D</kbd>Bewegen</div><div><kbd>Shift</kbd>Sprinten</div><div><kbd>Leertaste</kbd>Springen</div>
@@ -223,6 +224,7 @@
   </div>
 </div>
 
+<script src="models/zombie-data.js"></script>
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
 </script>
@@ -235,6 +237,9 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30))); // Ladebildschirm zeigen, bevor Texturen erzeugt werden
 
 // =====================================================================
@@ -1115,6 +1120,47 @@ function zmat(color, emissive = 0) { const k = color + '_' + emissive; if (!zMat
 function zSkin(color) { const k = 's' + color; if (!zMatCache.has(k)) zMatCache.set(k, pbrMat(SET_SKIN, 1, 1, { color })); return zMatCache.get(k); }
 function zCloth(color, f = 1) { const k = 'c' + color + f; if (!zMatCache.has(k)) zMatCache.set(k, pbrMat(SET_CLOTH, 1, 1, { color: new THREE.Color(color).multiplyScalar(1.6 * f) })); return zMatCache.get(k); }
 const zGeo = new Map(); const ZG = (k, f) => { if (!zGeo.has(k)) zGeo.set(k, f()); return zGeo.get(k); };
+// ---------- Echte, animierte Zombie-Modelle (optional, aus models/zombie-data.js) ----------
+let ZMODEL = null;
+const ZCLIP_FALLBACK = { run: ['walk'], attack: ['scream', 'walk'], scream: ['idle', 'walk'], idle: ['walk'], rise: ['scream', 'idle', 'walk'], crawl: ['walk'], walk: [] };
+function b64ToBuf(s) { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+async function parseAsset(a) {
+  if (a.ext === 'fbx') { const o = new FBXLoader().parse(a.buf, ''); return { scene: o, animations: o.animations || [] }; }
+  const g = await new GLTFLoader().parseAsync(a.buf, ''); return { scene: g.scene, animations: g.animations || [] };
+}
+function stripRootMotion(clip) { // Zombies bewegen sich per Spiellogik, nicht per Animation
+  const first = clip.tracks.find(t => t.name.endsWith('.position'));
+  for (const tr of clip.tracks) {
+    if (!tr.name.endsWith('.position') || (tr !== first && !/hips|root|pelvis/i.test(tr.name))) continue;
+    const v = tr.values, x0 = v[0], z0 = v[2]; for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; }
+  }
+  return clip;
+}
+async function loadZombieModel() {
+  const src = window.TW_MODELS; if (!src) return false;
+  try {
+    const get = k => src[k] ? { buf: b64ToBuf(src[k].data), ext: src[k].ext } : null;
+    const chAsset = get('character') || get('walk') || get(Object.keys(src)[0]);
+    const base = await parseAsset(chAsset); const clips = {};
+    for (const k of Object.keys(ZCLIP_FALLBACK)) {
+      const a = get(k); if (!a) continue;
+      try { const p = a === chAsset ? base : await parseAsset(a); const c = p.animations.find(c => c.duration > 0); if (c) clips[k] = stripRootMotion(c.clone()); }
+      catch (e) { console.warn('Animation', k, e); }
+    }
+    if (!clips.walk && base.animations[0]) clips.walk = stripRootMotion(base.animations[0].clone());
+    base.scene.traverse(o => { if (!o.isMesh) return;
+      const conv = m => m.isMeshStandardMaterial ? m : new THREE.MeshStandardMaterial({ map: m.map || null, normalMap: m.normalMap || null, color: m.color || 0xffffff, roughness: .82, metalness: 0, transparent: !!m.transparent, alphaTest: m.alphaTest || 0, side: m.side });
+      o.material = Array.isArray(o.material) ? o.material.map(conv) : conv(o.material); });
+    base.scene.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(base.scene), h = (box.max.y - box.min.y) || 1, f = 1.8 / h;
+    const holder = new THREE.Group(); base.scene.scale.multiplyScalar(f); base.scene.position.y -= box.min.y * f; holder.add(base.scene); holder.updateMatrixWorld(true);
+    let head = null; base.scene.traverse(o => { if (o.isBone && !head && /head(?!top|_?end)/i.test(o.name)) head = o; });
+    ZMODEL = { template: holder, clips, headName: head?.name || null, headOffset: .08 };
+    console.info('Zombie-Modell geladen. Animationen:', Object.keys(clips).join(', '));
+    return true;
+  } catch (e) { console.warn('Zombie-Modell konnte nicht geladen werden:', e); return false; }
+}
+
 const ZTYPES = {
   walker:  { hp: 1, dmg: 34, scale: 1, skin: [0x6f7a5c, 0x7d7564, 0x5e6b5f, 0x8a7a6a], cloth: [0x3a3328, 0x2b3240, 0x40302a, 0x353535], eye: 0xffaa22 },
   sprinter:{ hp: .65, dmg: 22, scale: .92, skin: [0x8a8f86], cloth: [0x222222], eye: 0xff2222, speed: 5.3 },
@@ -1132,7 +1178,31 @@ class Zombie {
     this.dmg = T.dmg * diff().dmg; this.tearT = 0; this.window = null;
     this.build();
   }
+  buildRig() {
+    const g = new THREE.Group(); this.mesh = g;
+    const inst = SkeletonUtils.clone(ZMODEL.template); g.add(inst);
+    const wide = { bomber: 1.4, koloss: 1.3, boss: 1.15, sprinter: .9 }[this.type] || 1; inst.scale.x *= wide; inst.scale.z *= wide;
+    const tint = { sprinter: 0xd0d0d0, spitter: 0xa8d880, bomber: 0xe8b080, koloss: 0xb89080, boss: 0xa04848 }[this.type];
+    const clones = new Map(); this.mats = [];
+    inst.traverse(o => { if (!o.isMesh) return;
+      const cl = m => { if (!clones.has(m)) { const c = m.clone(); if (tint) c.color.multiply(new THREE.Color(tint)); if (this.type === 'walker') c.color.multiplyScalar(rand(.8, 1.05));
+        c.userData.c0 = c.emissive.clone(); c.userData.e0 = c.emissiveIntensity; clones.set(m, c); this.mats.push(c); } return clones.get(m); };
+      o.material = Array.isArray(o.material) ? o.material.map(cl) : cl(o.material); o.castShadow = GFX >= 2; o.frustumCulled = false; });
+    if (this.type === 'bomber') for (const m of this.mats) { m.userData.c0 = new THREE.Color(0xff3300); m.userData.e0 = .12; m.emissive.copy(m.userData.c0); m.emissiveIntensity = .12; }
+    this.rig = { mixer: new THREE.AnimationMixer(inst), actions: {}, cur: null, curName: '' };
+    for (const [k, clip] of Object.entries(ZMODEL.clips)) { const a = this.rig.mixer.clipAction(clip); if (k === 'death') { a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } this.rig.actions[k] = a; }
+    this.headBone = ZMODEL.headName ? inst.getObjectByName(ZMODEL.headName) : null;
+    g.scale.setScalar(this.scale); scene.add(g);
+  }
+  anim(name, speed = 1, fade = .25) {
+    const R = this.rig; let k = name; while (k && !R.actions[k]) k = (ZCLIP_FALLBACK[k] || []).find(f => R.actions[f]);
+    const a = R.actions[k]; if (!a) return false; a.timeScale = speed;
+    if (R.curName === k) return true;
+    a.reset(); if (k !== 'death') a.time = Math.random() * a.getClip().duration; a.play();
+    if (R.cur) a.crossFadeFrom(R.cur, fade, false); R.cur = a; R.curName = k; return true;
+  }
   build() {
+    if (ZMODEL) return this.buildRig();
     const T = this.T, s = this.scale, g = new THREE.Group(); this.mesh = g;
     const skin = zSkin(pick(T.skin)), cloth = zCloth(pick(T.cloth)), pants = zCloth(pick(T.cloth), .7), eyeM = zmat(0x000000, T.eye), dark = zmat(0x140808);
     const fat = this.type === 'bomber' ? 1.5 : this.type === 'koloss' ? 1.35 : 1, thin = this.type === 'sprinter' ? .85 : 1;
@@ -1181,7 +1251,7 @@ class Zombie {
     g.traverse(o => { if (!o.isMesh) return; if (!clones.has(o.material)) { const c = o.material.clone(); c.userData.c0 = c.emissive.clone(); c.userData.e0 = c.emissiveIntensity; clones.set(o.material, c); this.mats.push(c); } o.material = clones.get(o.material); });
     if (this.belly) this.belly = this.belly; // gleiche Mesh-Referenz, Material ist schon der Klon
   }
-  get headPos() { return _hp.set(this.pos.x, this.pos.y + 1.72 * this.scale, this.pos.z); }
+  get headPos() { if (this.headBone) { this.headBone.getWorldPosition(_hp); _hp.y += ZMODEL.headOffset * this.scale; return _hp; } return _hp.set(this.pos.x, this.pos.y + 1.72 * this.scale, this.pos.z); }
   remove() { scene.remove(this.mesh); this.mats.forEach(m => m.dispose()); }
 }
 const _hp = new THREE.Vector3();
@@ -1226,12 +1296,13 @@ function updateZombie(z, dt) {
   if (z.hitFlash > 0) { z.hitFlash -= dt; const on = z.hitFlash > 0; for (const mt of z.mats) { if (on) { mt.emissive.setHex(0x661010); mt.emissiveIntensity = 1; } else { mt.emissive.copy(mt.userData.c0); mt.emissiveIntensity = mt.userData.e0; } } }
   if (z.dead) {
     z.deathT += dt; const k = Math.min(1, z.deathT / .45);
-    m.rotation.x = -k * Math.PI / 2 * z.fallDir; m.position.y = z.pos.y + Math.sin(k * Math.PI) * .2 * z.scale - (z.deathT > 3 ? (z.deathT - 3) * .6 : 0);
+    if (z.rig) { if (!z.deathAnim) z.deathAnim = z.anim('death', 1, .12) ? 1 : -1; z.rig.mixer.update(dt); }
+    if (!z.rig || z.deathAnim < 0) m.rotation.x = -k * Math.PI / 2 * z.fallDir; m.position.y = z.pos.y + Math.sin(k * Math.PI) * .2 * z.scale - (z.deathT > 3 ? (z.deathT - 3) * .6 : 0);
     if (z.deathT > 5) { z.remove(); return false; } return true;
   }
   z.t += dt;
   if (z.state === 'rise') { z.pos.y = Math.min(0, -1.9 + z.t * 1.9); if (z.t > 0.2 && Math.random() < dt * 8) dust(new THREE.Vector3(z.pos.x, .05, z.pos.z), 2);
-    z.armL.rotation.x = z.armR.rotation.x = -2.6 + Math.sin(z.t * 8) * .3; if (z.pos.y >= 0) { z.state = 'move'; z.pos.y = 0; } syncZ(z); return true; }
+    if (z.rig) { z.anim('rise', 1); z.rig.mixer.update(dt); } else z.armL.rotation.x = z.armR.rotation.x = -2.6 + Math.sin(z.t * 8) * .3; if (z.pos.y >= 0) { z.state = 'move'; z.pos.y = 0; } syncZ(z); return true; }
   const dx = P.pos.x - z.pos.x, dz = P.pos.z - z.pos.z, dist = Math.hypot(dx, dz);
   z.attackCd -= dt; z.special -= dt;
   let mv = 0, faceX = dx, faceZ = dz, speed = z.speed;
@@ -1255,7 +1326,7 @@ function updateZombie(z, dt) {
     if (z.at > 1.3) { z.state = 'move'; z.special = rand(5, 8); }
   } else if (z.state === 'tear') {
     const w = z.window; faceX = cellC(w.x) - z.pos.x; faceZ = cellC(w.z) - z.pos.z;
-    z.tearT -= dt; z.armL.rotation.x = -1.8 + Math.sin(z.t * 10) * .5; z.armR.rotation.x = -1.8 - Math.sin(z.t * 10) * .5;
+    z.tearT -= dt; if (!z.rig) { z.armL.rotation.x = -1.8 + Math.sin(z.t * 10) * .5; z.armR.rotation.x = -1.8 - Math.sin(z.t * 10) * .5; }
     if (w.boards <= 0) z.state = 'move';
     else if (z.tearT <= 0) { z.tearT = z.type === 'sprinter' ? .7 : 1.1; removeBoard(w); }
   } else { // move
@@ -1300,6 +1371,13 @@ function updateZombie(z, dt) {
   const moving = mv > 0 || (z.state === 'charge' && z.at > 0);
   z.phase += dt * (moving ? speed * 2.4 / z.scale : 1);
   const sw = moving ? Math.min(.9, .35 + speed * .12) : .05;
+  if (z.rig) {
+    if (z.state === 'attack' || z.state === 'tear') z.anim('attack', z.type === 'boss' ? .8 : 1.15, .15);
+    else if (z.state === 'spit') z.anim('scream', 1.2, .15);
+    else if (moving) { const run = speed > 2.8; z.anim(run ? 'run' : 'walk', clamp(speed / (run ? 4.2 : 1.25) / z.scale, .55, 2), .3); }
+    else z.anim('idle', 1, .3);
+    z.rig.mixer.update(dt);
+  } else {
   z.legL.rotation.x = Math.sin(z.phase) * sw; z.legR.rotation.x = -Math.sin(z.phase) * sw;
   z.legL.knee.rotation.x = Math.max(0, -Math.cos(z.phase)) * sw * 1.3 + .05; z.legR.knee.rotation.x = Math.max(0, Math.cos(z.phase)) * sw * 1.3 + .05;
   z.jaw.rotation.x = .25 + Math.max(0, Math.sin(z.t * 2.3 + z.phase * .1)) * .35;
@@ -1313,6 +1391,7 @@ function updateZombie(z, dt) {
   }
   z.headG.rotation.z = Math.sin(z.t * 1.3 + z.phase * .2) * .2;
   m.rotation.z = moving && speed < 2 ? Math.sin(z.phase) * .06 : 0;
+  }
   syncZ(z);
   if ((z.groanT -= dt) < 0) { z.groanT = rand(3, 8); SFX.groan(z.pos, z.type === 'koloss' || z.type === 'boss' ? .55 : z.type === 'sprinter' ? 1.4 : 1); }
   return true;
@@ -1378,7 +1457,7 @@ function killZombie(z, head, kind) {
     const zc = (cls().zed || 1) * (head ? .07 : .02) + (G.killStreak >= 4 ? .1 : 0);
     if (G.zedCd <= 0 && Math.random() < zc) startZed();
   }
-  if (head && z.head) { z.head.visible = false; bloodBurst(z.headPos, 30, 3); }
+  if (head) { bloodBurst(z.headPos, 30, 3); if (z.headBone) z.headBone.scale.setScalar(.001); else if (z.head) z.head.visible = false; }
   bloodBurst(new THREE.Vector3(z.pos.x, 1.1 * z.scale, z.pos.z), 16, 2);
   splat(z.pos.x, z.pos.z, z.scale * (z.type === 'boss' ? 2.5 : 1.2));
   if (z.type === 'bomber') explode(new THREE.Vector3(z.pos.x, 1, z.pos.z), 300 + G.wave * 25, 3.8, 'bomber');
@@ -1918,6 +1997,7 @@ $('pause').addEventListener('click', e => { if (e.target.id !== 'quitBtn') reque
 $('quitBtn').onclick = e => { e.stopPropagation(); gameOver(); };
 $('tClose').onclick = closeTrader;
 buildMenu(); show('menu');
+loadZombieModel().then(ok => { if (ok) $('modelInfo').textContent = '✓ Echte animierte Zombie-Modelle geladen'; });
 
 // =====================================================================
 //  Hauptschleife
@@ -1967,7 +2047,7 @@ $('loading').remove(); if (!composer) $('game').classList.add('nopost');
 loop();
 
 // Debug-/Testzugriff
-window.__tw = { G, P, zombies, startGame, spawnZombie, giveWeapon, WINDOWS, DOORS, openDoor, addPoints, startWave };
+window.__tw = { G, P, zombies, camera, rayZombies, rayGrid, THREE, startGame, spawnZombie, giveWeapon, WINDOWS, DOORS, openDoor, addPoints, startWave };
 </script>
 </body>
 </html>

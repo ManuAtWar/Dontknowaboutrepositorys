@@ -14,7 +14,8 @@ Browser-Version (Three.js), schnell testbar, läuft per Doppelklick.
 - [x] Händler, Klassen, Panzerung, Zeitlupe, Spezialgegner, Boss
 - [x] Realistischere Grafik: PBR-Materialien, Schatten, Bloom, Nebel, Lichtkegel, Grafikstufen
 - [ ] Detailliertere Waffenmodelle (Nachladeanimationen, Visiere)
-- [ ] Echte animierte Zombie-Modelle (z. B. Mixamo / Quaternius, glTF)
+- [x] Ladesystem für echte animierte Zombie-Modelle (FBX/glTF, Mixamo-kompatibel)
+- [ ] Zombie-Modelle von Mixamo herunterladen und hochladen
 - [ ] Bessere Sounds (echte Aufnahmen statt synthetisch), Musik
 - [ ] Zweite Karte
 - [ ] Easter Egg / Hauptquest auf der ersten Karte
@@ -65,3 +66,4 @@ Browser-Version (Three.js), schnell testbar, läuft per Doppelklick.
 |---|---|
 | 17.11.2026 | Projekt gestartet – erstes spielbares Totenwacht im Browser |
 | 20.11.2026 | Grafik-Update: realistische Materialien, Schatten, Filmeffekte, neue Zombies |
+| 26.11.2026 | Ladesystem für echte animierte Zombie-Modelle eingebaut |

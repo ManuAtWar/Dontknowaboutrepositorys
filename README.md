@@ -78,5 +78,6 @@ Munitionskiste · Todesstoß (One-Hit-Kills) · Doppelte Punkte · Feuersturm (t
   - Ultra: höhere Auflösung, schärfere Schatten, Schatten auch von Deckenlampen
 - Atmosphäre: Hängelampen mit Lichtkegeln, schwebender Staub, Bodennebel, Sternenhimmel mit Mond, Spiegelungen auf Metall und Pfützen.
 - Zombies mit Knie- und Ellbogengelenken, beweglichem Kiefer und leuchtenden Augen.
+- **Echte animierte Zombie-Modelle (optional):** Figuren und Animationen (z. B. von Mixamo) in `models/zombie/` ablegen und mit `python3 tools/embed-models.py` verpacken – Anleitung in [`models/zombie/README.md`](models/zombie/README.md). Animationen für Gehen, Rennen, Angriff, Sterben, Schreien, Aufstehen werden automatisch erkannt; Kopfschüsse treffen den echten Kopf-Knochen. Ohne Modelle werden die eingebauten Zombies benutzt.
 - Pfadfindung der Untoten über ein Flussfeld auf dem Kartenraster.
 - Einstellungen und Rekord werden im `localStorage` des Browsers gespeichert.
