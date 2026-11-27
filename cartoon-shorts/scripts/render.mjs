@@ -13,7 +13,10 @@ const serveUrl = await bundle({
   outDir: path.join(ROOT, '.bundle'),
   publicDir: path.join(ROOT, 'public'),
 });
-const composition = await selectComposition({serveUrl, id: 'Woodpecker', browserExecutable: BROWSER});
+// env: FRAMES=a-b (subset), DOF=0 (no depth-of-field blur), CONC=n, GL=swangle|angle|swiftshader|...
+const inputProps = {dof: process.env.DOF !== '0'};
+const frameRange = process.env.FRAMES ? process.env.FRAMES.split('-').map(Number) : null;
+const composition = await selectComposition({serveUrl, id: 'Woodpecker', browserExecutable: BROWSER, inputProps});
 const t0 = Date.now();
 let last = -1;
 await renderMedia({
@@ -27,9 +30,11 @@ await renderMedia({
   crf: Number(crf),
   pixelFormat: 'yuv420p',
   audioBitrate: '320k',
-  concurrency: 4,
+  concurrency: Number(process.env.CONC || 4),
+  inputProps,
+  frameRange,
   browserExecutable: BROWSER,
-  chromiumOptions: {gl: 'swangle'},
+  chromiumOptions: {gl: process.env.GL || 'swangle'},
   onProgress: ({progress}) => {
     const p = Math.floor(progress * 20);
     if (p !== last) {

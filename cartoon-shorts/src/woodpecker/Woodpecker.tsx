@@ -298,8 +298,8 @@ const TRUNK = SPR.trunk;
 const TSX = TRUNK_W / (TRUNK.right - TRUNK.left);
 const TRUNK_H = GROUND_Y + 80 - TRUNK_TOP;
 
-const Background: React.FC<{cam: Cam}> = ({cam}) => {
-  const blur = clamp((cam.k - 1.5) / 1.3) * 3.2;
+const Background: React.FC<{cam: Cam; dof: boolean}> = ({cam, dof}) => {
+  const blur = dof ? clamp((cam.k - 1.5) / 1.3) * 3.2 : 0;
   const kC = layerK(cam, 6000);
   const kH = layerK(cam, 3000);
   const kT = layerK(cam, 2200);
@@ -403,7 +403,7 @@ const Sound: React.FC = () => (
 );
 
 // ---------------- composition ----------------
-export const Woodpecker: React.FC = () => {
+export const Woodpecker: React.FC<{dof?: boolean}> = ({dof = true}) => {
   const frame = useCurrentFrame();
   const t = frame / FPS;
   const cam = camAt(t, CAM);
@@ -415,7 +415,7 @@ export const Woodpecker: React.FC = () => {
   return (
     <AbsoluteFill style={{background: 'linear-gradient(180deg, #8CCFFF 0%, #BDE6FF 55%, #E3F5FF 100%)'}}>
       <AbsoluteFill style={{transform: `translate(${sh.x}px, ${sh.y}px)`}}>
-        <Background cam={cam} />
+        <Background cam={cam} dof={dof} />
         <Layer cam={cam} Z={1000}>
           <div style={A(0, 0, {transformOrigin: `${TRUNK_BASE.x}px ${TRUNK_BASE.y}px`, transform: `rotate(${wob}deg)`})}>
             <Img
